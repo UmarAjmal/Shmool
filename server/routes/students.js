@@ -1,0 +1,1623 @@
+const router = require('express').Router();
+const pool = require('../db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs'); // Added for Password Hashing
+
+// Multer Configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = 'uploads/students';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB Limit per file
+});
+
+// ==========================================
+// FAMILY & SIBLING MANAGEMENT
+// ==========================================
+
+// Helper function to generate Family ID
+async function generateFamilyId(client) {
+    const year = new Date().getFullYear();
+    const lastFamily = await client.query(`
+        SELECT family_id FROM students 
+        WHERE family_id LIKE $1 
+        ORDER BY family_id DESC LIMIT 1
+    `, [`FAM-${year}-%`]);
+
+    let familyNum = 1;
+    if (lastFamily.rows.length > 0) {
+        const lastId = lastFamily.rows[0].family_id;
+        const match = lastId.match(/FAM-\d{4}-(\d{4})/);
+        if (match) {
+            familyNum = parseInt(match[1]) + 1;
+        }
+    }
+
+    return `FAM-${year}-${String(familyNum).padStart(4, '0')}`;
+}
+
+// Search for potential siblings
+router.get('/search-siblings', async (req, res) => {
+    try {
+        const { query } = req.query;
+        
+        if (!query || query.trim().length < 2) {
+            return res.json([]);
+        }
+
+        const searchTerm = `%${query}%`;
+        
+        const result = await pool.query(`
+            SELECT 
+                s.student_id,
+                s.admission_no,
+                s.first_name,
+                s.last_name,
+                s.father_name,
+                s.mother_name,
+                s.gender,
+                s.dob,
+                s.family_id,
+                s.monthly_fee,
+                s.class_id,
+                s.image_url,
+                c.class_name,
+                sec.section_name,
+                COALESCE(f.family_fee, 0) AS family_fee,
+                (SELECT COUNT(*) FROM students s2 WHERE s2.family_id = s.family_id AND s2.status = 'Active') AS family_size
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            LEFT JOIN families f ON f.family_id = s.family_id
+            WHERE 
+                s.status = 'Active' AND (
+                    s.first_name ILIKE $1 OR 
+                    s.last_name ILIKE $1 OR 
+                    s.admission_no ILIKE $1 OR
+                    s.father_name ILIKE $1 OR
+                    CONCAT(s.first_name, ' ', s.last_name) ILIKE $1
+                )
+            ORDER BY s.admission_date DESC
+            LIMIT 20
+        `, [searchTerm]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Get siblings of a student
+router.get('/:id/siblings', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Get student's family_id
+        const student = await pool.query(`
+            SELECT family_id FROM students WHERE student_id = $1
+        `, [id]);
+
+        if (student.rows.length === 0) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        const familyId = student.rows[0].family_id;
+        
+        if (!familyId) {
+            return res.json([]);
+        }
+
+        // Get all students with same family_id
+        const siblings = await pool.query(`
+            SELECT 
+                s.student_id,
+                s.admission_no,
+                s.first_name,
+                s.last_name,
+                s.father_name,
+                s.mother_name,
+                s.gender,
+                s.dob,
+                s.family_id,
+                s.sibling_relation,
+                s.class_id,
+                s.image_url,
+                c.class_name,
+                sec.section_name,
+                sr.relation_type
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            LEFT JOIN student_siblings sr ON sr.student_id = $1 AND sr.sibling_id = s.student_id
+            WHERE s.family_id = $2 AND s.student_id != $1
+            ORDER BY s.dob ASC
+        `, [id, familyId]);
+
+        res.json(siblings.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// GET /students/families/:family_id — get family info including family_fee and members
+router.get('/families/:family_id', async (req, res) => {
+    try {
+        const { family_id } = req.params;
+        // Get family record (upsert if missing)
+        let familyResult = await pool.query(
+            `SELECT * FROM families WHERE family_id = $1`, [family_id]
+        );
+        if (familyResult.rows.length === 0) {
+            // Create a stub record for this family_id
+            await pool.query(
+                `INSERT INTO families (family_id, family_fee) VALUES ($1, 0) ON CONFLICT DO NOTHING`, [family_id]
+            );
+            familyResult = await pool.query(`SELECT * FROM families WHERE family_id = $1`, [family_id]);
+        }
+        // Get all members
+        const members = await pool.query(`
+            SELECT s.student_id, s.admission_no, s.first_name, s.last_name,
+                   s.monthly_fee, c.class_name, s.status
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            WHERE s.family_id = $1 AND s.status = 'Active'
+            ORDER BY c.class_id DESC NULLS LAST, s.first_name
+        `, [family_id]);
+        res.json({
+            ...familyResult.rows[0],
+            members: members.rows
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT /students/families/:family_id/fee — update family fee
+router.put('/families/:family_id/fee', async (req, res) => {
+    try {
+        const { family_id } = req.params;
+        const { family_fee } = req.body;
+        if (family_fee === undefined || family_fee === null || isNaN(parseFloat(family_fee))) {
+            return res.status(400).json({ error: 'family_fee is required and must be a number' });
+        }
+        // Upsert families record
+        const result = await pool.query(`
+            INSERT INTO families (family_id, family_fee)
+            VALUES ($1, $2)
+            ON CONFLICT (family_id) DO UPDATE SET family_fee = EXCLUDED.family_fee
+            RETURNING *
+        `, [family_id, parseFloat(family_fee)]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==========================================
+// STUDENT MANAGEMENT API
+// ==========================================
+
+// 1. New Admission (Single Student)
+router.post('/', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'documents', maxCount: 5 }]), async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const {
+            // Academic
+            roll_no, class_id, section_id, admission_date, category,
+            // Personal
+            first_name, last_name, gender, dob, cnic_bform,
+            religion, blood_group, has_disability, disability_details,
+            // Contact
+            mobile_no, email, current_address, permanent_address, city,
+            // Parents
+            father_name, father_phone, father_cnic, father_occupation,
+            mother_name, mother_phone, mother_cnic, mother_occupation,
+            // Guardian
+            is_orphan, guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+            // Fees
+            monthly_fee, admission_fee, other_charges,
+            // Family fee (applies to the whole family unit)
+            family_fee,
+            // Opening Balance (previous dues before software was installed)
+            opening_balance,
+            // Family & Sibling - UPDATED for multiple siblings
+            siblings // JSON array: [{sibling_id, relation_type}, ...]
+        } = req.body;
+
+        // Handle Files
+        let image_url = null;
+        if (req.files['image'] && req.files['image'][0]) {
+            image_url = req.files['image'][0].path.replace(/\\/g, "/"); // Normalize path
+        }
+
+        let documents = [];
+        if (req.files['documents']) {
+            documents = req.files['documents'].map(f => f.path.replace(/\\/g, "/"));
+        }
+
+        await client.query('BEGIN');
+
+        const dateObj = admission_date ? new Date(admission_date) : new Date();
+        const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const year = dateObj.getFullYear();
+        
+        // Format: MMMDDYYYY (e.g., FEB052026)
+        const prefix = `${month}${day}${year}`;
+        
+        // Find latest admission number with this prefix
+        const lastStudent = await client.query(
+            "SELECT admission_no FROM students WHERE admission_no LIKE $1 ORDER BY admission_no DESC LIMIT 1",
+            [`${prefix}%`]
+        );
+
+        let sequence = '001';
+        if (lastStudent.rows.length > 0) {
+            const lastAdm = lastStudent.rows[0].admission_no;
+            const lastSeq = parseInt(lastAdm.replace(prefix, ''));
+            if (!isNaN(lastSeq)) {
+                sequence = String(lastSeq + 1).padStart(3, '0');
+            }
+        }
+
+        const auto_admission_no = `${prefix}${sequence}`;
+
+        // ----------------------------------------------------
+        // FAMILY ID & SIBLING HANDLING (Multiple Siblings Support)
+        // ----------------------------------------------------
+        let family_id = null;
+        let siblingsArray = [];
+
+        // Parse siblings JSON if provided
+        if (siblings) {
+            try {
+                siblingsArray = typeof siblings === 'string' ? JSON.parse(siblings) : siblings;
+            } catch (err) {
+                console.error('Error parsing siblings JSON:', err);
+                siblingsArray = [];
+            }
+        }
+
+        // If student has siblings, get/assign family_id
+        if (siblingsArray.length > 0) {
+            // Get family_id from first sibling
+            const firstSiblingId = siblingsArray[0].sibling_id;
+            const siblingResult = await client.query(
+                `SELECT family_id FROM students WHERE student_id = $1`,
+                [firstSiblingId]
+            );
+
+            if (siblingResult.rows.length > 0) {
+                family_id = siblingResult.rows[0].family_id;
+                
+                // If sibling doesn't have family_id, generate one and update all siblings
+                if (!family_id) {
+                    family_id = await generateFamilyId(client);
+                    // Update all siblings with the new family_id
+                    for (const sib of siblingsArray) {
+                        await client.query(
+                            `UPDATE students SET family_id = $1 WHERE student_id = $2`,
+                            [family_id, sib.sibling_id]
+                        );
+                    }
+                }
+            }
+        }
+
+        // If no siblings or sibling not found, generate new family_id
+        if (!family_id) {
+            family_id = await generateFamilyId(client);
+        }
+
+        // -------------------------------------------------------
+        // UPSERT INTO families TABLE (ensure record always exists)
+        // If family_fee is provided, update it. Otherwise keep existing.
+        // If opening_balance is provided, set it on the family.
+        // -------------------------------------------------------
+        const familyFeeVal = parseFloat(family_fee) || 0;
+        const opbVal = parseFloat(opening_balance) || 0;
+        await client.query(`
+            INSERT INTO families (family_id, family_fee, opening_balance, created_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (family_id) DO UPDATE
+                SET family_fee = CASE 
+                    WHEN $2 > 0 THEN $2 
+                    ELSE families.family_fee 
+                END,
+                opening_balance = CASE
+                    WHEN $3 > 0 THEN $3
+                    ELSE families.opening_balance
+                END
+        `, [family_id, familyFeeVal, opbVal]);
+
+        // Determine primary sibling_relation for the student record
+        // Use 'blood' if any sibling is blood relation, otherwise 'cousin'
+        let final_sibling_relation = null;
+        if (siblingsArray.length > 0) {
+            const hasBloodSibling = siblingsArray.some(s => s.relation_type === 'blood');
+            final_sibling_relation = hasBloodSibling ? 'blood' : 'cousin';
+        }
+
+        // ----------------------------------------------------
+        // USER CREDENTIALS GENERATION
+        // ----------------------------------------------------
+        // Username: STU-[AdmissionNo] (e.g., STU-FEB052026001)
+        const username = `STU-${auto_admission_no}`;
+        
+        // Default Password: 'student123' (Hashed)
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash('student123', salt);
+
+        // Get Role ID for 'Student'
+        let roleRes = await client.query("SELECT id FROM app_roles WHERE role_name = 'Student'");
+        let role_id;
+        if (roleRes.rows.length === 0) {
+            const newRole = await client.query("INSERT INTO app_roles (role_name, description) VALUES ('Student', 'Standard Student Access') RETURNING id");
+            role_id = newRole.rows[0].id;
+        } else {
+            role_id = roleRes.rows[0].id;
+        }
+
+        // Create User
+        const newUser = await client.query(
+            `INSERT INTO app_users (username, password_hash, full_name, email, role_id, is_active) 
+             VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+            [username, password_hash, `${first_name} ${last_name}`, email, role_id]
+        );
+        const user_id = newUser.rows[0].id;
+
+        // ----------------------------------------------------
+        // STUDENT CREATION
+        // ----------------------------------------------------
+
+        const newStudent = await client.query(
+            `INSERT INTO students (
+                admission_no, roll_no, class_id, section_id, admission_date, category,
+                first_name, last_name, gender, dob, cnic_bform,
+                religion, blood_group, has_disability, disability_details,
+                student_mobile, email, current_address, permanent_address, city,
+                father_name, father_phone, father_cnic, father_occupation,
+                mother_name, mother_phone, mother_cnic, mother_occupation,
+                is_orphan, guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+                monthly_fee, admission_fee, other_charges,
+                image_url, documents, user_id,
+                family_id, sibling_relation
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9, $10, $11,
+                $12, $13, $14, $15,
+                $16, $17, $18, $19, $20,
+                $21, $22, $23, $24,
+                $25, $26, $27, $28,
+                $29, $30, $31, $32, $33, $34,
+                $35, $36, $37,
+                $38, $39, $40,
+                $41, $42
+            )
+            RETURNING *`,
+            [
+                auto_admission_no, roll_no, class_id, section_id, admission_date || new Date(), category || 'Normal',
+                first_name, last_name, gender, dob, cnic_bform,
+                religion, blood_group, has_disability === 'true' || has_disability === true, disability_details,
+                mobile_no, email, current_address, permanent_address, city,
+                father_name, father_phone, father_cnic, father_occupation,
+                mother_name, mother_phone, mother_cnic, mother_occupation,
+                is_orphan === 'true' || is_orphan === true, guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+                monthly_fee || 0, admission_fee || 0, other_charges || 0,
+                image_url, JSON.stringify(documents), user_id,
+                family_id, final_sibling_relation
+            ]
+        );
+
+        const new_student_id = newStudent.rows[0].student_id;
+
+        // Create sibling relationships for all siblings
+        if (siblingsArray.length > 0) {
+            for (const sibling of siblingsArray) {
+                const { sibling_id, relation_type } = sibling;
+                
+                // Create forward relationship
+                await client.query(
+                    `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (student_id, sibling_id) DO NOTHING`,
+                    [new_student_id, sibling_id, relation_type]
+                );
+
+                // Create reverse relationship
+                await client.query(
+                    `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (student_id, sibling_id) DO NOTHING`,
+                    [sibling_id, new_student_id, relation_type]
+                );
+            }
+        }
+
+        // -------------------------------------------------------
+        // AUTO-CREATE ADMISSION FEE LEDGER
+        // If admission_fee > 0, create a ledger entry for this
+        // student that will track outstanding balance until paid
+        // -------------------------------------------------------
+        const admFeeVal = parseFloat(admission_fee) || 0;
+        if (admFeeVal > 0) {
+            await client.query(`
+                INSERT INTO admission_fee_ledger
+                    (student_id, total_amount, paid_amount, status, admission_date, notes)
+                VALUES ($1, $2, 0, 'unpaid', $3, 'Auto-created on admission')
+                ON CONFLICT (student_id) DO UPDATE
+                    SET total_amount = EXCLUDED.total_amount,
+                        status = CASE WHEN EXCLUDED.total_amount = 0 THEN 'paid' ELSE 'unpaid' END
+            `, [new_student_id, admFeeVal, admission_date || new Date()]);
+        }
+
+        await client.query('COMMIT');
+        // Return student with family_fee info
+        const familyInfo = await pool.query(`SELECT family_fee FROM families WHERE family_id = $1`, [family_id]);
+        const studentRow = newStudent.rows[0];
+        studentRow.family_fee = familyInfo.rows[0]?.family_fee || 0;
+        res.json(newStudent.rows[0]);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        if (err.code === '23505') {
+            return res.status(400).json({ error: "System generated a duplicate Admission No or Username. Please try again." });
+        }
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error: " + err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// 2. Bulk Import
+router.post('/bulk', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { students } = req.body; // Expecting array of objects
+        if (!students || !Array.isArray(students)) {
+            return res.status(400).json({ error: "Invalid data format. Expected array of students." });
+        }
+
+        await client.query('BEGIN');
+        
+        const results = { 
+            success: 0, 
+            failed: 0, 
+            errors: [],
+            familyStats: {
+                newFamilies: 0,
+                linkedByCNIC: 0,
+                linkedByNamePhone: 0,
+                totalStudents: 0
+            }
+        };
+
+        // 1. Pre-fetch Classes and Sections for Name-to-ID Resolution
+        const allClasses = await client.query("SELECT class_id, class_name FROM classes");
+        const allSections = await client.query("SELECT section_id, section_name, class_id FROM sections");
+
+        // Helper to find ID (Case Insensitive)
+        const getClassId = (name) => {
+            if(!name) return null;
+            // If already numeric, return it
+            if(!isNaN(name)) return parseInt(name);
+            const found = allClasses.rows.find(c => c.class_name.trim().toLowerCase() === String(name).trim().toLowerCase());
+            return found ? found.class_id : null;
+        };
+
+        const getSectionId = (secName, clsId) => {
+            if(!secName || !clsId) return null;
+            if(!isNaN(secName)) return parseInt(secName);
+            const found = allSections.rows.find(s => 
+                s.class_id === clsId && 
+                s.section_name.trim().toLowerCase() === String(secName).trim().toLowerCase()
+            );
+            return found ? found.section_id : null;
+        };
+        
+        for (const s of students) {
+            try {
+                // Resolve IDs
+                // Users might provide 'class_name' in Excel, or 'class_id'. We check both/either.
+                // The template will now use 'class_name' and 'section_name', but we map them to our variables.
+                let targetClassId = getClassId(s.class_name || s.class_id);
+                let targetSectionId = getSectionId(s.section_name || s.section_id, targetClassId);
+
+                if (!targetClassId) throw new Error(`Class '${s.class_name || s.class_id}' not found.`);
+                if (!targetSectionId) throw new Error(`Section '${s.section_name || s.section_id}' not found in Class.`);
+
+                // Auto ID Generation Logic if not provided
+                let finalAdmissionNo = s.admission_no;
+                if (!finalAdmissionNo || finalAdmissionNo === 'AUTO') {
+                    const dateObj = s.admission_date ? new Date(s.admission_date) : new Date();
+                    const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const year = dateObj.getFullYear();
+                    const prefix = `${month}${day}${year}`;
+
+                    // Check for collision in current transaction or DB
+                    // Note: In high volume bulk, this sequential query might be slow. 
+                    // Optimization: We could lock table or use a sequence. 
+                    // For now, we trust the iterative select-insert.
+                    
+                    const lastStudentResult = await client.query(
+                        "SELECT admission_no FROM students WHERE admission_no LIKE $1 ORDER BY admission_no DESC LIMIT 1",
+                        [`${prefix}%`]
+                    );
+                    
+                    let sequence = '001';
+                    if (lastStudentResult.rows.length > 0) {
+                        const lastAdm = lastStudentResult.rows[0].admission_no;
+                        const lastSeq = parseInt(lastAdm.replace(prefix, ''));
+                        if (!isNaN(lastSeq)) {
+                            sequence = String(lastSeq + 1).padStart(3, '0');
+                        }
+                    }
+                    finalAdmissionNo = `${prefix}${sequence}`;
+                }
+
+                // ============================================
+                // PHASE 1: CNIC-BASED FAMILY LINKING
+                // ============================================
+                let family_id = null;
+                let linkage_source = 'new';
+                let sibling_relation = null;
+
+                // Strategy 1: Father CNIC Match (Most Reliable)
+                if (s.father_cnic && s.father_cnic.trim() !== '') {
+                    const existingFamily = await client.query(
+                        `SELECT family_id, student_id, first_name 
+                         FROM students 
+                         WHERE father_cnic = $1 
+                         ORDER BY created_at DESC 
+                         LIMIT 1`,
+                        [s.father_cnic.trim()]
+                    );
+
+                    if (existingFamily.rows.length > 0) {
+                        family_id = existingFamily.rows[0].family_id;
+                        linkage_source = 'cnic_match';
+                        sibling_relation = 'blood';
+                        results.familyStats.linkedByCNIC++;
+                    }
+                }
+
+                // Strategy 2: Father Name + Phone Match (Backup)
+                if (!family_id && s.father_name && s.father_phone) {
+                    const phoneMatch = await client.query(
+                        `SELECT family_id, student_id 
+                         FROM students 
+                         WHERE LOWER(father_name) = LOWER($1) 
+                           AND father_phone = $2
+                         LIMIT 1`,
+                        [s.father_name.trim(), s.father_phone.trim()]
+                    );
+
+                    if (phoneMatch.rows.length > 0) {
+                        family_id = phoneMatch.rows[0].family_id;
+                        linkage_source = 'name_phone_match';
+                        sibling_relation = 'blood';
+                        results.familyStats.linkedByNamePhone++;
+                    }
+                }
+
+                // Strategy 3: Generate NEW Family ID
+                if (!family_id) {
+                    family_id = await generateFamilyId(client);
+                    linkage_source = 'new_family';
+                    results.familyStats.newFamilies++;
+                }
+
+                // Insert Student with Family ID
+                const insertResult = await client.query(
+                    `INSERT INTO students (
+                        admission_no, roll_no, class_id, section_id, admission_date, category,
+                        first_name, last_name, gender, dob, cnic_bform,
+                        religion, blood_group, 
+                        student_mobile, email, current_address, permanent_address, city,
+                        father_name, father_phone, father_cnic, father_occupation,
+                        mother_name, mother_phone, mother_cnic, mother_occupation,
+                        guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+                        monthly_fee, admission_fee, family_id, sibling_relation
+                    ) VALUES (
+                        $1, $2, $3, $4, $5, $6,
+                        $7, $8, $9, $10, $11,
+                        $12, $13, 
+                        $14, $15, $16, $17, $18,
+                        $19, $20, $21, $22,
+                        $23, $24, $25, $26,
+                        $27, $28, $29, $30, $31,
+                        $32, $33, $34, $35
+                    )
+                    RETURNING student_id`,
+                    [
+                        finalAdmissionNo, s.roll_no, targetClassId, targetSectionId, s.admission_date || new Date(), s.category || 'Normal',
+                        s.first_name, s.last_name, s.gender, s.dob, s.cnic_bform,
+                        s.religion, s.blood_group,
+                        s.student_mobile, s.email, s.current_address, s.permanent_address, s.city,
+                        s.father_name, s.father_phone, s.father_cnic, s.father_occupation,
+                        s.mother_name, s.mother_phone, s.mother_cnic, s.mother_occupation,
+                        s.guardian_name, s.guardian_relation, s.guardian_phone, s.guardian_cnic, s.guardian_address,
+                        s.monthly_fee || 0, s.admission_fee || 0, family_id, sibling_relation
+                    ]
+                );
+
+                const newStudentId = insertResult.rows[0].student_id;
+
+                // Create Sibling Relationships if linked
+                if (linkage_source === 'cnic_match' || linkage_source === 'name_phone_match') {
+                    const siblings = await client.query(
+                        `SELECT student_id FROM students 
+                         WHERE family_id = $1 AND student_id != $2`,
+                        [family_id, newStudentId]
+                    );
+
+                    for (const sibling of siblings.rows) {
+                        await client.query(
+                            `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                             VALUES ($1, $2, 'blood'), ($2, $1, 'blood')
+                             ON CONFLICT (student_id, sibling_id) DO NOTHING`,
+                            [newStudentId, sibling.student_id]
+                        );
+                    }
+                }
+
+                // Upsert families record (with optional opening_balance)
+                const bulkFamilyFee = parseFloat(s.family_fee) || 0;
+                const bulkOpb = parseFloat(s.opening_balance) || 0;
+                await client.query(`
+                    INSERT INTO families (family_id, family_fee, opening_balance, created_at)
+                    VALUES ($1, $2, $3, NOW())
+                    ON CONFLICT (family_id) DO UPDATE
+                        SET family_fee = CASE WHEN $2 > 0 THEN $2 ELSE families.family_fee END,
+                            opening_balance = CASE WHEN $3 > 0 THEN $3 ELSE families.opening_balance END
+                `, [family_id, bulkFamilyFee, bulkOpb]);
+
+                results.success++;
+                results.familyStats.totalStudents++;
+            } catch (err) {
+                // If collision on generated ID (race condition), retry logic could be added here
+                results.failed++;
+                results.errors.push({ name: s.first_name, error: err.message });
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: "Import processing complete", results });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: "Server Error during bulk import" });
+    } finally {
+        client.release();
+    }
+});
+
+// ==========================================
+// PHASE 2 & 3: FAMILY MANAGEMENT ENDPOINTS
+// ==========================================
+
+// Get Potential Duplicate Families (Phase 2)
+router.get('/families/potential-duplicates', async (req, res) => {
+    try {
+        const query = `
+            WITH family_details AS (
+                SELECT 
+                    family_id,
+                    ARRAY_AGG(student_id ORDER BY created_at) as student_ids,
+                    ARRAY_AGG(first_name || ' ' || last_name ORDER BY created_at) as student_names,
+                    ARRAY_AGG(admission_no ORDER BY created_at) as admission_nos,
+                    ARRAY_AGG(class_name ORDER BY created_at) as classes,
+                    MAX(father_name) as father_name,
+                    MAX(father_phone) as father_phone,
+                    MAX(father_cnic) as father_cnic,
+                    MAX(permanent_address) as address,
+                    COUNT(*) as family_size
+                FROM students s
+                LEFT JOIN classes c ON s.class_id = c.class_id
+                WHERE s.family_id IS NOT NULL
+                GROUP BY family_id
+            )
+            SELECT 
+                f1.family_id as family1_id,
+                f1.student_ids as family1_student_ids,
+                f1.student_names as family1_students,
+                f1.admission_nos as family1_admission_nos,
+                f1.classes as family1_classes,
+                f1.father_name as father1_name,
+                f1.father_phone as father1_phone,
+                f1.father_cnic as father1_cnic,
+                f1.address as address1,
+                f1.family_size as family1_size,
+                
+                f2.family_id as family2_id,
+                f2.student_ids as family2_student_ids,
+                f2.student_names as family2_students,
+                f2.admission_nos as family2_admission_nos,
+                f2.classes as family2_classes,
+                f2.father_name as father2_name,
+                f2.father_phone as father2_phone,
+                f2.father_cnic as father2_cnic,
+                f2.address as address2,
+                f2.family_size as family2_size,
+                
+                CASE
+                    WHEN LOWER(f1.father_name) = LOWER(f2.father_name) 
+                         AND f1.father_phone = f2.father_phone THEN 95
+                    WHEN LOWER(f1.father_name) = LOWER(f2.father_name)
+                         AND RIGHT(f1.father_phone, 7) = RIGHT(f2.father_phone, 7) THEN 85
+                    WHEN f1.father_phone = f2.father_phone THEN 75
+                    ELSE 60
+                END as match_score
+                
+            FROM family_details f1
+            JOIN family_details f2 ON f1.family_id < f2.family_id
+            WHERE (
+                (LOWER(f1.father_name) = LOWER(f2.father_name) 
+                 AND (f1.father_phone = f2.father_phone 
+                      OR RIGHT(f1.father_phone, 7) = RIGHT(f2.father_phone, 7)))
+                OR f1.father_phone = f2.father_phone
+            )
+            AND f1.family_id != f2.family_id
+            ORDER BY match_score DESC, f1.family_id
+            LIMIT 50
+        `;
+
+        const result = await pool.query(query);
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error('Duplicate detection error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Merge Two Families (Phase 2)
+router.post('/families/merge', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { primaryFamilyId, secondaryFamilyId, relationType } = req.body;
+
+        if (!primaryFamilyId || !secondaryFamilyId || !relationType) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        await client.query('BEGIN');
+
+        // Get all students from both families
+        const family1 = await client.query(
+            'SELECT student_id FROM students WHERE family_id = $1',
+            [primaryFamilyId]
+        );
+        const family2 = await client.query(
+            'SELECT student_id FROM students WHERE family_id = $1',
+            [secondaryFamilyId]
+        );
+
+        if (family2.rows.length === 0) {
+            throw new Error('Secondary family not found');
+        }
+
+        // Update all secondary family students to primary family
+        await client.query(
+            `UPDATE students 
+             SET family_id = $1, 
+                 sibling_relation = $2
+             WHERE family_id = $3`,
+            [primaryFamilyId, relationType, secondaryFamilyId]
+        );
+
+        // Create sibling relationships between all students
+        const allStudents = [...family1.rows, ...family2.rows];
+        
+        for (let i = 0; i < allStudents.length; i++) {
+            for (let j = i + 1; j < allStudents.length; j++) {
+                await client.query(
+                    `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                     VALUES ($1, $2, $3), ($2, $1, $3)
+                     ON CONFLICT (student_id, sibling_id) 
+                     DO UPDATE SET relation_type = $3`,
+                    [allStudents[i].student_id, allStudents[j].student_id, relationType]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        
+        res.json({ 
+            success: true, 
+            message: `Merged ${family2.rows.length} students into ${primaryFamilyId}`,
+            mergedFamily: primaryFamilyId,
+            movedStudents: family2.rows.length
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Merge error:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// Search Students for Manual Linking (Phase 3)
+router.get('/families/search-for-link', async (req, res) => {
+    try {
+        const { query } = req.query;
+        
+        if (!query || query.length < 2) {
+            return res.json([]);
+        }
+
+        const result = await pool.query(`
+            SELECT 
+                s.student_id,
+                s.admission_no,
+                s.first_name,
+                s.last_name,
+                s.father_name,
+                s.family_id,
+                c.class_name,
+                sec.section_name,
+                s.image_url
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            WHERE LOWER(s.first_name || ' ' || s.last_name) LIKE LOWER($1)
+               OR s.admission_no LIKE $1
+               OR LOWER(s.father_name) LIKE LOWER($1)
+            ORDER BY s.first_name
+            LIMIT 20
+        `, [`%${query}%`]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Search error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Manual Link Between Two Students (Phase 3)
+router.post('/families/manual-link', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { student1_id, student2_id, relation_type } = req.body;
+
+        if (!student1_id || !student2_id || !relation_type) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        if (student1_id === student2_id) {
+            return res.status(400).json({ error: 'Cannot link a student to themselves' });
+        }
+
+        await client.query('BEGIN');
+
+        // Get both students' info
+        const students = await client.query(
+            `SELECT student_id, family_id, first_name, last_name 
+             FROM students 
+             WHERE student_id IN ($1, $2)`,
+            [student1_id, student2_id]
+        );
+
+        if (students.rows.length !== 2) {
+            throw new Error('One or both students not found');
+        }
+
+        const [s1, s2] = students.rows;
+
+        // If already in same family, just create/update relationship
+        if (s1.family_id === s2.family_id) {
+            await client.query(
+                `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                 VALUES ($1, $2, $3), ($2, $1, $3)
+                 ON CONFLICT (student_id, sibling_id) 
+                 DO UPDATE SET relation_type = $3`,
+                [student1_id, student2_id, relation_type]
+            );
+
+            await client.query('COMMIT');
+            return res.json({ 
+                success: true, 
+                message: 'Sibling relationship created',
+                action: 'relationship_only'
+            });
+        }
+
+        // Different families - Merge them
+        const primaryFamilyId = s1.family_id < s2.family_id ? s1.family_id : s2.family_id;
+        const secondaryFamilyId = s1.family_id < s2.family_id ? s2.family_id : s1.family_id;
+
+        // Get all students from secondary family
+        const secondaryFamilyStudents = await client.query(
+            'SELECT student_id FROM students WHERE family_id = $1',
+            [secondaryFamilyId]
+        );
+
+        // Move all secondary family members to primary family
+        await client.query(
+            `UPDATE students 
+             SET family_id = $1,
+                 sibling_relation = $2
+             WHERE family_id = $3`,
+            [primaryFamilyId, relation_type, secondaryFamilyId]
+        );
+
+        // Get all students now in primary family
+        const allFamilyStudents = await client.query(
+            'SELECT student_id FROM students WHERE family_id = $1',
+            [primaryFamilyId]
+        );
+
+        // Create sibling relationships for all combinations
+        const studentIds = allFamilyStudents.rows.map(r => r.student_id);
+        
+        for (let i = 0; i < studentIds.length; i++) {
+            for (let j = i + 1; j < studentIds.length; j++) {
+                let pairRelation = relation_type;
+                
+                // For the specific pair being linked, use specified relation
+                if ((studentIds[i] === student1_id && studentIds[j] === student2_id) ||
+                    (studentIds[i] === student2_id && studentIds[j] === student1_id)) {
+                    pairRelation = relation_type;
+                } else {
+                    // For others, default to cousin when merging different families
+                    pairRelation = 'cousin';
+                }
+
+                await client.query(
+                    `INSERT INTO student_siblings (student_id, sibling_id, relation_type)
+                     VALUES ($1, $2, $3), ($2, $1, $3)
+                     ON CONFLICT (student_id, sibling_id) 
+                     DO UPDATE SET relation_type = $3`,
+                    [studentIds[i], studentIds[j], pairRelation]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+
+        res.json({ 
+            success: true, 
+            message: `Linked ${s2.first_name} to ${s1.first_name}'s family as ${relation_type}`,
+            primaryFamily: primaryFamilyId,
+            movedStudents: secondaryFamilyStudents.rows.length,
+            action: 'family_merged'
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Manual link error:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// 3. Get All Students (With Filters)
+router.get('/', async (req, res) => {
+    try {
+        const { class_id, section_id, gender, keyword, category, status, blood_group, is_orphan, family_id } = req.query;
+        
+        let query = `
+            SELECT s.*, c.class_name, sec.section_name 
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            WHERE 1=1
+        `;
+        
+        const params = [];
+        let paramCount = 1;
+
+        if (class_id) {
+            query += ` AND s.class_id = $${paramCount}`;
+            params.push(class_id);
+            paramCount++;
+        }
+
+        if (section_id) {
+            query += ` AND s.section_id = $${paramCount}`;
+            params.push(section_id);
+            paramCount++;
+        }
+
+        if (gender) {
+            query += ` AND s.gender = $${paramCount}`;
+            params.push(gender);
+            paramCount++;
+        }
+
+        if (category) {
+            query += ` AND s.category = $${paramCount}`;
+            params.push(category);
+            paramCount++;
+        }
+
+        if (status) {
+            query += ` AND s.status = $${paramCount}`;
+            params.push(status);
+            paramCount++;
+        }
+
+        if (blood_group) {
+            query += ` AND s.blood_group = $${paramCount}`;
+            params.push(blood_group);
+            paramCount++;
+        }
+
+        if (is_orphan) {
+            query += ` AND s.is_orphan = $${paramCount}`;
+            params.push(is_orphan === 'true');
+            paramCount++;
+        }
+
+        if (family_id) {
+            query += ` AND s.family_id ILIKE $${paramCount}`;
+            params.push(`%${family_id}%`);
+            paramCount++;
+        }
+
+        if (keyword) {
+            query += ` AND (
+                s.first_name ILIKE $${paramCount} OR 
+                s.last_name ILIKE $${paramCount} OR 
+                s.admission_no ILIKE $${paramCount} OR
+                s.father_name ILIKE $${paramCount}
+            )`;
+            params.push(`%${keyword}%`);
+            paramCount++;
+        }
+
+        if (req.query.age) {
+            query += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, s.dob)) = $${paramCount}`;
+            params.push(req.query.age);
+            paramCount++;
+        }
+
+        if (req.query.religion) {
+             query += ` AND s.religion = $${paramCount}`;
+             params.push(req.query.religion);
+             paramCount++;
+        }
+
+        query += ` ORDER BY s.class_id, s.section_id, s.roll_no, s.first_name`;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// 4. Get Single Student
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const student = await pool.query(`
+            SELECT s.*, c.class_name, sec.section_name, u.username,
+                   COALESCE(f.family_fee, 0) AS family_fee,
+                   COALESCE(f.opening_balance, 0) AS opening_balance,
+                   COALESCE(f.opening_balance_paid, 0) AS opening_balance_paid,
+                   GREATEST(0, COALESCE(f.opening_balance, 0) - COALESCE(f.opening_balance_paid, 0)) AS opb_remaining,
+                   f.opb_notes,
+                   (SELECT COUNT(*)::int FROM students s2 WHERE s2.family_id = s.family_id AND s2.status = 'Active') AS family_size
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            LEFT JOIN app_users u ON s.user_id = u.id
+            LEFT JOIN families f ON f.family_id = s.family_id
+            WHERE s.student_id = $1
+        `, [id]);
+        
+        if (student.rows.length === 0) return res.status(404).json({ error: "Student not found" });
+        res.json(student.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// 5. Update Student (Full Edit)
+router.put('/:id', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'documents', maxCount: 5 }]), async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        const {
+            roll_no, class_id, section_id, admission_date, category,
+            first_name, last_name, gender, dob, cnic_bform,
+            religion, blood_group, has_disability, disability_details,
+            mobile_no, email, current_address, permanent_address, city,
+            father_name, father_phone, father_cnic, father_occupation,
+            mother_name, mother_phone, mother_cnic, mother_occupation,
+            is_orphan, guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+            monthly_fee, admission_fee, other_charges,
+            family_fee
+        } = req.body;
+
+        // Handle Files
+        let image_url = req.body.existing_image_url || null; 
+        if (req.files['image'] && req.files['image'][0]) {
+            image_url = req.files['image'][0].path.replace(/\\/g, "/");
+        }
+
+        let documents = []; 
+        if (req.body.existing_documents) {
+            try { documents = JSON.parse(req.body.existing_documents); } catch(e) {}
+        }
+        if (req.files['documents']) {
+            const newDocs = req.files['documents'].map(f => f.path.replace(/\\/g, "/"));
+            documents = [...documents, ...newDocs];
+        }
+
+        await client.query('BEGIN');
+
+        const updateQ = `UPDATE students SET
+            roll_no=$1, class_id=$2, section_id=$3, admission_date=$4, category=$5,
+            first_name=$6, last_name=$7, gender=$8, dob=$9, cnic_bform=$10,
+            religion=$11, blood_group=$12, has_disability=$13, disability_details=$14,
+            student_mobile=$15, email=$16, current_address=$17, permanent_address=$18, city=$19,
+            father_name=$20, father_phone=$21, father_cnic=$22, father_occupation=$23,
+            mother_name=$24, mother_phone=$25, mother_cnic=$26, mother_occupation=$27,
+            is_orphan=$28, guardian_name=$29, guardian_relation=$30, guardian_phone=$31, guardian_cnic=$32, guardian_address=$33,
+            monthly_fee=$34, admission_fee=$35, other_charges=$36,
+            image_url=$37, documents=$38
+            WHERE student_id=$39 RETURNING user_id, family_id`;
+        
+        const vals = [
+            roll_no, class_id, section_id, admission_date, category,
+            first_name, last_name, gender, dob, cnic_bform,
+            religion, blood_group, has_disability === 'true' || has_disability === true, disability_details,
+            mobile_no, email, current_address, permanent_address, city,
+            father_name, father_phone, father_cnic, father_occupation,
+            mother_name, mother_phone, mother_cnic, mother_occupation,
+            is_orphan === 'true' || is_orphan === true, guardian_name, guardian_relation, guardian_phone, guardian_cnic, guardian_address,
+            monthly_fee || 0, admission_fee || 0, other_charges || 0,
+            image_url, JSON.stringify(documents),
+            id
+        ];
+
+        const resUpd = await client.query(updateQ, vals);
+        
+         if (resUpd.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        const user_id = resUpd.rows[0].user_id;
+        const fam_id_updated = resUpd.rows[0].family_id;
+
+        // Update family fee in families table if provided
+        if (family_fee !== undefined && family_fee !== null && family_fee !== '' && !isNaN(parseFloat(family_fee)) && parseFloat(family_fee) > 0 && fam_id_updated) {
+            await client.query(`
+                INSERT INTO families (family_id, family_fee)
+                VALUES ($1, $2)
+                ON CONFLICT (family_id) DO UPDATE SET family_fee = $2
+            `, [fam_id_updated, parseFloat(family_fee)]);
+        }
+
+        // Update User
+        if (user_id) {
+             await client.query(
+                "UPDATE app_users SET full_name = $1, email = $2 WHERE id = $3",
+                [`${first_name} ${last_name}`, email, user_id]
+            );
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: "Updated successfully" });
+
+    } catch(err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: "Server Error: " + err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// 6. Toggle Status
+router.patch('/:id/status', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        const { status } = req.body; 
+        
+        if (!status) return res.status(400).json({ error: "Status is required" });
+
+        await client.query('BEGIN');
+
+        // Update Student
+        const studentRes = await client.query(
+            "UPDATE students SET status = $1 WHERE student_id = $2 RETURNING user_id",
+            [status, id]
+        );
+        
+        if (studentRes.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: "Student not found" });
+        }
+        
+        const user_id = studentRes.rows[0].user_id;
+        
+        // Update User if linked
+        if (user_id) {
+            const isActive = (status === 'Active');
+            await client.query("UPDATE app_users SET is_active = $1 WHERE id = $2", [isActive, user_id]);
+        }
+        
+        await client.query('COMMIT');
+        res.json({ message: "Status updated successfully", status });
+    } catch(err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: "Server Error" });
+    } finally {
+        client.release();
+    }
+});
+
+// 7. Generate Credentials (Manual)
+router.patch('/:id/generate-credentials', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        await client.query('BEGIN');
+
+        // 1. Get Student Info
+        const sRes = await client.query("SELECT * FROM students WHERE student_id = $1", [id]);
+        if(sRes.rows.length === 0) return res.status(404).json({error: "Student not found"});
+        const student = sRes.rows[0];
+
+        if(student.user_id) return res.status(400).json({error: "User already exists"});
+
+        // 2. Generate Credentials
+        const username = `STU-${student.admission_no}`;
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash('student123', salt);
+
+        // 3. Get Role
+        let roleRes = await client.query("SELECT id FROM app_roles WHERE role_name = 'Student'");
+        let role_id = roleRes.rows.length > 0 ? roleRes.rows[0].id : null;
+        if (!role_id) {
+             const newRole = await client.query("INSERT INTO app_roles (role_name, description) VALUES ('Student', 'Standard Access') RETURNING id");
+             role_id = newRole.rows[0].id;
+        }
+
+        // 4. Create User
+        const newUser = await client.query(
+            `INSERT INTO app_users (username, password_hash, full_name, email, role_id, is_active) 
+             VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+            [username, password_hash, `${student.first_name} ${student.last_name}`, student.email, role_id]
+        );
+        const user_id = newUser.rows[0].id;
+
+        // 5. Link to Student
+        await client.query("UPDATE students SET user_id = $1 WHERE student_id = $2", [user_id, id]);
+
+        await client.query('COMMIT');
+        res.json({ message: "Credentials Generated", username });
+    } catch(err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: "Server Error: " + err.message });
+    } finally {
+        client.release();
+    }
+});
+
+// 8. Change Password
+router.patch('/:id/change-password', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        const { password } = req.body;
+        
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters" });
+        }
+
+        await client.query('BEGIN');
+
+        // Get User ID
+        const sRes = await client.query("SELECT user_id FROM students WHERE student_id = $1", [id]);
+        if(sRes.rows.length === 0) return res.status(404).json({error: "Student not found"});
+        
+        const user_id = sRes.rows[0].user_id;
+        if(!user_id) return res.status(400).json({error: "Student has no system login"});
+
+        // Hash Password
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
+
+        // Update User
+        await client.query("UPDATE app_users SET password_hash = $1 WHERE id = $2", [password_hash, user_id]);
+
+        await client.query('COMMIT');
+        res.json({ message: "Password updated successfully" });
+    } catch(err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: "Server Error" });
+    } finally {
+        client.release();
+    }
+});
+
+// 9. Delete Student
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query("DELETE FROM students WHERE student_id = $1", [id]);
+        res.json({ message: "Student deleted successfully" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// ══════════════════════════════════════════════════════════
+//  OPENING BALANCE (OPB) ROUTES
+// ══════════════════════════════════════════════════════════
+
+// GET /students/opb/families
+// List all families with their opening balance info + members
+router.get('/opb/families', async (req, res) => {
+    try {
+        const { search, filter } = req.query;
+
+        let where = '';
+        const params = [];
+
+        if (filter === 'with_opb') {
+            where = 'WHERE f.opening_balance > 0';
+        } else if (filter === 'cleared') {
+            where = 'WHERE f.opening_balance > 0 AND f.opening_balance_paid >= f.opening_balance';
+        } else if (filter === 'pending') {
+            where = 'WHERE f.opening_balance > 0 AND f.opening_balance_paid < f.opening_balance';
+        }
+
+        const result = await pool.query(`
+            SELECT
+                f.family_id,
+                f.family_name,
+                f.primary_contact_name,
+                f.primary_contact_phone,
+                f.opening_balance,
+                f.opening_balance_paid,
+                GREATEST(f.opening_balance - f.opening_balance_paid, 0) AS opb_remaining,
+                f.opb_notes,
+                f.family_fee,
+                -- Members summary
+                COUNT(s.student_id) AS total_members,
+                MAX(s.father_name) AS father_name,
+                MAX(s.father_phone) AS father_phone,
+                STRING_AGG(s.first_name || ' ' || s.last_name, ', ' ORDER BY s.first_name) AS member_names,
+                STRING_AGG(c.class_name, ', ' ORDER BY c.class_name) AS class_names
+            FROM families f
+            LEFT JOIN students s ON s.family_id = f.family_id AND s.status = 'Active'
+            LEFT JOIN classes c ON c.class_id = s.class_id
+            ${where}
+            GROUP BY f.family_id, f.family_name, f.primary_contact_name, f.primary_contact_phone,
+                     f.opening_balance, f.opening_balance_paid, f.opb_notes, f.family_fee
+            ORDER BY opb_remaining DESC, f.family_id
+        `, params);
+
+        // Optional search
+        let rows = result.rows;
+        if (search) {
+            const q = search.toLowerCase();
+            rows = rows.filter(r =>
+                (r.father_name || '').toLowerCase().includes(q) ||
+                (r.family_id || '').toLowerCase().includes(q) ||
+                (r.member_names || '').toLowerCase().includes(q) ||
+                (r.father_phone || '').includes(q)
+            );
+        }
+
+        res.json(rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /students/opb/families/:family_id
+// Full OPB detail for one family including payment history
+router.get('/opb/families/:family_id', async (req, res) => {
+    try {
+        const { family_id } = req.params;
+
+        const familyRes = await pool.query(`
+            SELECT f.*,
+                GREATEST(f.opening_balance - f.opening_balance_paid, 0) AS opb_remaining
+            FROM families f WHERE f.family_id = $1
+        `, [family_id]);
+
+        if (familyRes.rows.length === 0)
+            return res.status(404).json({ error: 'Family not found' });
+
+        const members = await pool.query(`
+            SELECT s.student_id, s.admission_no, s.first_name, s.last_name, c.class_name
+            FROM students s
+            LEFT JOIN classes c ON c.class_id = s.class_id
+            WHERE s.family_id = $1 AND s.status = 'Active'
+            ORDER BY s.first_name
+        `, [family_id]);
+
+        const payments = await pool.query(`
+            SELECT * FROM family_opb_payments
+            WHERE family_id = $1
+            ORDER BY payment_date DESC, created_at DESC
+        `, [family_id]);
+
+        res.json({
+            ...familyRes.rows[0],
+            members: members.rows,
+            payments: payments.rows
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT /students/opb/families/:family_id
+// Set or update opening balance for a family
+router.put('/opb/families/:family_id', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { family_id } = req.params;
+        const { opening_balance, opb_notes } = req.body;
+
+        if (opening_balance === undefined || isNaN(parseFloat(opening_balance)))
+            return res.status(400).json({ error: 'opening_balance is required and must be a number' });
+
+        const bal = parseFloat(opening_balance);
+        if (bal < 0) return res.status(400).json({ error: 'opening_balance cannot be negative' });
+
+        await client.query('BEGIN');
+
+        // Upsert family record
+        await client.query(`
+            INSERT INTO families (family_id, opening_balance, opb_notes, family_fee)
+            VALUES ($1, $2, $3, 0)
+            ON CONFLICT (family_id) DO UPDATE
+                SET opening_balance = $2,
+                    opb_notes = COALESCE($3, families.opb_notes)
+        `, [family_id, bal, opb_notes || null]);
+
+        const updated = await client.query(`
+            SELECT f.*,
+                GREATEST(f.opening_balance - f.opening_balance_paid, 0) AS opb_remaining
+            FROM families f WHERE f.family_id = $1
+        `, [family_id]);
+
+        await client.query('COMMIT');
+        res.json(updated.rows[0]);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    } finally { client.release(); }
+});
+
+// POST /students/opb/families/:family_id/payment
+// Record a payment towards opening balance
+router.post('/opb/families/:family_id/payment', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { family_id } = req.params;
+        const { amount, payment_date, payment_method, received_by, reference_no, notes } = req.body;
+
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)
+            return res.status(400).json({ error: 'amount is required and must be > 0' });
+
+        await client.query('BEGIN');
+
+        // Get current OPB state
+        const familyRes = await client.query(
+            `SELECT opening_balance, opening_balance_paid FROM families WHERE family_id = $1`,
+            [family_id]
+        );
+        if (familyRes.rows.length === 0)
+            return res.status(404).json({ error: 'Family not found' });
+
+        const { opening_balance, opening_balance_paid } = familyRes.rows[0];
+        const remaining = parseFloat(opening_balance) - parseFloat(opening_balance_paid);
+        const payAmt = Math.min(parseFloat(amount), remaining); // can't pay more than remaining
+
+        if (payAmt <= 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Opening balance is already fully paid' });
+        }
+
+        // Record payment in ledger
+        const payment = await client.query(`
+            INSERT INTO family_opb_payments
+                (family_id, amount, payment_date, payment_method, received_by, reference_no, notes)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+        `, [family_id, payAmt, payment_date || new Date().toISOString().split('T')[0],
+            payment_method || 'cash', received_by || null, reference_no || null, notes || null]);
+
+        // Update families.opening_balance_paid
+        await client.query(`
+            UPDATE families
+            SET opening_balance_paid = opening_balance_paid + $1
+            WHERE family_id = $2
+        `, [payAmt, family_id]);
+
+        const updatedFamily = await client.query(`
+            SELECT f.*,
+                GREATEST(f.opening_balance - f.opening_balance_paid, 0) AS opb_remaining
+            FROM families f WHERE f.family_id = $1
+        `, [family_id]);
+
+        await client.query('COMMIT');
+        res.json({
+            payment: payment.rows[0],
+            family: updatedFamily.rows[0]
+        });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    } finally { client.release(); }
+});
+
+// DELETE /students/opb/families/:family_id/payment/:payment_id
+// Delete an OPB payment entry (reverse payment)
+router.delete('/opb/families/:family_id/payment/:payment_id', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { family_id, payment_id } = req.params;
+
+        await client.query('BEGIN');
+
+        const pmtRes = await client.query(
+            `SELECT amount FROM family_opb_payments WHERE payment_id = $1 AND family_id = $2`,
+            [payment_id, family_id]
+        );
+        if (pmtRes.rows.length === 0)
+            return res.status(404).json({ error: 'Payment not found' });
+
+        const amt = parseFloat(pmtRes.rows[0].amount);
+
+        await client.query(`DELETE FROM family_opb_payments WHERE payment_id = $1`, [payment_id]);
+        await client.query(`
+            UPDATE families
+            SET opening_balance_paid = GREATEST(opening_balance_paid - $1, 0)
+            WHERE family_id = $2
+        `, [amt, family_id]);
+
+        await client.query('COMMIT');
+        res.json({ message: 'Payment reversed successfully' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    } finally { client.release(); }
+});
+
+module.exports = router;

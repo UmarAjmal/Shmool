@@ -1,0 +1,984 @@
+'use client';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const API = 'http://localhost:5000';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+interface SlipRow {
+    slip_id: number;
+    student_id: number;
+    first_name: string; last_name: string;
+    admission_no: string;
+    father_name: string | null;
+    father_phone: string | null;
+    class_name: string;
+    family_id: string | null;
+    is_family_slip: boolean;
+    total_amount: number;
+    paid_amount: number;
+    status: 'paid' | 'partial' | 'unpaid';
+    due_date: string | null;
+    issue_date: string | null;
+    month: number;
+    year: number;
+    line_items: { item_id: number; head_name: string; amount: number; note?: string }[];
+    family_members?: { student_id: number; first_name: string; last_name: string; class_name: string; admission_no: string }[];
+}
+interface Stats {
+    total_students: number; total_amount: number; paid_amount: number;
+    paid_count: number; unpaid_count: number; partial_count: number;
+}
+interface Payment {
+    payment_id: number; amount_paid: number; payment_date: string;
+    payment_method: string; received_by: string; reference_no: string; notes: string;
+}
+interface SchoolInfo {
+    school_name: string; school_address: string;
+    phone_number: string; school_phone2: string; school_phone3: string; school_logo_url: string;
+}
+
+function fmt(n: number) { return `PKR ${Number(n || 0).toLocaleString('en-PK')}`; }
+function fmtDate(d: string | null) {
+    if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const map: Record<string, { bg: string; label: string }> = {
+        paid: { bg: '#198754', label: 'Paid' },
+        partial: { bg: '#fd7e14', label: 'Partial' },
+        unpaid: { bg: '#dc3545', label: 'Unpaid' },
+    };
+    const s = map[status] || { bg: '#6c757d', label: status };
+    return <span className="badge rounded-pill" style={{ backgroundColor: s.bg, fontSize: '0.7rem' }}>{s.label}</span>;
+}
+
+export default function CollectFeePage() {
+    // Filters
+    const [classes, setClasses] = useState<{ class_id: number; class_name: string }[]>([]);
+    const { hasPermission } = useAuth();
+    const [selectedClass, setSelectedClass] = useState('');
+    const [year, setYear] = useState(new Date().getFullYear().toString());
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [search, setSearch] = useState('');
+
+    // Data
+    const [slips, setSlips] = useState<SlipRow[]>([]);
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+    const [loaded, setLoaded] = useState(false);
+
+    // Payment Modal
+    const [payModal, setPayModal] = useState(false);
+    const [activeSlip, setActiveSlip] = useState<SlipRow | null>(null);
+    const [slipPayments, setSlipPayments] = useState<Payment[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [deletingPaymentId, setDeletingPaymentId] = useState<number | null>(null);
+
+    // Slip Picker Modal (when a student has multiple months)
+    const [slipPickerGroup, setSlipPickerGroup] = useState<{ first_name: string; last_name: string; slips: SlipRow[] } | null>(null);
+
+    const [payAmount, setPayAmount] = useState('');
+    const [payMethod, setPayMethod] = useState('cash');
+    const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
+    const [receivedBy, setReceivedBy] = useState('');
+    const [refNo, setRefNo] = useState('');
+    const [notes, setNotes] = useState('');
+    const [paying, setPaying] = useState(false);
+    const [payMsg, setPayMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+    const [school, setSchool] = useState<SchoolInfo>({ school_name: '', school_address: '', phone_number: '', school_phone2: '', school_phone3: '', school_logo_url: '' });
+
+    useEffect(() => {
+        fetch(`${API}/academic`).then(r => r.json()).then(setClasses).catch(() => {});
+        // School info lives in school_settings table (via /settings), NOT system_settings
+        fetch(`${API}/settings`).then(r => r.json()).then((data: any) => {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                setSchool({
+                    school_name:    data.school_name    || '',
+                    school_address: data.address        || '',
+                    phone_number:   data.contact_number || '',
+                    school_phone2:  '',
+                    school_phone3:  '',
+                    // logo_url is a relative path like /uploads/school_logo.png — prefix API host
+                    school_logo_url: data.logo_url ? `${API}${data.logo_url}` : ''
+                });
+            }
+        }).catch(() => {});
+    }, []);
+
+    const loadSlips = async () => {
+        if (!year) {
+            setMessage({ type: 'danger', text: 'Please enter a Year.' });
+            return;
+        }
+        setLoading(true); setMessage(null); setSlips([]); setStats(null); setLoaded(false);
+        try {
+            const params = new URLSearchParams({ year });
+            if (selectedClass) params.append('class_id', selectedClass);
+            const r = await fetch(`${API}/fee-slips?${params.toString()}`);
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error);
+            setSlips(data.slips || []);
+            setStats(data.stats || null);
+            setLoaded(true);
+        } catch (e: any) { setMessage({ type: 'danger', text: e.message }); }
+        finally { setLoading(false); }
+    };
+
+    // Silent reload — re-fetches all slips in the background without clearing UI or spinner.
+    // Called after payment/reversal so waterfall-updated old slips also reflect their new state.
+    const silentReload = async () => {
+        if (!year) return;
+        try {
+            const params = new URLSearchParams({ year });
+            if (selectedClass) params.append('class_id', selectedClass);
+            const r = await fetch(`${API}/fee-slips?${params.toString()}`);
+            const data = await r.json();
+            if (r.ok) {
+                setSlips(data.slips || []);
+                setStats(data.stats || null);
+            }
+        } catch {}
+    };
+
+    const openPayModal = async (slip: SlipRow) => {
+        setActiveSlip(slip);
+        const balance = parseFloat(slip.total_amount as any) - parseFloat(slip.paid_amount as any);
+        setPayAmount(balance > 0 ? balance.toString() : '');
+        setPayMethod('cash'); setPayDate(new Date().toISOString().split('T')[0]);
+        setReceivedBy(''); setRefNo(''); setNotes('');
+        setPayMsg(null); setPayModal(true);
+        setLoadingHistory(true); setSlipPayments([]);
+        try {
+            const r = await fetch(`${API}/fee-slips/${slip.slip_id}`);
+            const d = await r.json(); setSlipPayments(d.payments || []);
+        } catch { setSlipPayments([]); }
+        finally { setLoadingHistory(false); }
+    };
+
+    const openReceiptWindow = (
+        slip: SlipRow,
+        receivingAmt: number,
+        submissionDate: string,
+        prevPaid: number
+    ) => {
+        const total = parseFloat(slip.total_amount as any);
+        const balance = Math.max(0, total - prevPaid - receivingAmt);
+        const fmtR = (n: number) => `${Number(n || 0).toLocaleString('en-PK')}/-`;
+        const fmtD = (d: string | null) => { if (!d) return '\u2014'; try { return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return d; } };
+        const zeroPad = (n: number) => String(n).padStart(8, '0');
+
+        const members: any[] = (slip.family_members && slip.family_members.length > 0)
+            ? slip.family_members
+            : [{ first_name: slip.first_name, last_name: slip.last_name, father_name: '', class_name: slip.class_name }];
+        const rows9 = [...members];
+        while (rows9.length < 9) rows9.push({ first_name: '', last_name: '', father_name: '', class_name: '' });
+
+        let feeBody = (slip.line_items || []).map((li, i) =>
+            `<tr><td>${i + 1}</td><td>${li.head_name.replace('Family Monthly Fee', 'Monthly Fee')}${li.note ? ` (${li.note})` : ''}</td><td>${fmtR(parseFloat(li.amount as any))}</td></tr>`
+        ).join('');
+        let sr = (slip.line_items || []).length + 1;
+        if (prevPaid > 0) feeBody += `<tr><td>${sr++}</td><td>Previous Payment (Credit)</td><td>\u2212 ${fmtR(prevPaid)}</td></tr>`;
+        feeBody += `<tr><td>${sr++}</td><td><strong>Total Payable Amount</strong></td><td><strong>${fmtR(total)}</strong></td></tr>`;
+        feeBody += `<tr class="thick"><td>${sr++}</td><td><strong>Receiving Amount</strong></td><td><strong>${fmtR(receivingAmt)}</strong></td></tr>`;
+        feeBody += `<tr class="thick"><td>${sr++}</td><td><strong>Balance Amount</strong></td><td><strong>${fmtR(balance)}</strong></td></tr>`;
+
+        const studentBody = rows9.map(m =>
+            `<tr><td>${m.first_name || ''} ${m.last_name || ''}</td><td>${m.father_name || ''}</td><td>${m.class_name || ''}</td></tr>`
+        ).join('');
+
+        const phones = [school.phone_number, school.school_phone2, school.school_phone3].filter(Boolean).join(' ; ');
+        const logoHtml = school.school_logo_url
+            ? `<img src="${school.school_logo_url}" style="width:16mm;height:16mm;object-fit:contain;margin-right:3mm;flex-shrink:0;" />`
+            : `<div style="width:16mm;height:16mm;background-color:#007bff;margin-right:3mm;flex-shrink:0;"></div>`;
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fee Receipt</title>
+  <style>
+    @page { size: 80mm 150mm; margin: 0; }
+    html, body { margin: 0; padding: 0; width: 80mm; height: 150mm; box-sizing: border-box; font-family: Arial, sans-serif; }
+    .voucher { width: 80mm; height: 150mm; padding: 5mm; border: 1px solid #000; border-radius: 2mm; display: flex; flex-direction: column; box-sizing: border-box; }
+    .header { display: flex; align-items: center; margin-bottom: 2mm; }
+    .school-name { font-size: 13pt; font-weight: bold; line-height: 1.2; text-transform: uppercase; }
+    .address-block { text-align: center; font-size: 9pt; margin-bottom: 1mm; line-height: 1.3; }
+    .address-block p { margin: 0; }
+    hr { border: 0; border-top: 1px solid #000; margin: 1mm 0; }
+    .voucher-title { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin: 0.5mm 0; }
+    .info { font-size: 9pt; margin-bottom: 1mm; line-height: 1.4; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
+    .info-row2 { margin-bottom: 0.5mm; }
+    .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 0.5mm; }
+    table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 1mm; }
+    th, td { border: 1px solid #000; padding: 0.5mm 1mm; text-align: center; }
+    th { background-color: #f0f0f0; font-weight: bold; }
+    .details tbody td:nth-child(2) { text-align: left; }
+    tr.thick td { border: 2px solid #000; }
+    .students tbody tr { height: 5mm; }
+    .students tbody td:nth-child(1), .students tbody td:nth-child(2) { text-align: left; }
+    .spacer { flex-grow: 1; }
+    .thank-you { text-align: center; font-size: 10pt; font-weight: bold; margin-bottom: 1mm; }
+    .print-btn { display: block; width: 100%; margin-top: 4mm; padding: 2mm; font-size: 10pt; font-weight: bold; background: #007bff; color: #fff; border: none; border-radius: 2mm; cursor: pointer; }
+    @media print { .print-btn { display: none; } @page { size: 80mm 150mm; margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="voucher">
+    <div class="header">${logoHtml}<div class="school-name">${school.school_name || 'SCHOOL NAME'}</div></div>
+    <div class="address-block"><p>${school.school_address || ''}</p><p>${phones}</p></div>
+    <hr><div class="voucher-title">Fee Receipt</div><hr>
+    <div class="info">
+      <div class="info-row">
+        <div>Voucher No: <strong><u>${zeroPad(slip.slip_id)}</u></strong></div>
+        <div>Family ID: <strong><u>${slip.family_id || '\u2014'}</u></strong></div>
+      </div>
+      <div class="info-row2">Fee Submission Date: <strong><u>${fmtD(submissionDate)}</u></strong></div>
+    </div>
+    <div class="section-label">Students Details</div>
+    <table class="students"><thead><tr><th>Student Name</th><th>Father Name</th><th>Class</th></tr></thead><tbody>${studentBody}</tbody></table>
+    <div class="section-label">Fee Details</div>
+    <table class="details"><thead><tr><th>Sr.#</th><th>Fee Description</th><th>Amount</th></tr></thead><tbody>${feeBody}</tbody></table>
+    <div class="thank-you">Thank You</div>
+    <div class="spacer"></div>
+  </div>
+  <button class="print-btn" onclick="window.print()">&#128438; Print Receipt</button>
+  <script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`;
+
+        const w = window.open('', '_blank', 'width=420,height=680,toolbar=0,menubar=0,scrollbars=1');
+        if (w) { w.document.write(html); w.document.close(); }
+    };
+
+    const deletePayment = async (paymentId: number) => {
+        if (!window.confirm('Reverse this payment? The collection will be removed and slip balance recalculated.')) return;
+        setDeletingPaymentId(paymentId);
+        try {
+            const r = await fetch(`${API}/fee-slips/payments/${paymentId}`, { method: 'DELETE' });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error);
+            // Refresh payments list
+            const rh = await fetch(`${API}/fee-slips/${activeSlip!.slip_id}`);
+            const dh = await rh.json();
+            setSlipPayments(dh.payments || []);
+            // Update slip in list + active slip
+            setSlips(prev => prev.map(s => s.slip_id === activeSlip!.slip_id
+                ? { ...s, paid_amount: d.slip.paid_amount, status: d.slip.status } : s));
+            setActiveSlip(prev => prev ? { ...prev, paid_amount: d.slip.paid_amount, status: d.slip.status } : null);
+            // Re-fetch all slips silently — OPB reversal may have updated older slips in DB
+            silentReload();
+        } catch (e: any) { alert('Error: ' + e.message); }
+        finally { setDeletingPaymentId(null); }
+    };
+
+    const handlePay = async (shouldPrint = false) => {        if (!payAmount || parseFloat(payAmount) <= 0) { setPayMsg({ type: 'danger', text: 'Enter a valid amount.' }); return; }
+        // Snapshot before state changes (needed for receipt after async updates)
+        const prevPaidSnap = parseFloat(activeSlip!.paid_amount as any);
+        const receivingSnap = parseFloat(payAmount);
+        const slipSnap = { ...activeSlip! };
+        const payDateSnap = payDate;
+        setPaying(true); setPayMsg(null);
+        try {
+            const r = await fetch(`${API}/fee-slips/${activeSlip!.slip_id}/pay`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount_paid: receivingSnap, payment_method: payMethod, payment_date: payDateSnap, received_by: receivedBy, reference_no: refNo, notes })
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error);
+            setPayMsg({ type: 'success', text: 'Payment recorded successfully!' });
+            // Refresh history
+            const rh = await fetch(`${API}/fee-slips/${activeSlip!.slip_id}`);
+            const dh = await rh.json(); setSlipPayments(dh.payments || []);
+            // Update slip in list
+            setSlips(prev => prev.map(s => s.slip_id === activeSlip!.slip_id ? { ...s, paid_amount: d.slip.paid_amount, status: d.slip.status } : s));
+            setStats(prev => prev ? {
+                ...prev,
+                paid_amount: (prev.paid_amount || 0) + receivingSnap,
+                paid_count: d.slip.status === 'paid' ? (prev.paid_count + 1) : prev.paid_count,
+                unpaid_count: d.slip.status !== 'unpaid' && activeSlip?.status === 'unpaid' ? prev.unpaid_count - 1 : prev.unpaid_count,
+                partial_count: d.slip.status === 'partial' ? (activeSlip?.status === 'unpaid' ? prev.partial_count + 1 : prev.partial_count) :
+                               d.slip.status === 'paid' && activeSlip?.status === 'partial' ? prev.partial_count - 1 : prev.partial_count
+            } : null);
+            setActiveSlip(prev => prev ? { ...prev, paid_amount: d.slip.paid_amount, status: d.slip.status } : null);
+            setPayAmount('');
+            // Open receipt in new window after successful payment
+            if (shouldPrint) openReceiptWindow(slipSnap, receivingSnap, payDateSnap, prevPaidSnap);
+            // Re-fetch all slips silently — waterfall may have updated older slips in DB
+            silentReload();
+        } catch (e: any) { setPayMsg({ type: 'danger', text: e.message }); }
+        finally { setPaying(false); }
+    };
+
+    // Filtered slips
+    const filtered = slips.filter(s => {
+        if (statusFilter !== 'all' && s.status !== statusFilter) return false;
+        if (search.trim()) {
+            const q = search.toLowerCase().trim();
+            const name    = `${s.first_name} ${s.last_name}`.toLowerCase();
+            const admno   = (s.admission_no || '').toLowerCase();
+            const famId   = (s.family_id || '').toLowerCase();
+            const fName   = (s.father_name || '').toLowerCase();
+            const fPhone  = (s.father_phone || '').toLowerCase();
+            const members = (s.family_members || []).map(m => `${m.first_name} ${m.last_name}`.toLowerCase()).join(' ');
+            return name.includes(q) || admno.includes(q) || famId.includes(q) || fName.includes(q) || fPhone.includes(q) || members.includes(q);
+        }
+        return true;
+    });
+
+    // Group filtered slips by student/family — one row per student
+    // NOTE: Each slip already embeds previous months' unpaid balance as "Previous Balance" line item.
+    //       So we NEVER sum across slips — we only look at the LATEST slip per student.
+    const groupedFiltered = (() => {
+        const map = new Map<string, {
+            key: string; student_id: number; first_name: string; last_name: string;
+            admission_no: string; father_name: string | null; father_phone: string | null;
+            class_name: string; family_id: string | null; is_family_slip: boolean;
+            family_members?: any[];
+            latest_slip: SlipRow;      // the most recent slip (highest year then month)
+            latest_unpaid: SlipRow;    // most recent unpaid/partial slip — collect THIS one
+            latest_paid: SlipRow | null;  // most recent slip with paid_amount > 0 (for Reverse)
+            has_payments: boolean;     // any slip in this group has been paid at least partially
+            balance: number;           // balance from latest_unpaid only
+            slips: SlipRow[]; status: 'paid' | 'partial' | 'unpaid';
+        }>();
+        filtered.forEach(slip => {
+            const key = (slip.is_family_slip && slip.family_id) ? `fam_${slip.family_id}` : `stu_${slip.student_id}`;
+            if (!map.has(key)) {
+                map.set(key, {
+                    key, student_id: slip.student_id,
+                    first_name: slip.first_name, last_name: slip.last_name,
+                    admission_no: slip.admission_no, father_name: slip.father_name,
+                    father_phone: slip.father_phone, class_name: slip.class_name,
+                    family_id: slip.family_id, is_family_slip: slip.is_family_slip,
+                    family_members: slip.family_members,
+                    latest_slip: slip, latest_unpaid: slip,
+                    latest_paid: null, has_payments: false,
+                    balance: 0, slips: [], status: 'paid',
+                });
+            }
+            const g = map.get(key)!;
+            // Track latest slip (highest year, then highest month)
+            const isNewer = slip.year > g.latest_slip.year ||
+                (slip.year === g.latest_slip.year && slip.month > g.latest_slip.month);
+            if (isNewer) g.latest_slip = slip;
+            // Track latest slip with payments (paid_amount > 0)
+            if (parseFloat(slip.paid_amount as any) > 0) {
+                g.has_payments = true;
+                if (!g.latest_paid ||
+                    slip.year > g.latest_paid.year ||
+                    (slip.year === g.latest_paid.year && slip.month > g.latest_paid.month)) {
+                    g.latest_paid = slip;
+                }
+            }
+            g.slips.push(slip);
+        });
+        // After collecting all slips, find the latest unpaid/partial per group
+        map.forEach(g => {
+            // slips ordered by month ASC from server; pick last unpaid/partial
+            const unpaid = g.slips
+                .filter(s => s.status !== 'paid')
+                .sort((a, b) => (b.year - a.year) || (b.month - a.month));
+            g.latest_unpaid = unpaid[0] || g.latest_slip;
+            const tot = parseFloat(g.latest_unpaid.total_amount as any);
+            const paid = parseFloat(g.latest_unpaid.paid_amount as any);
+            g.balance = Math.max(0, tot - paid);
+            g.status = g.balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
+        });
+        return Array.from(map.values());
+    })();
+
+    const totalDue = stats ? stats.total_amount - stats.paid_amount : 0;
+    const collectionPct = stats && stats.total_amount > 0 ? Math.round((stats.paid_amount / stats.total_amount) * 100) : 0;
+
+    return (
+        <div className="page-wrap" style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
+            {/* Page Header */}
+            <div className="d-flex align-items-center gap-3 mb-4">
+                <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'var(--primary-teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-cash-coin" style={{ fontSize: 22, color: '#fff' }}></i>
+                </div>
+                <div>
+                    <h4 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>Collect Fee</h4>
+                    <div className="text-muted small">Record fee payments against monthly vouchers</div>
+                </div>
+            </div>
+
+            {message && (
+                <div className={`alert alert-${message.type} alert-dismissible d-flex align-items-center gap-2 mb-3`} role="alert">
+                    <i className={`bi ${message.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}`}></i>
+                    {message.text}
+                    <button className="btn-close ms-auto" onClick={() => setMessage(null)} />
+                </div>
+            )}
+
+            {/* ── Filter Card ── */}
+            <div className="card border-0 shadow-sm mb-4">
+                <div className="card-header bg-white border-bottom py-3" style={{ borderLeft: '4px solid var(--primary-teal)' }}>
+                    <h6 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
+                        <i className="bi bi-funnel me-2"></i>Search Vouchers
+                    </h6>
+                </div>
+                <div className="card-body p-4">
+                    {/* Row 1: Search bar — always visible */}
+                    <div className="mb-3">
+                        <div className="input-group">
+                            <span className="input-group-text bg-white">
+                                <i className="bi bi-search text-muted"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                placeholder="Search student name, father name, phone, family ID, admission no..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                style={{ fontSize: '0.875rem' }}
+                            />
+                            {search && (
+                                <button className="btn btn-outline-secondary" onClick={() => setSearch('')} title="Clear">
+                                    <i className="bi bi-x-lg"></i>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Row 2: Class (optional), Year, Status, Load button */}
+                    <div className="row g-3 align-items-end">
+                        <div className="col-md-3">
+                            <label className="form-label fw-bold small text-muted">
+                                <i className="bi bi-mortarboard me-1"></i>Class
+                                <span className="text-muted fw-normal ms-1" style={{ fontSize: '0.7rem' }}>(optional)</span>
+                            </label>
+                            <select className="form-select" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
+                                <option value="">All Classes</option>
+                                {classes.map(c => <option key={c.class_id} value={c.class_id}>{c.class_name}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-md-2">
+                            <label className="form-label fw-bold small text-muted">
+                                <i className="bi bi-calendar3 me-1"></i>Year <span className="text-danger">*</span>
+                            </label>
+                            <input type="number" className="form-control" value={year} onChange={e => setYear(e.target.value)} />
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label fw-bold small text-muted">
+                                <i className="bi bi-circle-half me-1"></i>Status
+                            </label>
+                            <select className="form-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                                <option value="all">All Statuses</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="partial">Partial</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                        </div>
+                        <div className="col-md-4">
+                            <button className="btn w-100 fw-bold" onClick={loadSlips} disabled={loading}
+                                style={{ backgroundColor: 'var(--primary-teal)', color: '#fff', borderRadius: 8, height: 38 }}>
+                                {loading ? <span className="spinner-border spinner-border-sm me-1" /> : <i className="bi bi-search me-1"></i>}
+                                {loading ? 'Loading...' : 'Load Slips'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Result count hint when loaded */}
+                    {loaded && (
+                        <div className="mt-2" style={{ fontSize: '0.8rem', color: '#888' }}>
+                            <i className="bi bi-info-circle me-1"></i>
+                            {filtered.length} voucher{filtered.length !== 1 ? 's' : ''} shown
+                            {search ? ` matching "${search}"` : ''}
+                            {selectedClass ? ` · ${classes.find(c => c.class_id.toString() === selectedClass)?.class_name || ''}` : ' · All Classes'}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Stats Cards ── */}
+            {stats && loaded && (
+                <div className="row g-3 mb-4">
+                    {[
+                        { label: 'Total Vouchers', value: slips.length, icon: 'bi-receipt', color: 'var(--primary-teal)', sub: `All months · ${year}` },
+                        { label: 'Total Amount', value: fmt(stats.total_amount), icon: 'bi-currency-exchange', color: 'var(--primary-dark)', sub: `${stats.total_students} student(s)` },
+                        { label: 'Collected', value: fmt(stats.paid_amount), icon: 'bi-check-circle-fill', color: '#198754', sub: `${collectionPct}% of total` },
+                        { label: 'Pending', value: fmt(totalDue), icon: 'bi-hourglass-split', color: '#dc3545', sub: `${stats.unpaid_count} unpaid · ${stats.partial_count} partial` },
+                    ].map((s, i) => (
+                        <div className="col-md-3" key={i}>
+                            <div className="card border-0 shadow-sm h-100" style={{ borderLeft: `4px solid ${s.color}` }}>
+                                <div className="card-body py-3 px-3">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div style={{ width: 42, height: 42, borderRadius: 10, backgroundColor: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <i className={`bi ${s.icon}`} style={{ fontSize: 20, color: s.color }}></i>
+                                        </div>
+                                        <div>
+                                            <div className="text-muted small">{s.label}</div>
+                                            <div className="fw-bold fs-6" style={{ color: 'var(--primary-dark)' }}>{s.value}</div>
+                                            <div style={{ fontSize: '0.72rem', color: '#888' }}>{s.sub}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {/* Progress bar row */}
+                    <div className="col-12">
+                        <div className="card border-0 shadow-sm">
+                            <div className="card-body py-2 px-4">
+                                <div className="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Collection Progress</span>
+                                    <span className="fw-bold" style={{ color: 'var(--primary-teal)' }}>{collectionPct}%</span>
+                                </div>
+                                <div className="progress" style={{ height: 8, borderRadius: 8 }}>
+                                    <div className="progress-bar" style={{ width: `${collectionPct}%`, backgroundColor: 'var(--primary-teal)', borderRadius: 8 }} />
+                                </div>
+                                <div className="d-flex gap-3 mt-2" style={{ fontSize: '0.72rem', color: '#888' }}>
+                                    <span><span className="badge bg-success me-1">●</span>{stats.paid_count} Paid</span>
+                                    <span><span className="badge me-1" style={{ backgroundColor: '#fd7e14' }}>●</span>{stats.partial_count} Partial</span>
+                                    <span><span className="badge bg-danger me-1">●</span>{stats.unpaid_count} Unpaid</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Slips Table ── */}
+            {loaded && (
+                <div className="card border-0 shadow-sm">
+                    <div className="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                        style={{ borderLeft: '4px solid var(--accent-orange)' }}>
+                        <h6 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
+                            <i className="bi bi-list-ul me-2"></i>Fee Vouchers
+                            <span className="badge rounded-pill ms-2" style={{ backgroundColor: 'var(--primary-teal)', fontSize: '0.7rem' }}>
+                                {groupedFiltered.length}
+                            </span>
+                            {groupedFiltered.length !== filtered.length && (
+                                <span className="text-muted ms-2" style={{ fontSize: '0.7rem', fontWeight: 400 }}>
+                                    ({filtered.length} slips)
+                                </span>
+                            )}
+                        </h6>
+                        <div style={{ width: 240 }}>
+                            <div className="input-group input-group-sm">
+                                <span className="input-group-text bg-white"><i className="bi bi-search text-muted"></i></span>
+                                <input type="text" className="form-control border-start-0"
+                                    placeholder="Search by name or adm no..."
+                                    value={search} onChange={e => setSearch(e.target.value)} />
+                                {search && <button className="btn btn-outline-secondary btn-sm" onClick={() => setSearch('')}><i className="bi bi-x"></i></button>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="card-body p-0">
+                        {groupedFiltered.length === 0 ? (
+                            <div className="text-center py-5 text-muted">
+                                <i className="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No vouchers found{search ? ` for "${search}"` : ''}.
+                            </div>
+                        ) : (
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle mb-0" style={{ fontSize: '0.875rem' }}>
+                                    <thead style={{ backgroundColor: '#f0f9f9', color: 'var(--primary-dark)' }}>
+                                        <tr>
+                                            <th className="py-3 px-3" style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>#</th>
+                                            <th className="py-3 px-2" style={{ fontWeight: 600 }}>Student / Family</th>
+                                            <th className="py-3 px-2" style={{ fontWeight: 600 }}>Class</th>
+                                            <th className="py-3 px-2 text-center" style={{ fontWeight: 600 }}>Slips</th>
+                                            <th className="py-3 px-2 text-end" style={{ fontWeight: 600 }}>Per Month</th>
+                                            <th className="py-3 px-2 text-end" style={{ fontWeight: 600 }}>Paid</th>
+                                            <th className="py-3 px-2 text-end" style={{ fontWeight: 600 }}>Pending</th>
+                                            <th className="py-3 px-2 text-center" style={{ fontWeight: 600 }}>Status</th>
+                                            <th className="py-3 px-2 text-center" style={{ fontWeight: 600 }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {groupedFiltered.map((g, idx) => {
+                                            const isFam = g.is_family_slip;
+                                            const members = g.family_members || [];
+                                            return (
+                                                <tr key={g.key} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                                                    <td className="px-3 text-muted" style={{ fontSize: '0.78rem' }}>{idx + 1}</td>
+                                                    <td className="px-2">
+                                                        <div className="d-flex align-items-start gap-2">
+                                                            <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                backgroundColor: isFam ? '#e8f5f5' : '#fff3ea' }}>
+                                                                <i className={`bi ${isFam ? 'bi-people-fill' : 'bi-person-fill'}`}
+                                                                   style={{ color: isFam ? 'var(--primary-teal)' : 'var(--accent-orange)', fontSize: 16 }}></i>
+                                                            </div>
+                                                            <div>
+                                                                <div className="fw-bold" style={{ color: 'var(--primary-dark)', lineHeight: 1.3 }}>
+                                                                    {g.first_name} {g.last_name}
+                                                                    {isFam && <span className="badge ms-1 rounded-pill" style={{ backgroundColor: 'var(--primary-teal)', fontSize: '0.65rem' }}>Family</span>}
+                                                                </div>
+                                                                <div style={{ fontSize: '0.72rem', color: '#888' }}>Adm: {g.admission_no}</div>
+                                                                {g.father_name && (
+                                                                    <div style={{ fontSize: '0.72rem', color: '#666' }}>
+                                                                        <i className="bi bi-person-lines-fill me-1" style={{ color: 'var(--primary-teal)', opacity: 0.7 }}></i>
+                                                                        {g.father_name}{g.father_phone ? <span className="ms-2 text-muted">{g.father_phone}</span> : null}
+                                                                    </div>
+                                                                )}
+                                                                {isFam && members.length > 0 && (
+                                                                    <div className="d-flex flex-wrap gap-1 mt-1">
+                                                                        {members.map((m, mi) => (
+                                                                            <span key={mi} style={{ fontSize: '0.7rem', backgroundColor: '#f0f9f9', color: 'var(--primary-teal)', border: '1px solid #c5e8e8', borderRadius: 4, padding: '1px 5px' }}>
+                                                                                {m.first_name} {m.last_name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2">
+                                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem' }}>{g.class_name}</span>
+                                                    </td>
+                                                    <td className="px-2 text-center">
+                                                        {g.slips.length === 1 ? (
+                                                            <span className="badge rounded-pill" style={{ backgroundColor: 'var(--primary-teal)', fontSize: '0.7rem', opacity: 0.9 }}>
+                                                                {MONTHS[(g.slips[0].month ?? 1) - 1]?.slice(0, 3)} {g.slips[0].year}
+                                                            </span>
+                                                        ) : (
+                                                            <button className="btn btn-sm" style={{ fontSize: '0.7rem', backgroundColor: '#e8f5f5', color: 'var(--primary-teal)', border: '1px solid #c5e8e8', borderRadius: 6 }}
+                                                                onClick={() => setSlipPickerGroup({ first_name: g.first_name, last_name: g.last_name, slips: g.slips })}>
+                                                                <i className="bi bi-calendar3 me-1"></i>{g.slips.length} months
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-2 text-end" style={{ color: 'var(--primary-dark)' }}>
+                                                        <div className="fw-bold">{fmt(parseFloat(g.latest_unpaid.total_amount as any))}</div>
+                                                        <div style={{ fontSize: '0.68rem', color: '#888' }}>
+                                                            {MONTHS[(g.latest_unpaid.month ?? 1) - 1]?.slice(0, 3)} {g.latest_unpaid.year}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 text-end fw-bold" style={{ color: '#198754' }}>
+                                                        {parseFloat(g.latest_unpaid.paid_amount as any) > 0
+                                                            ? fmt(parseFloat(g.latest_unpaid.paid_amount as any))
+                                                            : <span className="text-muted">—</span>}
+                                                    </td>
+                                                    <td className="px-2 text-end fw-bold" style={{ color: g.balance > 0 ? '#dc3545' : '#198754' }}>
+                                                        {g.balance > 0 ? fmt(g.balance) : <span className="text-success">✓ Clear</span>}
+                                                    </td>
+                                                    <td className="px-2 text-center">
+                                                        <StatusBadge status={g.status} />
+                                                    </td>
+                                                    <td className="px-2 text-center">
+                        {g.status === 'paid' ? (
+                                                            <button className="btn btn-sm" style={{ fontSize: '0.72rem', backgroundColor: '#e8f5e9', color: '#198754', border: '1px solid #c3e6cb', borderRadius: 6 }}
+                                                                onClick={() => openPayModal(g.latest_paid || g.latest_slip)}>
+                                                                <i className="bi bi-eye me-1"></i>History
+                                                            </button>
+                                                        ) : (
+                                                            <div className="d-flex gap-1 justify-content-center">
+                                                                <button className="btn btn-sm fw-bold" style={{ fontSize: '0.72rem', backgroundColor: 'var(--accent-orange)', color: '#fff', borderRadius: 6, border: 'none' }}
+                                                                    onClick={() => openPayModal(g.latest_unpaid)}>
+                                                                    <i className="bi bi-cash me-1"></i>Collect
+                                                                </button>
+                                                                {g.has_payments && (
+                                                                    <button className="btn btn-sm" title="Reverse a payment" style={{ fontSize: '0.72rem', backgroundColor: '#fff0f0', color: '#dc3545', border: '1px solid #f5c2c7', borderRadius: 6 }}
+                                                                        onClick={() => openPayModal(g.latest_paid || g.latest_slip)}>
+                                                                        <i className="bi bi-arrow-counterclockwise"></i>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Slip Picker Modal (multi-month student) ── */}
+            {slipPickerGroup && (
+                <>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} onClick={() => setSlipPickerGroup(null)} />
+                    <div className="modal fade show d-block" style={{ zIndex: 1045 }} tabIndex={-1}>
+                        <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 480 }}>
+                            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: 16 }}>
+                                <div className="modal-header border-0 px-4 pt-4 pb-2"
+                                    style={{ background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)', borderRadius: '16px 16px 0 0' }}>
+                                    <div className="text-white">
+                                        <h6 className="mb-1 fw-bold">
+                                            <i className="bi bi-calendar3 me-2"></i>Select Month
+                                        </h6>
+                                        <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>
+                                            {slipPickerGroup.first_name} {slipPickerGroup.last_name} · {slipPickerGroup.slips.length} slips
+                                        </div>
+                                    </div>
+                                    <button className="btn-close btn-close-white ms-auto" onClick={() => setSlipPickerGroup(null)} />
+                                </div>
+                                <div className="modal-body px-4 py-3">
+                                    <p className="text-muted small mb-3">This student has multiple monthly slips. Pick a month to collect or view:</p>
+                                    <div className="d-flex flex-column gap-2">
+                                        {slipPickerGroup.slips.map(slip => {
+                                            const bal = parseFloat(slip.total_amount as any) - parseFloat(slip.paid_amount as any);
+                                            return (
+                                                <button key={slip.slip_id}
+                                                    className="btn text-start d-flex align-items-center justify-content-between"
+                                                    style={{ border: '1.5px solid', borderColor: slip.status === 'paid' ? '#c3e6cb' : slip.status === 'partial' ? '#ffd27a' : '#f5c2c7',
+                                                        borderRadius: 10, backgroundColor: slip.status === 'paid' ? '#f0fff4' : slip.status === 'partial' ? '#fffbf0' : '#fff5f5',
+                                                        padding: '10px 14px' }}
+                                                    onClick={() => { setSlipPickerGroup(null); openPayModal(slip); }}>
+                                                    <div>
+                                                        <div className="fw-bold" style={{ color: 'var(--primary-dark)', fontSize: '0.9rem' }}>
+                                                            {MONTHS[(slip.month ?? 1) - 1]} {slip.year}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.72rem', color: '#888' }}>
+                                                            Total: {fmt(parseFloat(slip.total_amount as any))}
+                                                            {slip.paid_amount > 0 && <span className="ms-2 text-success">Paid: {fmt(parseFloat(slip.paid_amount as any))}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        {bal > 0 && <span className="fw-bold" style={{ color: '#dc3545', fontSize: '0.82rem' }}>{fmt(bal)}</span>}
+                                                        <StatusBadge status={slip.status} />
+                                                        <i className="bi bi-chevron-right text-muted" style={{ fontSize: '0.75rem' }}></i>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="modal-footer border-0 px-4 py-3">
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => setSlipPickerGroup(null)}>
+                                        <i className="bi bi-x me-1"></i>Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* ── Payment Modal ── */}
+            {payModal && activeSlip && (
+                <>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} onClick={() => setPayModal(false)} />
+                    <div className="modal fade show d-block" style={{ zIndex: 1045 }} tabIndex={-1}>
+                        <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                            <div className="modal-content border-0 shadow-lg" style={{ borderRadius: 16 }}>
+                                {/* Modal Header */}
+                                <div className="modal-header border-0 pb-0 px-4 pt-4" style={{ background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)', borderRadius: '16px 16px 0 0' }}>
+                                    <div className="text-white">
+                                        <h5 className="modal-title fw-bold mb-1">
+                                            <i className="bi bi-cash-coin me-2"></i>
+                                            {activeSlip.status === 'paid' ? 'Payment History' : 'Collect Fee Payment'}
+                                        </h5>
+                                        <div style={{ fontSize: '0.82rem', opacity: 0.85 }}>
+                                            {activeSlip.is_family_slip ? (
+                                                <><i className="bi bi-people-fill me-1"></i>Family Voucher · {activeSlip.first_name} {activeSlip.last_name}</>
+                                            ) : (
+                                                <><i className="bi bi-person me-1"></i>{activeSlip.first_name} {activeSlip.last_name} · Adm# {activeSlip.admission_no}</>
+                                            )}
+                                            <span className="ms-3">· {activeSlip.class_name}</span>
+                                        </div>
+                                    </div>
+                                    <button className="btn-close btn-close-white ms-auto" onClick={() => setPayModal(false)} />
+                                </div>
+
+                                <div className="modal-body px-4 py-3">
+                                    {/* Slip summary bar */}
+                                    <div className="row g-2 mb-3">
+                                        {[
+                                            { label: 'Total Amount', value: fmt(parseFloat(activeSlip.total_amount as any)), color: 'var(--primary-dark)' },
+                                            { label: 'Paid So Far', value: fmt(parseFloat(activeSlip.paid_amount as any)), color: '#198754' },
+                                            { label: 'Balance Due', value: fmt(parseFloat(activeSlip.total_amount as any) - parseFloat(activeSlip.paid_amount as any)), color: '#dc3545' },
+                                        ].map((s, i) => (
+                                            <div className="col-4" key={i}>
+                                                <div className="text-center py-2 px-1 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #e9ecef' }}>
+                                                    <div style={{ fontSize: '0.68rem', color: '#888', fontWeight: 600 }}>{s.label}</div>
+                                                    <div className="fw-bold" style={{ fontSize: '0.9rem', color: s.color }}>{s.value}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Family members list */}
+                                    {activeSlip.is_family_slip && (activeSlip.family_members || []).length > 0 && (
+                                        <div className="mb-3 p-2 rounded" style={{ backgroundColor: '#e8f5f5', border: '1px solid #c5e8e8' }}>
+                                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-teal)', marginBottom: 4 }}>
+                                                <i className="bi bi-people-fill me-1"></i>Students Covered ({activeSlip.family_members!.length})
+                                            </div>
+                                            <div className="d-flex flex-wrap gap-1">
+                                                {activeSlip.family_members!.map((m, i) => (
+                                                    <span key={i} style={{ fontSize: '0.72rem', backgroundColor: '#fff', color: 'var(--primary-dark)', border: '1px solid #b8dede', borderRadius: 5, padding: '2px 7px' }}>
+                                                        {m.first_name} {m.last_name} <span style={{ color: '#888' }}>({m.class_name})</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Fee breakdown */}
+                                    {activeSlip.line_items && activeSlip.line_items.length > 0 && (
+                                        <div className="mb-3">
+                                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: 4 }}>Fee Breakdown</div>
+                                            <div className="rounded overflow-hidden" style={{ border: '1px solid #e9ecef' }}>
+                                                {activeSlip.line_items.map((li, i) => (
+                                                    <div key={i} className="d-flex justify-content-between align-items-center px-3 py-1"
+                                                        style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#f8f9fa', fontSize: '0.78rem' }}>
+                                                        <span style={{ color: '#555' }}>{li.head_name}{li.note ? <span className="text-muted ms-1">({li.note})</span> : ''}</span>
+                                                        <span className="fw-bold" style={{ color: 'var(--primary-dark)' }}>{fmt(parseFloat(li.amount as any))}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Payment history — always visible so Delete button is always accessible */}
+                                    <div className="mb-3">
+                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: 4 }}>
+                                            <i className="bi bi-clock-history me-1"></i>Payment History
+                                        </div>
+                                        {loadingHistory ? (
+                                            <div className="text-center py-2"><div className="spinner-border spinner-border-sm text-secondary" /></div>
+                                        ) : slipPayments.length === 0 ? (
+                                            <div className="text-muted small py-2 px-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #e9ecef' }}>
+                                                <i className="bi bi-info-circle me-1"></i>No payments recorded yet for this slip.
+                                            </div>
+                                        ) : (
+                                            <div className="rounded overflow-hidden" style={{ border: '1px solid #e9ecef' }}>
+                                                {slipPayments.map((p, i) => (
+                                                    <div key={p.payment_id} className="d-flex justify-content-between align-items-center px-3 py-2"
+                                                        style={{ backgroundColor: i % 2 === 0 ? '#f0fff7' : '#f8f9fa', fontSize: '0.78rem', borderBottom: i < slipPayments.length-1 ? '1px solid #e9ecef' : 'none' }}>
+                                                        <div className="flex-grow-1">
+                                                            <span className="fw-bold" style={{ color: '#198754' }}>{fmt(parseFloat(p.amount_paid as any))}</span>
+                                                            <span className="text-muted ms-2">via {p.payment_method}</span>
+                                                            {p.received_by && <span className="text-muted ms-2">· {p.received_by}</span>}
+                                                            {p.reference_no && <span className="text-muted ms-2">· Ref: {p.reference_no}</span>}
+                                                            {p.notes && <div style={{ fontSize: '0.7rem', color: '#888' }}>{p.notes}</div>}
+                                                        </div>
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <span style={{ fontSize: '0.72rem', color: '#888' }}>{fmtDate(p.payment_date)}</span>
+                                                            {hasPermission('fees', 'delete') && (
+                                                            <button
+                                                                className="btn btn-sm"
+                                                                title="Reverse this payment"
+                                                                disabled={deletingPaymentId === p.payment_id}
+                                                                onClick={() => deletePayment(p.payment_id)}
+                                                                style={{ fontSize: '0.7rem', backgroundColor: '#fff0f0', color: '#dc3545', border: '1px solid #f5c2c7', borderRadius: 6, padding: '2px 7px' }}>
+                                                                {deletingPaymentId === p.payment_id
+                                                                    ? <span className="spinner-border spinner-border-sm" />
+                                                                    : <><i className="bi bi-arrow-counterclockwise me-1"></i>Reverse</>}
+                                                            </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Payment Form */}
+                                    {activeSlip.status !== 'paid' && (
+                                        <div className="rounded p-3" style={{ backgroundColor: '#fffbf5', border: '1px solid #ffe5cc' }}>
+                                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-orange)', marginBottom: 10 }}>
+                                                <i className="bi bi-plus-circle me-1"></i>Record New Payment
+                                            </div>
+                                            {payMsg && (
+                                                <div className={`alert alert-${payMsg.type} py-2 px-3 small d-flex align-items-center gap-2 mb-2`}>
+                                                    <i className={`bi ${payMsg.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}`}></i>
+                                                    {payMsg.text}
+                                                </div>
+                                            )}
+                                            <div className="row g-2">
+                                                <div className="col-md-4">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Amount <span className="text-danger">*</span></label>
+                                                    <div className="input-group input-group-sm">
+                                                        <span className="input-group-text bg-white small">PKR</span>
+                                                        <input type="number" className="form-control form-control-sm" placeholder="0"
+                                                            value={payAmount} onChange={e => setPayAmount(e.target.value)} min="1" />
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Payment Method</label>
+                                                    <select className="form-select form-select-sm" value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                                                        <option value="cash">Cash</option>
+                                                        <option value="bank_transfer">Bank Transfer</option>
+                                                        <option value="cheque">Cheque</option>
+                                                        <option value="online">Online</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Payment Date</label>
+                                                    <input type="date" className="form-control form-control-sm"
+                                                        value={payDate} onChange={e => setPayDate(e.target.value)} />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Received By</label>
+                                                    <input type="text" className="form-control form-control-sm" placeholder="Staff name"
+                                                        value={receivedBy} onChange={e => setReceivedBy(e.target.value)} />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Reference No.</label>
+                                                    <input type="text" className="form-control form-control-sm" placeholder="Cheque / TXN No."
+                                                        value={refNo} onChange={e => setRefNo(e.target.value)} />
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label small fw-bold text-muted mb-1">Notes</label>
+                                                    <textarea className="form-control form-control-sm" rows={2} placeholder="Optional remarks..."
+                                                        value={notes} onChange={e => setNotes(e.target.value)} />
+                                                </div>
+                                                <div className="col-12 mt-1">
+                                                    <div className="d-flex gap-2">
+                                                        <button className="btn fw-bold" style={{ flex: 1, backgroundColor: '#e8f5f5', color: 'var(--primary-teal)', border: '1.5px solid var(--primary-teal)', borderRadius: 8 }}
+                                                            disabled={paying || !payAmount || parseFloat(payAmount) <= 0}
+                                                            onClick={() => openReceiptWindow(
+                                                                activeSlip!,
+                                                                parseFloat(payAmount) || 0,
+                                                                payDate,
+                                                                parseFloat(activeSlip!.paid_amount as any)
+                                                            )}>
+                                                            <i className="bi bi-printer me-1"></i>Print
+                                                        </button>
+                                                        {hasPermission('fees', 'write') && (
+                                                        <button className="btn fw-bold" onClick={() => handlePay(true)} disabled={paying}
+                                                            style={{ flex: 2, backgroundColor: 'var(--accent-orange)', color: '#fff', borderRadius: 8, border: 'none' }}>
+                                                            {paying ? <><span className="spinner-border spinner-border-sm me-2" />Processing...</> : <><i className="bi bi-check-lg me-1" />Confirm &amp; Print</>}
+                                                        </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeSlip.status === 'paid' && (
+                                        <div className="text-center py-2">
+                                            <div className="rounded p-3" style={{ backgroundColor: '#e8f5e9', border: '1px solid #c3e6cb' }}>
+                                                <i className="bi bi-patch-check-fill text-success d-block mb-1" style={{ fontSize: 28 }}></i>
+                                                <div className="fw-bold text-success mb-1">Fee Fully Paid</div>
+                                                <div className="text-muted small mb-2">This voucher has been cleared.</div>
+                                                <button className="btn btn-sm fw-bold" style={{ backgroundColor: 'var(--primary-teal)', color: '#fff', borderRadius: 6, border: 'none' }}
+                                                    onClick={() => {
+                                                        const lastP = slipPayments[0];
+                                                        openReceiptWindow(
+                                                            activeSlip,
+                                                            lastP ? parseFloat(lastP.amount_paid as any) : parseFloat(activeSlip.paid_amount as any),
+                                                            lastP ? lastP.payment_date : new Date().toISOString().split('T')[0],
+                                                            lastP ? parseFloat(activeSlip.paid_amount as any) - parseFloat(lastP.amount_paid as any) : 0
+                                                        );
+                                                    }}>
+                                                    <i className="bi bi-printer me-1"></i>Print Last Receipt
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="modal-footer border-0 px-4 py-3">
+                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => setPayModal(false)}>
+                                        <i className="bi bi-x me-1"></i>Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
