@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminDashboard      from '@/components/dashboards/AdminDashboard';
 import TeacherDashboard    from '@/components/dashboards/TeacherDashboard';

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API, fmt, fmtPKR, C, StatCard, Panel, DashShell, DashLoading, DashError } from './shared';
