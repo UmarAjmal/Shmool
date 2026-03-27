@@ -211,7 +211,7 @@ export default function TeacherAssign() {
             classTeacherSections.forEach(secId => activeSectionsMap.set(secId, true));
 
             // -- Process Upserts (Active Sections) --
-            for (const [secId, _] of activeSectionsMap.entries()) {
+            for (const [secId, _] of Array.from(activeSectionsMap.entries())) {
                 const sec = sections.find(s => s.section_id === secId);
                 if (!sec) continue;
 

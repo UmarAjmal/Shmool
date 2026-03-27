@@ -381,7 +381,7 @@ export default function ImportStudents() {
                             </div>
                             <div className="card-body">
                                 <div className="alert alert-danger mb-0" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                    {importResults.errors.slice(0, 10).map((err, idx) => (
+                                    {importResults.errors.slice(0, 10).map((err: any, idx: number) => (
                                         <div key={idx} className="mb-2 pb-2 border-bottom">
                                             <strong>{err.name || 'Unknown'}:</strong> {err.error}
                                         </div>

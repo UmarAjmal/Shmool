@@ -68,7 +68,6 @@ export default function NewAdmission() {
         family_fee: '',
         admission_fee: '',
         other_charges: '',
-        opening_balance: '',
         opening_balance: ''
     });
 
@@ -467,7 +466,7 @@ export default function NewAdmission() {
                                             onChange={e => {
                                                 setHasSibling(e.target.checked);
                                                 if (!e.target.checked) {
-                                                    setSelectedSibling(null);
+                                                    setSelectedSiblings([]);
                                                     setSearchResults([]);
                                                     setSiblingSearch('');
                                                 }
