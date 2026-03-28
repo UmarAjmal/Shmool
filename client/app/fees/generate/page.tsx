@@ -77,8 +77,8 @@ export default function FeeGeneratePage() {
         setLoadingPlan(true);
         try {
             const r = await fetch('https://shmool.onrender.com/fee-plans');
-            const plans: PlanInfo[] = await r.json();
-            const active = plans.find(p => p.is_active && (p as any).class_id?.toString() === class_id);
+            const plans: any[] = await r.json();
+            const active = plans.find(p => p.is_active && (p.applies_to_all || (p.classes && p.classes.some((c:any) => c.class_id.toString() === class_id))));
             setPlanInfo(active || null);
         } catch { setPlanInfo(null); }
         finally { setLoadingPlan(false); }
