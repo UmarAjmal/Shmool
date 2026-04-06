@@ -6,6 +6,7 @@ const API = 'https://shmool.onrender.com';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 interface SlipRow {
+    category?: string;
     slip_id: number;
     student_id: number;
     first_name: string; last_name: string;
@@ -120,7 +121,7 @@ export default function CollectFeePage() {
             const r = await fetch(`${API}/fee-slips?${params.toString()}`);
             const data = await r.json();
             if (!r.ok) throw new Error(data.error);
-            setSlips(data.slips || []);
+            setSlips((data.slips || []).map((s: any) => s.category === 'Trusted' ? { ...s, status: 'satteled' } : s));
             setStats(data.stats || null);
             setLoaded(true);
         } catch (e: any) { setMessage({ type: 'danger', text: e.message }); }
@@ -137,7 +138,7 @@ export default function CollectFeePage() {
             const r = await fetch(`${API}/fee-slips?${params.toString()}`);
             const data = await r.json();
             if (r.ok) {
-                setSlips(data.slips || []);
+                setSlips((data.slips || []).map((s: any) => s.category === 'Trusted' ? { ...s, status: 'satteled' } : s));
                 setStats(data.stats || null);
             }
         } catch {}

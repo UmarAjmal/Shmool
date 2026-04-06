@@ -296,7 +296,7 @@ router.get('/', async (req, res) => {
 
         const result = await pool.query(`
             SELECT mfs.*, s.first_name, s.last_name, s.admission_no, s.family_id,
-                   s.father_name, s.father_phone, c.class_name,
+                     s.father_name, s.father_phone, c.class_name, s.category,
                 COALESCE(JSON_AGG(JSON_BUILD_OBJECT('item_id',sli.item_id,'head_name',sli.head_name,'amount',sli.amount,'note',sli.note) ORDER BY sli.item_id) FILTER (WHERE sli.item_id IS NOT NULL),'[]') as line_items
             FROM monthly_fee_slips mfs
             JOIN students s ON mfs.student_id = s.student_id
@@ -306,16 +306,20 @@ router.get('/', async (req, res) => {
               ${monthClause}
               ${classClause}
             GROUP BY mfs.slip_id, s.first_name, s.last_name, s.admission_no, s.family_id,
-                     s.father_name, s.father_phone, c.class_name
+                       s.father_name, s.father_phone, c.class_name, s.category
             ORDER BY mfs.month ASC, s.first_name ASC`, params);
-        const stats = {
-            total_students: result.rows.length,
-            total_amount: result.rows.reduce((s, r) => s + parseFloat(r.total_amount), 0),
-            paid_amount: result.rows.reduce((s, r) => s + parseFloat(r.paid_amount), 0),
-            paid_count: result.rows.filter(r => r.status === 'paid').length,
-            unpaid_count: result.rows.filter(r => r.status === 'unpaid').length,
-            partial_count: result.rows.filter(r => r.status === 'partial').length,
-        };
+                  // Force trusted category to satteled
+          result.rows.forEach(r => {
+              if (r.category === 'Trusted') r.status = 'satteled';
+          });
+          const stats = {
+              total_students: result.rows.length,
+              total_amount: result.rows.reduce((s, r) => s + parseFloat(r.total_amount), 0),
+              paid_amount: result.rows.reduce((s, r) => s + parseFloat(r.paid_amount), 0),
+              paid_count: result.rows.filter(r => ['paid', 'satteled'].includes(r.status)).length,
+              unpaid_count: result.rows.filter(r => r.status === 'unpaid').length,
+              partial_count: result.rows.filter(r => r.status === 'partial').length,
+          };
 
         // For family slips, attach all active students in this class that share the family_id
         const familySlipIds = result.rows
