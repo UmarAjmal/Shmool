@@ -75,6 +75,38 @@ export default function NewAdmission() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [documentFiles, setDocumentFiles] = useState<FileList | null>(null);
 
+    const handleTextChange = (field: string, value: string) => {
+        if (/^[a-zA-Z\s]*$/.test(value)) {
+            setForm(f => ({ ...f, [field]: value }));
+        }
+    };
+
+    const handleNumberChange = (field: string, value: string) => {
+        if (/^\d*$/.test(value)) {
+            setForm(f => ({ ...f, [field]: value }));
+        }
+    };
+
+    const handlePhoneChange = (field: string, value: string) => {
+        let val = value;
+        if (val.startsWith("92")) {
+           const digits = val.substring(2).replace(/\D/g, "");
+           if (digits.length <= 10) setForm(f => ({ ...f, [field]: "92" + digits }));
+        } else {
+           const digits = val.replace(/\D/g, "");
+           if (digits.length <= 12) setForm(f => ({ ...f, [field]: digits }));
+        }
+    };
+
+    const handleCNICChange = (field: string, value: string) => {
+        let digits = value.replace(/\D/g, "");
+        if (digits.length > 13) digits = digits.slice(0, 13);
+        let formatted = digits;
+        if (digits.length > 5) formatted = digits.slice(0, 5) + "-" + digits.slice(5);
+        if (digits.length > 12) formatted = formatted.slice(0, 13) + "-" + digits.slice(12);
+        setForm(f => ({ ...f, [field]: formatted }));
+    };
+
     useEffect(() => {
         require('bootstrap/dist/js/bootstrap.bundle.min.js');
         fetchClasses();
@@ -360,7 +392,7 @@ export default function NewAdmission() {
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Roll No</label>
                                                 <input type="text" className="form-control" 
-                                                    value={form.roll_no} onChange={e=>setForm({...form, roll_no: e.target.value})} />
+                                                    value={form.roll_no} onChange={e=>handleNumberChange("roll_no", e.target.value)} />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Category</label>
@@ -393,12 +425,12 @@ export default function NewAdmission() {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">First Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
-                                            value={form.first_name} onChange={e=>setForm({...form, first_name: e.target.value})} />
+                                            value={form.first_name} onChange={e=>handleTextChange("first_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Last Name</label>
                                         <input type="text" className="form-control" 
-                                            value={form.last_name} onChange={e=>setForm({...form, last_name: e.target.value})} />
+                                            value={form.last_name} onChange={e=>handleTextChange("last_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Date of Birth</label>
@@ -416,7 +448,7 @@ export default function NewAdmission() {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">CNIC / B-Form</label>
                                         <input type="text" className="form-control" placeholder="xxxxx-xxxxxxx-x"
-                                            value={form.cnic_bform} onChange={e=>setForm({...form, cnic_bform: e.target.value})} />
+                                            value={form.cnic_bform} onChange={e=>handleCNICChange("cnic_bform", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Blood Group</label>
@@ -749,44 +781,44 @@ export default function NewAdmission() {
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required={!form.is_orphan}
-                                            value={form.father_name} onChange={e=>setForm({...form, father_name: e.target.value})} />
+                                            value={form.father_name} onChange={e=>handleTextChange("father_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Phone</label>
                                         <input type="text" className="form-control" 
-                                            value={form.father_phone} onChange={e=>setForm({...form, father_phone: e.target.value})} />
+                                            value={form.father_phone} onChange={e=>handlePhoneChange("father_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father CNIC</label>
                                         <input type="text" className="form-control" 
-                                            value={form.father_cnic} onChange={e=>setForm({...form, father_cnic: e.target.value})} />
+                                            value={form.father_cnic} onChange={e=>handleCNICChange("father_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
                                         <input type="text" className="form-control" 
-                                            value={form.father_occupation} onChange={e=>setForm({...form, father_occupation: e.target.value})} />
+                                            value={form.father_occupation} onChange={e=>handleTextChange("father_occupation", e.target.value)} />
                                     </div>
                                     
                                     {/* MOTHER */}
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required={!form.is_orphan}
-                                            value={form.mother_name} onChange={e=>setForm({...form, mother_name: e.target.value})} />
+                                            value={form.mother_name} onChange={e=>handleTextChange("mother_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Phone</label>
                                         <input type="text" className="form-control" 
-                                            value={form.mother_phone} onChange={e=>setForm({...form, mother_phone: e.target.value})} />
+                                            value={form.mother_phone} onChange={e=>handlePhoneChange("mother_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother CNIC</label>
                                         <input type="text" className="form-control" 
-                                            value={form.mother_cnic} onChange={e=>setForm({...form, mother_cnic: e.target.value})} />
+                                            value={form.mother_cnic} onChange={e=>handleCNICChange("mother_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
                                         <input type="text" className="form-control" 
-                                            value={form.mother_occupation} onChange={e=>setForm({...form, mother_occupation: e.target.value})} />
+                                            value={form.mother_occupation} onChange={e=>handleTextChange("mother_occupation", e.target.value)} />
                                     </div>
                                 </div>
 
@@ -811,25 +843,25 @@ export default function NewAdmission() {
                                         <label className="form-label fw-bold">Guardian Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_name} onChange={e=>setForm({...form, guardian_name: e.target.value})} />
+                                            value={form.guardian_name} onChange={e=>handleTextChange("guardian_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Relation <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" placeholder="e.g. Uncle, Grandfather" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_relation} onChange={e=>setForm({...form, guardian_relation: e.target.value})} />
+                                            value={form.guardian_relation} onChange={e=>handleTextChange("guardian_relation", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian Phone <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_phone} onChange={e=>setForm({...form, guardian_phone: e.target.value})} />
+                                            value={form.guardian_phone} onChange={e=>handlePhoneChange("guardian_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian CNIC <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_cnic} onChange={e=>setForm({...form, guardian_cnic: e.target.value})} />
+                                            value={form.guardian_cnic} onChange={e=>handleCNICChange("guardian_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-8">
                                         <label className="form-label fw-bold">Guardian Address <span className="text-danger">*</span></label>
@@ -853,7 +885,7 @@ export default function NewAdmission() {
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Student Mobile</label>
                                         <input type="text" className="form-control" 
-                                            value={form.mobile_no} onChange={e=>setForm({...form, mobile_no: e.target.value})} />
+                                            value={form.mobile_no} onChange={e=>handlePhoneChange("mobile_no", e.target.value)} />
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Email</label>
@@ -863,7 +895,7 @@ export default function NewAdmission() {
                                     <div className="col-12">
                                         <label className="form-label fw-bold">City</label>
                                         <input type="text" className="form-control" 
-                                            value={form.city} onChange={e=>setForm({...form, city: e.target.value})} />
+                                            value={form.city} onChange={e=>handleTextChange("city", e.target.value)} />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">Current Address</label>
@@ -931,7 +963,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.admission_fee} onChange={e=>setForm({...form, admission_fee: e.target.value})} />
+                                                        value={form.admission_fee} onChange={e=>handleNumberChange("admission_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -939,7 +971,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.other_charges} onChange={e=>setForm({...form, other_charges: e.target.value})} />
+                                                        value={form.other_charges} onChange={e=>handleNumberChange("other_charges", e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -956,7 +988,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control form-control-lg" placeholder="0.00" required
-                                                        value={form.monthly_fee} onChange={e=>setForm({...form, monthly_fee: e.target.value})} />
+                                                        value={form.monthly_fee} onChange={e=>handleNumberChange("monthly_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -964,7 +996,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.admission_fee} onChange={e=>setForm({...form, admission_fee: e.target.value})} />
+                                                        value={form.admission_fee} onChange={e=>handleNumberChange("admission_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -972,7 +1004,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.other_charges} onChange={e=>setForm({...form, other_charges: e.target.value})} />
+                                                        value={form.other_charges} onChange={e=>handleNumberChange("other_charges", e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -992,7 +1024,7 @@ export default function NewAdmission() {
                                         <span className="input-group-text bg-white fw-semibold">Rs.</span>
                                         <input type="number" className="form-control" placeholder="0.00 (agar koi purana baqi ho)"
                                             min="0" step="1"
-                                            value={form.opening_balance} onChange={e=>setForm({...form, opening_balance: e.target.value})} />
+                                            value={form.opening_balance} onChange={e=>handleNumberChange("opening_balance", e.target.value)} />
                                     </div>
                                 </div>
                             </div>
