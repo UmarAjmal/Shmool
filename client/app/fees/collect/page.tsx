@@ -381,13 +381,13 @@ export default function CollectFeePage() {
         map.forEach(g => {
             // slips ordered by month ASC from server; pick last unpaid/partial
             const unpaid = g.slips
-                .filter(s => s.status !== 'paid')
+                .filter(s => !['paid', 'satteled'].includes(s.status))
                 .sort((a, b) => (b.year - a.year) || (b.month - a.month));
             g.latest_unpaid = unpaid[0] || g.latest_slip;
             const tot = parseFloat(g.latest_unpaid.total_amount as any);
             const paid = parseFloat(g.latest_unpaid.paid_amount as any);
             g.balance = Math.max(0, tot - paid);
-            g.status = g.balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
+            g.status = g.latest_unpaid.status === 'satteled' ? 'satteled' : g.balance <= 0 ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
         });
         return Array.from(map.values());
     })();
