@@ -1,0 +1,4 @@
+const { Pool } = require('pg'); 
+require('dotenv').config(); 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); 
+pool.query("SELECT s.*, c.class_name, sec.section_name, u.username, COALESCE(f.family_fee, 0) AS family_fee, COALESCE(f.opening_balance, 0) AS opening_balance, COALESCE(f.opening_balance_paid, 0) AS opening_balance_paid, GREATEST(0, COALESCE(f.opening_balance, 0) - COALESCE(f.opening_balance_paid, 0)) AS opb_remaining, f.opb_notes, (SELECT COUNT(*)::int FROM students s2 WHERE s2.family_id = s.family_id AND s2.status = 'Active') AS family_size FROM students s LEFT JOIN classes c ON s.class_id = c.class_id LEFT JOIN sections sec ON s.section_id = sec.section_id LEFT JOIN app_users u ON s.user_id = u.id LEFT JOIN families f ON f.family_id = s.family_id WHERE s.student_id = 1").then(res => console.log('OK')).catch(err => console.error(err.message)).finally(() => pool.end());

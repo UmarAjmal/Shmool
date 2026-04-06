@@ -310,7 +310,7 @@ router.get('/', async (req, res) => {
             ORDER BY mfs.month ASC, s.first_name ASC`, params);
                   // Force trusted category to satteled
           result.rows.forEach(r => {
-              if (r.category === 'Trusted') r.status = 'satteled';
+              if (r.category && r.category.trim().toLowerCase() === 'trusted') r.status = 'satteled';
           });
           const stats = {
               total_students: result.rows.length,
