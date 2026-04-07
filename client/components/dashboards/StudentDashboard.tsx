@@ -70,7 +70,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         const fetchMe = async () => {
             try {
                 const adm = user.username.replace('STU-', '');
-                const res = await fetch(`${API}/students?search=${adm}`);
+                const res = await fetch(`${API}/students?keyword=${adm}`);
                 if (res.ok) {
                     const data = await res.json();
                     const list = data.rows || data;
