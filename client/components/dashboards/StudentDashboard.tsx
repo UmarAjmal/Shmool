@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/contexts/AuthContext';
+import { API } from './shared';
 
 export default function StudentDashboard({ user }: { user: any }) {
     const [currentId, setCurrentId] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         setAttLoading(true);
         try {
             const month = m || attMonth; const year = y || attYear;
-            const res = await fetch(`https://shmool.onrender.com/attendance/students/${currentId}/history?month=${month}&year=${year}`);
+            const res = await fetch(`${API}/attendance/students/${currentId}/history?month=${month}&year=${year}`);
             if (res.ok) { const data = await res.json(); setAttRecords(data.records || []); setAttStats(data.stats || {}); }
         } catch {}
         setAttLoading(false);
@@ -41,7 +42,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     const fetchAcademics = async () => {
         setAcadLoading(true);
         try {
-            const res = await fetch(`https://shmool.onrender.com/exams/student-academics/${currentId}`);
+            const res = await fetch(`${API}/exams/student-academics/${currentId}`);
             if (res.ok) { const data = await res.json(); setAcad(data); }
         } catch {}
         setAcadLoading(false);
@@ -69,7 +70,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         const fetchMe = async () => {
             try {
                 const adm = user.username.replace('STU-', '');
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://shmool.onrender.com'}/students?search=${adm}`);
+                const res = await fetch(`${API}/students?search=${adm}`);
                 if (res.ok) {
                     const data = await res.json();
                     const list = data.rows || data;
@@ -87,7 +88,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         if (!currentId) return;
         const fetchStudent = async () => {
             try {
-                const res = await fetch(`https://shmool.onrender.com/students/${currentId}`);
+                const res = await fetch(`${API}/students/${currentId}`);
                 if (res.ok) {
                     const data = await res.json();
                     setStudent(data.rows ? data.rows[0] : (Array.isArray(data) ? data[0] : data));
@@ -103,7 +104,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         const fetchSiblings = async () => {
             setLoadingSiblings(true);
             try {
-                const res = await fetch(`https://shmool.onrender.com/students/${currentId}/siblings`);
+                const res = await fetch(`${API}/students/${currentId}/siblings`);
                 if (res.ok) {
                     const data = await res.json();
                     setSiblings(data);
@@ -124,7 +125,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     const fetchAdmissionFee = async () => {
         setLoadingFees(true);
         try {
-            const res = await fetch(`https://shmool.onrender.com/fee-slips/admission-fees/student/${currentId}`);
+            const res = await fetch(`${API}/fee-slips/admission-fees/student/${currentId}`);
             if (res.ok) {
                 const data = await res.json();
                 setAdmissionFee(data.ledger);
@@ -139,7 +140,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         if (!admissionFee) return;
         setPayingFee(true); setPayError(''); setPaySuccess('');
         try {
-            const res = await fetch(`https://shmool.onrender.com/fee-slips/admission-fees/${admissionFee.ledger_id}/pay`, {
+            const res = await fetch(`${API}/fee-slips/admission-fees/${admissionFee.ledger_id}/pay`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount_paid: payAmt, payment_method: payMethod, reference_no: payRef, payment_date: payDate })
@@ -156,7 +157,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         if(!confirm(`Are you sure you want to change status to ${student.status === 'Active' ? 'Inactive' : 'Active'}?`)) return;
         try {
             const newStatus = student.status === 'Active' ? 'Inactive' : 'Active';
-            const res = await fetch(`https://shmool.onrender.com/students/${currentId}/status`, {
+            const res = await fetch(`${API}/students/${currentId}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -176,7 +177,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     const handleGenerateCredentials = async () => {
         if(!confirm("Generate System Login Credentials for this student?")) return;
         try {
-            const res = await fetch(`https://shmool.onrender.com/students/${currentId}/generate-credentials`, { method: 'PATCH' });
+            const res = await fetch(`${API}/students/${currentId}/generate-credentials`, { method: 'PATCH' });
             const data = await res.json();
             if(res.ok) {
                 toast.success(`Credentials Created! Username: ${data.username}`);
@@ -189,7 +190,7 @@ export default function StudentDashboard({ user }: { user: any }) {
 
     const handleChangePassword = async (password: string) => {
         try {
-            const res = await fetch(`https://shmool.onrender.com/students/${currentId}/change-password`, {
+            const res = await fetch(`${API}/students/${currentId}/change-password`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password })
@@ -277,7 +278,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                         <div className="d-flex align-items-end gap-4" style={{ marginBottom: '-60px' }}>
                             <div className="position-relative">
                                 <img 
-                                    src={student.image_url ? `https://shmool.onrender.com/${student.image_url}` : "https://via.placeholder.com/150"} 
+                                    src={student.image_url ? `${API}/${student.image_url}` : "https://via.placeholder.com/150"} 
                                     className="rounded-circle border border-4 border-white shadow-lg bg-white"
                                     style={{ width: '160px', height: '160px', objectFit: 'cover' }}
                                 />
@@ -922,7 +923,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                                                                     <div className="me-3">
                                                                                         {sibling.image_url ? (
                                                                                             <img 
-                                                                                                src={`https://shmool.onrender.com/${sibling.image_url}`} 
+                                                                                                src={`${API}/${sibling.image_url}`} 
                                                                                                 alt={sibling.first_name}
                                                                                                 className="rounded-circle border border-2"
                                                                                                 style={{ 
@@ -1360,7 +1361,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                                         <div className="card-body text-center p-4">
                                                             <i className="bi bi-file-earmark-pdf fs-1 text-danger mb-3"></i>
                                                             <h6 className="text-truncate">Document {i+1}</h6>
-                                                            <a href={`https://shmool.onrender.com/${doc}`} target="_blank" className="btn btn-sm btn-outline-primary mt-2">View</a>
+                                                            <a href={`${API}/${doc}`} target="_blank" className="btn btn-sm btn-outline-primary mt-2">View</a>
                                                         </div>
                                                     </div>
                                                 </div>
