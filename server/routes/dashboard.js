@@ -438,4 +438,53 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET popup attendance details
+router.get('/attendance-details', async (req, res) => {
+    try {
+        const { type, status } = req.query;
+        if (!type || !status) return res.status(400).json({ error: 'Missing type or status' });
+        
+        const targetDate = new Date().toISOString().split('T')[0];
+        
+        if (type === 'student') {
+            const {rows} = await pool.query(`
+                 SELECT s.first_name || ' ' || COALESCE(s.last_name, '') as name,
+                        s.father_name as guardian,
+                        c.class_name,
+                        sec.section_name,
+                        COALESCE(s.father_phone, s.mobile_no) as phone
+                 FROM student_attendance sa
+                 JOIN students s ON sa.student_id = s.student_id
+                 LEFT JOIN classes c ON c.class_id = s.class_id
+                 LEFT JOIN sections sec ON sec.section_id = s.section_id
+                 WHERE sa.attendance_date = $1 
+                   AND sa.status ILIKE $2
+                   AND s.status = 'Active'
+                 ORDER BY c.class_name, s.first_name`,
+                [targetDate, status]
+            );
+            return res.json(rows);
+        } else if (type === 'staff') {
+            const {rows} = await pool.query(`
+                 SELECT e.first_name || ' ' || COALESCE(e.last_name, '') as name,
+                        e.designation as guardian,
+                        e.phone
+                 FROM staff_attendance sa
+                 JOIN employees e ON sa.employee_id = e.employee_id
+                 WHERE sa.attendance_date = $1 
+                   AND sa.status ILIKE $2
+                   AND e.status = 'Active'
+                 ORDER BY e.first_name`,
+                [targetDate, status]
+            );
+            return res.json(rows);
+        } else {
+            return res.status(400).json({error: 'Invalid type'});
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: err.message});
+    }
+});
+
 module.exports = router;
