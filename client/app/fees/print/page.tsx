@@ -54,7 +54,7 @@ function VoucherSlip({ v, serial, month, year, school, filterClassId }: { v: Vou
     // Fixed 9 rows — matches template exactly
     // For family vouchers: use family_members from backend (all active siblings)
     // Sort so filtered-class students appear first when a class filter is active
-    type StudentRow = { first_name: string; last_name: string; father_name?: string; class_name?: string } | null;
+    type StudentRow = { first_name: string; last_name: string; father_name?: string; class_name?: string; section_name?: string } | null;
     let membersSource = v.family_members && v.family_members.length > 0
         ? [...v.family_members]
         : allStudents.map(s => ({ ...s, class_id: s.c_class_id }));
@@ -65,7 +65,13 @@ function VoucherSlip({ v, serial, month, year, school, filterClassId }: { v: Vou
             return aMatch - bMatch;
         });
     }
-    const baseStudents: StudentRow[] = membersSource.map(m => ({ first_name: m.first_name, last_name: m.last_name, father_name: (m as any).father_name, class_name: (m as any).class_name }));
+    const baseStudents: StudentRow[] = membersSource.map(m => ({ 
+        first_name: m.first_name, 
+        last_name: m.last_name, 
+        father_name: (m as any).father_name, 
+        class_name: (m as any).class_name,
+        section_name: (m as any).section_name
+    }));
     const studentRows: StudentRow[] = [...baseStudents];
     while (studentRows.length < 9) studentRows.push(null);
 
@@ -117,7 +123,7 @@ function VoucherSlip({ v, serial, month, year, school, filterClassId }: { v: Vou
                         <tr key={i}>
                             <td style={td()}>{s ? `${s.first_name} ${s.last_name}` : '\u00A0'}</td>
                             <td style={td()}>{s?.father_name || '\u00A0'}</td>
-                            <td style={td({ textAlign: 'center' })}>{s ? `${s.class_name}` : '\u00A0'}</td>
+                              <td style={td({ textAlign: 'center' })}>{s ? `${s.class_name}${s.section_name ? ` (${s.section_name})` : ''}` : '\u00A0'}</td>
                         </tr>
                     ))}
                 </tbody>
