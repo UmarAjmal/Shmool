@@ -6,7 +6,7 @@ const pool = require('../db');
 router.post('/generate', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { class_id, year, due_date, issue_date, extra_heads } = req.body;
+        const { class_id, year, due_date, issue_date, extra_heads, plan_id } = req.body;
         // Accept either months[] array (new) or single month (backward compat)
         const rawMonths = req.body.months || (req.body.month ? [req.body.month] : null);
         if (!class_id || !rawMonths || rawMonths.length === 0 || !year)
@@ -26,18 +26,31 @@ router.post('/generate', async (req, res) => {
         // For backward compat let month = firstMonth when needed
         const month = firstMonth;
 
+        // Allow explicit plan specification via UI, else fallback to topmost plan
+        const explicitPlanId = req.body.plan_id || null;
+
         await client.query('BEGIN');
 
-        const planResult = await client.query(
-            `SELECT fp.plan_id
-             FROM fee_plans fp
-             LEFT JOIN fee_plan_classes fpc ON fpc.plan_id = fp.plan_id
-             WHERE (fp.class_id = $1 OR fpc.class_id = $1 OR fp.applies_to_all = TRUE)
-               AND fp.is_active = TRUE
-             ORDER BY fp.academic_year DESC, fp.plan_name ASC
-             LIMIT 1`,
-            [class_id]
-        );
+        let planResult;
+        if (explicitPlanId) {
+             planResult = await client.query(
+                `SELECT fp.plan_id
+                 FROM fee_plans fp
+                 WHERE fp.plan_id = $1 AND fp.is_active = TRUE`,
+                [explicitPlanId]
+            );
+        } else {
+             planResult = await client.query(
+                `SELECT fp.plan_id
+                 FROM fee_plans fp
+                 LEFT JOIN fee_plan_classes fpc ON fpc.plan_id = fp.plan_id
+                 WHERE (fp.class_id = $1 OR fpc.class_id = $1 OR fp.applies_to_all = TRUE)
+                   AND fp.is_active = TRUE
+                 ORDER BY fp.academic_year DESC, fp.plan_name ASC
+                 LIMIT 1`,
+                [class_id]
+            );
+        }
         if (planResult.rows.length === 0) {
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'No active fee plan found for this class.' });
