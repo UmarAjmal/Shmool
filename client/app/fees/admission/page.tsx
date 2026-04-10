@@ -33,6 +33,7 @@ interface Stats {
 
 interface PaymentForm {
     amount_paid: string;
+    discount_amount: string;
     payment_method: string;
     received_by: string;
     reference_no: string;
@@ -62,7 +63,8 @@ export default function AdmissionFeePage() {
     const [payForm, setPayForm] = useState<PaymentForm>({
         amount_paid: '', payment_method: 'cash',
         received_by: '', reference_no: '', notes: '',
-        payment_date: new Date().toISOString().split('T')[0]
+        payment_date: new Date().toISOString().split('T')[0],
+        discount_amount: ''
     });
     const [paying, setPaying] = useState(false);
     const [payError, setPayError] = useState('');
@@ -194,7 +196,8 @@ export default function AdmissionFeePage() {
         setPayForm({
             amount_paid: ledger.remaining_amount.toString(),
             payment_method: 'cash', received_by: '', reference_no: '', notes: '',
-            payment_date: new Date().toISOString().split('T')[0]
+            payment_date: new Date().toISOString().split('T')[0],
+            discount_amount: ''
         });
         setPayError(''); setPaySuccess('');
         setShowPayModal(true);
@@ -460,6 +463,18 @@ export default function AdmissionFeePage() {
                                                     placeholder="0" />
                                             </div>
                                             <small className="text-muted">Max: {fmt(selectedLedger.remaining_amount)}</small>
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label fw-bold small text-muted">Discount Amount</label>
+                                            <div className="input-group">
+                                                <span className="input-group-text bg-light fw-bold">PKR</span>
+                                                <input type="number" className="form-control fw-bold fs-5" min="0"
+                                                    max={selectedLedger.remaining_amount - (parseFloat(payForm.amount_paid) || 0)}
+                                                    value={payForm.discount_amount}
+                                                    onChange={e => setPayForm(p => ({ ...p, discount_amount: e.target.value }))}
+                                                    placeholder="0" />
+                                            </div>
+                                            <small className="text-muted">Will reduce the remaining balance directly.</small>
                                         </div>
                                         <div className="col-6">
                                             <label className="form-label fw-bold small text-muted">Payment Method</label>

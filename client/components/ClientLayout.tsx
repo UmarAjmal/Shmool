@@ -29,7 +29,7 @@ const NAV_GROUPS: NavGroup[] = [
   { key:'attendance', label:'Attendance',     icon:'bi-calendar-check-fill', href:'/attendance/students', permission:'attendance',
     subs:[{label:'Student Attendance',href:'/attendance/students'},{label:'Student History',href:'/attendance/students/history'},{label:'Staff Attendance',href:'/attendance/staff'},{label:'Staff History',href:'/attendance/staff/history'}] },
   { key:'reports',    label:'Reports',        icon:'bi-bar-chart-fill',      href:'/reports/students',  permission:'reports',
-    subs:[{label:'Student Report',href:'/reports/students'},{label:'Results Report',href:'/reports/results'},{label:'Expense Report',href:'/reports/expenses'},{label:'Family Fee Report',href:'/reports/family-fee'}] },
+      subs:[{label:'Student Report',href:'/reports/students'},{label:'Results Report',href:'/reports/results'},{label:'Expense Report',href:'/reports/expenses'},{label:'Family Fee Report',href:'/reports/family-fee'},{label:'Admission Report',href:'/reports/admission'}] },
   { key:'settings',   label:'Settings',       icon:'bi-gear-fill',           href:'/settings',          permission:'settings',
     subs:[{label:'General Info',href:'/settings/general'},{label:'Academic Setup',href:'/settings/academic'},{label:'User Roles',href:'/settings/roles'},{label:'System Users',href:'/settings/users'},{label:'System Config',href:'/settings/system'}] },
 ];
