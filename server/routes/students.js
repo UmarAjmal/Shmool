@@ -1239,6 +1239,29 @@ router.put('/:id', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'docum
             );
         }
 
+        // Create or Update Admission Fee Ledger on Edit
+        const admFeeVal = parseFloat(admission_fee) || 0;
+        if (admFeeVal > 0) {
+            await client.query(`
+                INSERT INTO admission_fee_ledger 
+                    (student_id, total_amount, paid_amount, status, admission_date, notes)
+                VALUES ($1, $2, 0, 'unpaid', $3, 'Auto-created/Updated via student edit')
+                ON CONFLICT (student_id) DO UPDATE 
+                    SET total_amount = EXCLUDED.total_amount,
+                        status = CASE 
+                            WHEN admission_fee_ledger.paid_amount >= EXCLUDED.total_amount THEN 'paid'
+                            WHEN admission_fee_ledger.paid_amount > 0 THEN 'partial'
+                            ELSE 'unpaid'
+                        END
+            `, [id, admFeeVal, admission_date || new Date()]);
+        } else {
+            await client.query(`
+                UPDATE admission_fee_ledger
+                SET total_amount = 0, status = 'paid'
+                WHERE student_id = $1 AND paid_amount = 0
+            `, [id]);
+        }
+
         await client.query('COMMIT');
         res.json({ message: "Updated successfully" });
 
