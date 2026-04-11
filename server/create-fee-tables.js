@@ -76,6 +76,7 @@ async function createFeeTables() {
                 head_id INTEGER REFERENCES fee_heads(head_id) ON DELETE SET NULL,
                 head_name VARCHAR(100) NOT NULL,
                 amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+                paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
                 note TEXT
             );
         `);
