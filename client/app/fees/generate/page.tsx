@@ -67,6 +67,7 @@ export default function FeeGeneratePage() {
     
     // Tracks months that already have generated slips for this class+year
     const [generatedMonths, setGeneratedMonths] = useState<string[]>([]);
+    const [generatedGroups, setGeneratedGroups] = useState<{ value: string, label: string, months: number[] }[]>([]);
 
     useEffect(() => { fetchClasses(); fetchHeads(); }, []);
 
@@ -113,19 +114,37 @@ export default function FeeGeneratePage() {
     };
 
     const fetchGeneratedMonths = async () => {
-        if (!selectedClass || !selectedYear) { setGeneratedMonths([]); return; }
+        if (!selectedClass || !selectedYear) { setGeneratedMonths([]); setGeneratedGroups([]); return; }
         try {
             const r = await fetch(`https://shmool.onrender.com/fee-slips/available-months?year=${selectedYear}&class_id=${selectedClass}`);
             const data = await r.json();
-            if (data.months) setGeneratedMonths(data.months.map((m: number) => m.toString()));
+            if (data.months) {
+                setGeneratedGroups(data.months);
+                const flatMonths: string[] = [];
+                data.months.forEach((g: any) => {
+                    g.months.forEach((m: number) => flatMonths.push(m.toString()));
+                });
+                setGeneratedMonths(flatMonths);
+            }
         } catch { }
     };
 
     const fetchSlips = async () => {
-        if (!selectedClass || !viewMonth || !selectedYear) { setSlips([]); setStats(null); return; }
+        if (!selectedClass || selectedMonths.length === 0 || !selectedYear) { setSlips([]); setStats(null); return; }
+        
+        // Find if the currently selected months EXACTLY match a generated group
+        let fetchMonthValue = sortedSelectedMonths[0] ?? null;
+        const matchingGroup = generatedGroups.find(g => 
+            g.months.length === sortedSelectedMonths.length && 
+            g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
+        );
+        if (matchingGroup) {
+            fetchMonthValue = matchingGroup.value;
+        }
+
         setLoadingSlips(true);
         try {
-            const r = await fetch(`https://shmool.onrender.com/fee-slips?class_id=${selectedClass}&month=${viewMonth}&year=${selectedYear}`);
+            const r = await fetch(`https://shmool.onrender.com/fee-slips?class_id=${selectedClass}&month=${fetchMonthValue}&year=${selectedYear}`);
             const data = await r.json();
             setSlips(data.slips || []);
             setStats(data.stats || null);
@@ -224,7 +243,15 @@ export default function FeeGeneratePage() {
 
     const deleteSlip = async (slipId: number) => {
         if (!confirm('Delete this slip? This cannot be undone.')) return;
-        await fetch(`${API}/fee-slips/class/${selectedClass}/month/${viewMonth}/year/${selectedYear}`, { method: 'DELETE' });
+        
+        let fetchMonthValue = sortedSelectedMonths[0] ?? null;
+        const matchingGroup = generatedGroups.find(g => 
+            g.months.length === sortedSelectedMonths.length && 
+            g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
+        );
+        if (matchingGroup) fetchMonthValue = matchingGroup.value;
+
+        await fetch(`${API}/fee-slips/class/${selectedClass}/month/${fetchMonthValue}/year/${selectedYear}`, { method: 'DELETE' });
         fetchSlips();
         fetchGeneratedMonths();
     };
@@ -232,8 +259,15 @@ export default function FeeGeneratePage() {
     const handleUndo = async () => {
         setUndoLoading(true);
         try {
+            let fetchMonthValue = sortedSelectedMonths[0] ?? null;
+            const matchingGroup = generatedGroups.find(g => 
+                g.months.length === sortedSelectedMonths.length && 
+                g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
+            );
+            if (matchingGroup) fetchMonthValue = matchingGroup.value;
+
             const r = await fetch(
-                `${API}/fee-slips/class/${selectedClass}/month/${viewMonth}/year/${selectedYear}`,
+                `${API}/fee-slips/class/${selectedClass}/month/${fetchMonthValue}/year/${selectedYear}`,
                 { method: 'DELETE' }
             );
             const data = await r.json();
@@ -262,6 +296,19 @@ export default function FeeGeneratePage() {
     const className = classes.find(c => c.class_id.toString() === selectedClass)?.class_name || '';
 
     const hasGeneratedSelected = selectedMonths.some(m => generatedMonths.includes(m));
+
+    // Check if the current selection is a PARTIAL selection of a combined group
+    let partialGroupLabel = '';
+    const involvedGroup = generatedGroups.find(g => 
+        g.months.some((m: number) => selectedMonths.includes(m.toString()))
+    );
+    if (involvedGroup) {
+        const isExactMatch = involvedGroup.months.length === selectedMonths.length 
+            && involvedGroup.months.every((m: number) => selectedMonths.includes(m.toString()));
+        if (!isExactMatch) {
+            partialGroupLabel = involvedGroup.label;
+        }
+    }
 
     return (
         <div className="container-fluid p-4 animate__animated animate__fadeIn">
@@ -317,6 +364,16 @@ export default function FeeGeneratePage() {
                                         const val = (i+1).toString();
                                         const active = selectedMonths.includes(val);
                                         const isGenerated = generatedMonths.includes(val);
+                                        
+                                        // Find if this month is part of a combined group to show a link icon
+                                        let isCombined = false;
+                                        if (isGenerated) {
+                                            const g = generatedGroups.find(gr => gr.months.includes(parseInt(val)));
+                                            if (g && g.months.length > 1) {
+                                                isCombined = true;
+                                            }
+                                        }
+
                                         return (
                                             <button key={val} type="button"
                                                 onClick={() => toggleMonth(val)}
@@ -327,7 +384,9 @@ export default function FeeGeneratePage() {
                                                     border: active ? '1.5px solid var(--primary-teal)' : '1.5px solid #dee2e6',
                                                     fontWeight: isGenerated ? 'bold' : '600',
                                                     transition:'all 0.15s'}}>
-                                                {m.slice(0,3)}{isGenerated ? <i className="bi bi-check-lg ms-1"></i> : ''}
+                                                {m.slice(0,3)}
+                                                {isGenerated && isCombined ? <i className="bi bi-link ms-1"></i> : 
+                                                 isGenerated ? <i className="bi bi-check-lg ms-1"></i> : ''}
                                             </button>
                                         );
                                     })}
@@ -470,10 +529,12 @@ export default function FeeGeneratePage() {
                             <button
                                 className={`btn w-100 py-2 fw-bold shadow-sm ${hasGeneratedSelected ? 'btn-secondary' : 'btn-primary-custom'}`}
                                 onClick={handleGenerate}
-                                disabled={generating || hasGeneratedSelected}
+                                disabled={generating || hasGeneratedSelected || !!partialGroupLabel}
                             >
                                 {generating ? (
                                     <><span className="spinner-border spinner-border-sm me-2"></span>Generating...</>
+                                ) : partialGroupLabel ? (
+                                    <><i className="bi bi-x-circle me-2"></i>Select Entire Combined ({partialGroupLabel}) first</>
                                 ) : hasGeneratedSelected ? (
                                     <><i className="bi bi-x-circle me-2"></i>Cannot Generate (Month Already Issued)</>
                                 ) : selectedMonths.length > 1 ? (
@@ -540,7 +601,13 @@ export default function FeeGeneratePage() {
                             )}
                         </div>
                         <div className="card-body p-0">
-                            {loadingSlips ? (
+                            {partialGroupLabel ? (
+                                <div className="text-center py-5">
+                                    <i className="bi bi-info-circle text-warning fs-1 d-block mb-3"></i>
+                                    <h5 className="text-dark fw-bold">Combined Billing Detected!</h5>
+                                    <p className="text-muted">Aap ne iss month ki fee kisi aur month ke sath mila kar ({partialGroupLabel}) jorrii thi.<br/> Data show karne kelye kripya <strong>pura {partialGroupLabel} ek sath select karen</strong>.</p>
+                                </div>
+                            ) : loadingSlips ? (
                                 <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>
                             ) : slips.length === 0 ? (
                                 <div className="text-center py-5 text-muted">
