@@ -300,6 +300,19 @@ router.post('/generate', async (req, res) => {
     } finally { client.release(); }
 });
 
+// GET /fee-slips/available-months
+router.get('/available-months', async (req, res) => {
+    try {
+        const { year } = req.query;
+        let query = 'SELECT DISTINCT month FROM monthly_fee_slips';
+        let params = [];
+        if (year) { query += ' WHERE year = $1'; params.push(year); }
+        query += ' ORDER BY month ASC';
+        const result = await pool.query(query, params);
+        res.json({ months: result.rows.map(r => parseInt(r.month, 10)) });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /fee-slips?class_id=&year=&month= (class_id optional, month optional)
 router.get('/', async (req, res) => {
     try {

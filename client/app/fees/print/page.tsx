@@ -231,6 +231,7 @@ export default function PrintSlipsPage() {
     const [year, setYear] = useState(new Date().getFullYear().toString());
     const [classId, setClassId] = useState('');
     const [classes, setClasses] = useState<{ class_id: number; class_name: string }[]>([]);
+    const [availableMonths, setAvailableMonths] = useState<number[]>([]);
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [coveredStudents, setCoveredStudents] = useState<any[]>([]);
     const [stats, setStats] = useState<{ total_vouchers: number; printed: number; pending: number; family_vouchers: number } | null>(null);
@@ -261,10 +262,31 @@ export default function PrintSlipsPage() {
         }).catch(() => {});
     }, []);
 
+    // Fetch available months for the selected year
+    useEffect(() => {
+        fetch(`${API}/fee-slips/available-months?year=${year}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.months) {
+                    setAvailableMonths(data.months);
+                    // Automatically select latest generated month if current is invalid
+                    if (data.months.length > 0) {
+                        if (!data.months.includes(parseInt(month))) {
+                            setMonth(data.months[data.months.length - 1].toString());
+                        }
+                    } else {
+                        setMonth('');
+                    }
+                }
+            })
+            .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [year]);
+
     const loadQueue = async () => {
         setLoading(true); setMessage(null); setSelected(new Set()); setVouchers([]); setCoveredStudents([]); setStats(null);
         try {
-            const url = `${API}/fee-slips/print-queue?month=${month}&year=${year}${classId ? `&class_id=${classId}` : ''}`;
+            const url = `${API}/fee-slips?month=${month}&year=${year}${classId ? `&class_id=${classId}` : ''}`;
             const r = await fetch(url);
             const data = await r.json();
             if (!r.ok) throw new Error(data.error);
@@ -419,7 +441,11 @@ export default function PrintSlipsPage() {
                             <div className="col-md-2">
                                 <label className="form-label fw-bold small text-muted">Month</label>
                                 <select className="form-select" value={month} onChange={e => setMonth(e.target.value)}>
-                                    {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+                                    {availableMonths.length === 0 ? (
+        <option value="">No Fees Generated</option>
+    ) : (
+        availableMonths.map(m => <option key={m} value={m}>{MONTHS[m - 1]}</option>)
+    )}
                                 </select>
                             </div>
                             <div className="col-md-2">
