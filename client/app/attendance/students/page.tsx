@@ -44,8 +44,8 @@ export default function StudentAttendancePage() {
     const canMarkAdvance = isAdmin || hasPermission('attendance.mark_advance', 'write');
 
     useEffect(() => {
-        fetch('https://shmool.onrender.com/classes').then(r=>r.json()).then(d=>Array.isArray(d)?setClasses(d):null).catch(()=>{});
-        fetch('https://shmool.onrender.com/classes/sections').then(r=>r.json()).then(d=>Array.isArray(d)?setSections(d):null).catch(()=>{});
+        fetch('https://shmool.onrender.com/academic').then(r=>r.json()).then(d=>Array.isArray(d)?setClasses(d):null).catch(()=>{});
+        fetch('https://shmool.onrender.com/academic/sections').then(r=>r.json()).then(d=>Array.isArray(d)?setSections(d):null).catch(()=>{});
     }, []);
 
     const loadAttendance = useCallback(async () => {
