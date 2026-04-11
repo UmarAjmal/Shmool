@@ -120,8 +120,8 @@ export default function AdminDashboard({ userName }: { userName: string }) {  co
         </Panel>
         )}
 
-        {hasPermission('dash.admin_recent', 'read') && (
         {/* Recent Payments */}
+        {hasPermission('dash.admin_recent', 'read') && (
         <Panel title="Recent Fee Payments" icon="bi-receipt" noPad
           action={
             <Link href="/fees/collect" style={{ fontSize:12, color:C.orange, fontWeight:700, textDecoration:'none', display:'flex', alignItems:'center', gap:4 }}>
@@ -133,8 +133,8 @@ export default function AdminDashboard({ userName }: { userName: string }) {  co
         )}
       </div>
 
-      {hasPermission('dash.admin_charts', 'read') && (
       {/* Fee Area Chart */}
+      {hasPermission('dash.admin_charts', 'read') && (
       <div style={{ marginBottom:20 }}>
         <Panel title="Daily Fee Collection â€” Last 14 Days" icon="bi-graph-up-arrow"
           action={<span style={{ fontSize:12, color:'#94a3b8', fontWeight:600 }}>{<MaskedAmount amount={s.this_month_collected} />} this month</span>}>
@@ -160,6 +160,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {  co
           )}
         </Panel>
       </div>
+      )}
 
       {/* Attendance Bar Chart */}
       <div style={{ marginBottom:20 }}>
