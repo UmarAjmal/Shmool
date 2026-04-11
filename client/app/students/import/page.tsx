@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as XLSX from 'xlsx';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 
 export default function ImportStudents() {
     const router = useRouter();
@@ -80,7 +80,7 @@ export default function ImportStudents() {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Students");
         XLSX.writeFile(wb, "Student_Import_Template.xlsx");
-        toast.success("Template downloaded!");
+        notify.success("Template downloaded!");
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +98,7 @@ export default function ImportStudents() {
                 setHeaders(data[0] as string[]);
                 const jsonData = XLSX.utils.sheet_to_json(ws);
                 setExcelData(jsonData);
-                toast.success("File parsed successfully!");
+                notify.success("File parsed successfully!");
             }
         };
         reader.readAsBinaryString(file);
@@ -106,7 +106,7 @@ export default function ImportStudents() {
 
     const handleImport = async () => {
         if (excelData.length === 0) {
-            toast.error("No data to import");
+            notify.error("No data to import");
             return;
         }
         if(!confirm(`Import ${excelData.length} students? Family relationships will be auto-detected using Father CNIC.`)) return;
@@ -159,7 +159,7 @@ export default function ImportStudents() {
             }
         } catch (err) {
             console.error(err);
-            toast.error('Failed to load duplicates');
+            notify.error('Failed to load duplicates');
         } finally {
             setLoadingDuplicates(false);
         }
@@ -211,11 +211,11 @@ export default function ImportStudents() {
 
     const handleManualLink = async () => {
         if (!student1 || !student2) {
-            toast.error('Please select both students');
+            notify.error('Please select both students');
             return;
         }
         if (student1.student_id === student2.student_id) {
-            toast.error('Cannot link a student to themselves');
+            notify.error('Cannot link a student to themselves');
             return;
         }
         const toastId = toast.loading('Linking students...');
@@ -689,3 +689,4 @@ export default function ImportStudents() {
         </div>
     );
 }
+

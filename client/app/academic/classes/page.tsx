@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 type ClassItem = { class_id: number; class_name: string; description: string; };
@@ -234,3 +234,4 @@ export default function ClassSettings() {
         </div>
     );
 }
+

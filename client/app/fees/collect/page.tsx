@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { notify } from '@/app/utils/notify';
 
 const API = 'https://shmool.onrender.com';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -68,7 +69,7 @@ export default function CollectFeePage() {
     const [slips, setSlips] = useState<SlipRow[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+    |
     const [loaded, setLoaded] = useState(false);
 
     // Payment Modal
@@ -88,7 +89,7 @@ export default function CollectFeePage() {
     const [refNo, setRefNo] = useState('');
     const [notes, setNotes] = useState('');
     const [paying, setPaying] = useState(false);
-    const [payMsg, setPayMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+    const [payMsg, setPayMsg] = useState<{ type: 'success' |
     const [school, setSchool] = useState<SchoolInfo>({ school_name: '', school_address: '', phone_number: '', school_phone2: '', school_phone3: '', school_logo_url: '' });
 
     useEffect(() => {
@@ -111,10 +112,10 @@ export default function CollectFeePage() {
 
     const loadSlips = async () => {
         if (!year) {
-            setMessage({ type: 'danger', text: 'Please enter a Year.' });
+            notify.error('Please enter a Year.');
             return;
         }
-        setLoading(true); setMessage(null); setSlips([]); setStats(null); setLoaded(false);
+        setLoading(true); ; setSlips([]); setStats(null); setLoaded(false);
         try {
             const params = new URLSearchParams({ year });
             if (selectedClass) params.append('class_id', selectedClass);
@@ -124,7 +125,7 @@ export default function CollectFeePage() {
             setSlips((data.slips || []).map((s: any) => s.category && s.category.trim().toLowerCase() === 'trusted' ? { ...s, status: 'satteled' } : s));
             setStats(data.stats || null);
             setLoaded(true);
-        } catch (e: any) { setMessage({ type: 'danger', text: e.message }); }
+        } catch (e: any) { notify.error(e.message); }
         finally { setLoading(false); }
     };
 
@@ -419,13 +420,7 @@ export default function CollectFeePage() {
                 </div>
             </div>
 
-            {message && (
-                <div className={`alert alert-${message.type} alert-dismissible d-flex align-items-center gap-2 mb-3`} role="alert">
-                    <i className={`bi ${message.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}`}></i>
-                    {message.text}
-                    <button className="btn-close ms-auto" onClick={() => setMessage(null)} />
-                </div>
-            )}
+            
 
             {/* ── Filter Card ── */}
             <div className="card border-0 shadow-sm mb-4">
@@ -1031,3 +1026,7 @@ export default function CollectFeePage() {
         </div>
     );
 }
+
+
+
+

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 
 interface ClassItem { class_id: number; class_name: string; }
 interface FeeHead { head_id: number; head_name: string; head_type: string; }
@@ -183,7 +183,7 @@ export default function FeeGeneratePage() {
 
     const handleGenerate = async () => {
         if (!selectedClass || selectedMonths.length === 0 || !selectedYear) {
-            toast.error('Please select class, at least one month and year.');
+            notify.error('Please select class, at least one month and year.');
             return;
         }
         setGenerating(true);
@@ -205,16 +205,16 @@ export default function FeeGeneratePage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                toast.error(data.error || 'Generation failed');
+                notify.error(data.error || 'Generation failed');
             } else {
                 const monthLabels = sortedMonths.map(m => MONTHS[parseInt(m) - 1]).join(' + ');
                 const slipNote = sortedMonths.length > 1 ? ` (combined ${sortedMonths.length}-month slip per student)` : '';
-                toast.success(`Generated slips for ${monthLabels}${slipNote} — ${data.generated} created, ${data.skipped} skipped.`);
+                notify.success(`Generated slips for ${monthLabels}${slipNote} — ${data.generated} created, ${data.skipped} skipped.`);
             }
             fetchSlips();
             fetchGeneratedMonths();
         } catch (err: any) {
-            toast.error(err.message);
+            notify.error(err.message);
         } finally { setGenerating(false); }
     };
 
@@ -238,7 +238,7 @@ export default function FeeGeneratePage() {
             if (!res.ok) throw new Error(data.error);
             setShowEdit(false); 
             fetchSlips();
-            toast.success("Fee slip updated successfully");
+            notify.success("Fee slip updated successfully");
         } catch (err: any) { setEditError(err.message); }
         finally { setEditLoading(false); }
     };
@@ -276,14 +276,14 @@ export default function FeeGeneratePage() {
             if (!r.ok) throw new Error(data.error);
             setShowUndoModal(false);
             if (data.blocked_paid > 0) {
-                toast.warning(data.message);
+                notify.warning(data.message);
             } else {
-                toast.success(data.message);
+                notify.success(data.message);
             }
             fetchSlips();
             fetchGeneratedMonths();
         } catch (err: any) {
-            toast.error(err.message);
+            notify.error(err.message);
             setShowUndoModal(false);
         } finally { setUndoLoading(false); }
     };
@@ -314,16 +314,16 @@ export default function FeeGeneratePage() {
     }
 
     return (
-        <div className="container-fluid p-4 animate__animated animate__fadeIn">
+        <div className="container-fluid p-3 p-md-4 animate__animated animate__fadeIn">
             {/* Header */}
-            <div className="d-flex justify-content-between align-items-start mb-4">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center align-items-start gap-3 mb-4">
                 <div>
                     <h2 className="fw-bold mb-1" style={{ color: 'var(--primary-dark)' }}>
                         <i className="bi bi-lightning-charge me-2"></i>Monthly Fee Generation
                     </h2>
                     <p className="text-muted small mb-0">Select a class and month — regular heads auto-load from fee plan. Add extra charges if needed.</p>
                 </div>
-                <button className="btn btn-secondary-custom d-flex align-items-center gap-2" onClick={() => router.push('/fees/print')}>
+                <button className="btn btn-secondary-custom d-flex align-items-center gap-2 w-100 w-md-auto" onClick={() => router.push('/fees/print')}>
                     <i className="bi bi-printer"></i> Print Slips
                 </button>
             </div>
@@ -568,7 +568,7 @@ export default function FeeGeneratePage() {
                     )}
 
                     <div className="card border-0 shadow-sm">
-                        <div className="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                        <div className="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
                             <h6 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
                                 {className
                                     ? sortedSelectedMonths.length === 1
@@ -577,12 +577,12 @@ export default function FeeGeneratePage() {
                                     : 'Select a class to view slips'}
                             </h6>
                             {slips.length > 0 && (
-                                <div className="d-flex align-items-center gap-2">
+                                <div className="d-flex flex-wrap align-items-center gap-2">
                                     <span className="badge rounded-pill bg-light text-dark border">{slips.length} slips</span>
                                     {slips.some(s => s.is_family_slip) && (
                                         <span className="badge rounded-pill bg-warning text-dark border">
                                             <i className="bi bi-people-fill me-1"></i>
-                                            {slips.reduce((total, s) => total + (s.is_family_slip ? (s.family_members?.length || 1) : 1), 0)} students covered
+                                            {slips.reduce((total, s) => total + (s.is_family_slip ? (s.family_members?.length || 1) : 1), 0)} students
                                         </span>
                                     )}
                                     {hasPermission('fees', 'delete') && (
@@ -810,3 +810,4 @@ export default function FeeGeneratePage() {
         </div>
     );
 }
+

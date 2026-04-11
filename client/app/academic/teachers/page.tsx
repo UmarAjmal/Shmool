@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 // --- Types ---
@@ -103,7 +103,7 @@ export default function TeacherAssign() {
         } catch (err: any) {
             console.error("Fetch Error:", err);
             setError(`${err.message} (API: ${API_URL})`);
-            toast.error(`Error: ${err.message}`);
+            notify.error(`Error: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -537,4 +537,5 @@ export default function TeacherAssign() {
         </>
     );
 }
+
 

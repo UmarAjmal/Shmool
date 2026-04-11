@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -136,12 +136,12 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                 else setGuardianType('Other');
 
             } else {
-                toast.error("Failed to load student data");
+                notify.error("Failed to load student data");
                 router.push('/students');
             }
         } catch (e) {
             console.error(e);
-            toast.error("Error loading student");
+            notify.error("Error loading student");
         } finally {
             setLoading(false);
         }

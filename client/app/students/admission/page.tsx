@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function NewAdmission() {
@@ -173,7 +173,7 @@ export default function NewAdmission() {
             }
         } catch (error) {
             console.error('Error searching siblings:', error);
-            toast.error('Failed to search students');
+            notify.error('Failed to search students');
         } finally {
             setSearchingSiblings(false);
         }
@@ -183,7 +183,7 @@ export default function NewAdmission() {
     const selectSibling = (sibling: any) => {
         // Check if already selected
         if (selectedSiblings.some(s => s.student_id === sibling.student_id)) {
-            toast.warning('This sibling is already added!');
+            notify.warning('This sibling is already added!');
             return;
         }
 
@@ -222,7 +222,7 @@ export default function NewAdmission() {
             }));
         }
 
-        toast.success(`Sibling added: ${sibling.first_name} ${sibling.last_name}`);
+        notify.success(`Sibling added: ${sibling.first_name} ${sibling.last_name}`);
     };
 
     const removeSibling = (index: number) => {
@@ -1046,3 +1046,4 @@ export default function NewAdmission() {
         </div>
     );
 }
+

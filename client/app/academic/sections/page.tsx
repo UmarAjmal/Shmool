@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 type SectionItem = { 
@@ -281,3 +281,4 @@ export default function SectionSettings() {
         </div>
     );
 }
+

@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function StudentProfile({ params }: { params: { id: string } }) {
@@ -74,7 +74,7 @@ export default function StudentProfile({ params }: { params: { id: string } }) {
                 }
             } catch (err) {
                 console.error(err);
-                toast.error("Failed to load profile");
+                notify.error("Failed to load profile");
             } finally {
                 setLoading(false);
             }
@@ -156,13 +156,13 @@ export default function StudentProfile({ params }: { params: { id: string } }) {
             });
             if (res.ok) {
                 setStudent({ ...student, status: newStatus });
-                toast.success(`Status updated to ${newStatus}`);
+                notify.success(`Status updated to ${newStatus}`);
             } else {
-                toast.error('Failed to update status');
+                notify.error('Failed to update status');
             }
         } catch (e) { 
             console.error(e);
-            toast.error('Error updating status');
+            notify.error('Error updating status');
         }
     };
 
@@ -172,12 +172,12 @@ export default function StudentProfile({ params }: { params: { id: string } }) {
             const res = await fetch(`https://shmool.onrender.com/students/${params.id}/generate-credentials`, { method: 'PATCH' });
             const data = await res.json();
             if(res.ok) {
-                toast.success(`Credentials Created! Username: ${data.username}`);
+                notify.success(`Credentials Created! Username: ${data.username}`);
                 setStudent({...student, username: data.username});
             } else {
-                toast.error(data.error || "Failed");
+                notify.error(data.error || "Failed");
             }
-        } catch(e) { toast.error("Connection Error"); }
+        } catch(e) { notify.error("Connection Error"); }
     };
 
     const handleChangePassword = async (password: string) => {
@@ -188,12 +188,12 @@ export default function StudentProfile({ params }: { params: { id: string } }) {
                 body: JSON.stringify({ password })
             });
             if(res.ok) {
-                toast.success("Password changed successfully");
+                notify.success("Password changed successfully");
             } else {
                 const d = await res.json();
-                toast.error(d.error || "Failed to change password");
+                notify.error(d.error || "Failed to change password");
             }
-        } catch(e) { toast.error("Connection Error"); }
+        } catch(e) { notify.error("Connection Error"); }
     };
 
     // ── Academic helpers ─────────────────────────────────────────────────────

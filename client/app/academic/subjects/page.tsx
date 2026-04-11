@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 type SubjectItem = {
@@ -148,7 +148,7 @@ export default function SubjectSettings() {
         e.preventDefault();
         
         if (form.section_ids.length === 0) {
-            toast.error("Please select at least one section");
+            notify.error("Please select at least one section");
             return;
         }
 
@@ -445,3 +445,4 @@ export default function SubjectSettings() {
         </div>
     );
 }
+

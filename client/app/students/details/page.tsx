@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { notify } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Student = {
@@ -251,7 +251,7 @@ export default function StudentDetails() {
             }
         } catch (e) {
             console.error(e);
-            toast.error("Failed to fetch students");
+            notify.error("Failed to fetch students");
         } finally {
             setLoading(false);
         }
@@ -269,12 +269,12 @@ export default function StudentDetails() {
         try {
             const res = await fetch(`https://shmool.onrender.com/students/${id}`, { method: 'DELETE' });
             if (res.ok) {
-                toast.success("Student deleted successfully");
+                notify.success("Student deleted successfully");
                 fetchStudents();
             } else {
-                toast.error("Failed to delete student");
+                notify.error("Failed to delete student");
             }
-        } catch (e) { toast.error("Error deleting student"); }
+        } catch (e) { notify.error("Error deleting student"); }
     };
 
     // ── Column toggle ─────────────────────────────────────────────────────
@@ -322,7 +322,7 @@ export default function StudentDetails() {
     const doExportPDF = () => {
         const { headers, rows } = buildExportData();
         const win = window.open('', '_blank');
-        if (!win) { toast.error('Popup blocked — allow popups to export PDF.'); return; }
+        if (!win) { notify.error('Popup blocked — allow popups to export PDF.'); return; }
         const ths = headers.map(h => `<th>${h}</th>`).join('');
         const trs = rows.map(r => '<tr>' + r.map(v => `<td>${v}</td>`).join('') + '</tr>').join('');
         win.document.write(
