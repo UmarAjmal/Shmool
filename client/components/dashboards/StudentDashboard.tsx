@@ -402,7 +402,14 @@ export default function StudentDashboard({ user }: { user: any }) {
                         <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: '600px' }}>
                             <div className="card-header bg-white border-bottom-0 p-0">
                                 <ul className="nav nav-tabs nav-fill" role="tablist">
-                                    {['overview', 'academic', 'family', 'fees', 'attendance', 'documents'].map(tab => (
+                                    {[
+    hasPermission('dash.student_kpi', 'read') ? 'overview' : null,
+    'academic',
+    'family',
+    hasPermission('dash.student_fees', 'read') ? 'fees' : null,
+    hasPermission('dash.student_att', 'read') ? 'attendance' : null,
+    'documents'
+  ].filter((t): t is string => Boolean(t)).map(tab => (
                                         <li className="nav-item" key={tab}>
                                             <button 
                                                 className={`nav-link py-3 fw-bold text-uppercase border-0 rounded-0 ${activeTab === tab ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted'}`}
@@ -417,7 +424,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             </div>
                             
                             <div className="card-body p-4 p-lg-5 bg-light bg-opacity-50">
-                                {activeTab === 'overview' && (
+                                {activeTab === 'overview' && hasPermission('dash.student_kpi', 'read') && (
                                     <div className="animate__animated animate__fadeIn">
                                         <h5 className="fw-bold mb-4 text-dark border-start border-4 border-primary ps-3">Personal Details</h5>
                                         <div className="row g-4">
@@ -1003,7 +1010,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                     </div>
                                 )}
 
-                                {activeTab === 'fees' && (
+                                {activeTab === 'fees' && hasPermission('dash.student_fees', 'read') && (
                                     <div className="animate__animated animate__fadeIn">
                                         {/* Monthly Fee Card */}
                                         <div className="row g-4 mb-4">
@@ -1141,7 +1148,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                 )}
 
                                 {/* Family Monthly Fee Slips */}
-                                {activeTab === 'fees' && (
+                                {activeTab === 'fees' && hasPermission('dash.student_fees', 'read') && (
                                     <div className="card bg-white border-0 shadow-sm rounded-4 mt-4 overflow-hidden animate__animated animate__fadeInUp">
                                         <div className="card-header py-3" style={{ borderLeft: '4px solid var(--primary-teal)', backgroundColor: 'white' }}>
                                             <h6 className="fw-bold mb-0" style={{ color: 'var(--primary-dark)' }}>
@@ -1333,7 +1340,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                     </>
                                 )}
 
-                                {activeTab === 'attendance' && (
+                                {activeTab === 'attendance' && hasPermission('dash.student_att', 'read') && (
                                     <div className="animate__animated animate__fadeIn">
                                         {/* Filter row */}
                                         <div className="d-flex gap-2 mb-4 align-items-end flex-wrap">

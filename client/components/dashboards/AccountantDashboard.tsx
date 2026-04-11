@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import {
   AreaChart, Area, BarChart, Bar,
@@ -28,6 +29,7 @@ const CUSTOM_TOOLTIP = ({ active, payload, label }: any) => {
 };
 
 export default function AccountantDashboard({ userName }: { userName: string }) {
+  const { hasPermission } = useAuth();
   const [data, setData]   = useState<AccountantData | null>(null);
   const [loading, setLoad] = useState(true);
   const [err, setErr]     = useState('');
@@ -72,15 +74,18 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
       </>}
     >
       {/* KPI Row */}
-      <div className="dash-stat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))', gap:14, marginBottom:20 }}>
+        {hasPermission('dash.acc_kpi', 'read') && (
+        <div className="dash-stat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))', gap:14, marginBottom:20 }}>
         <StatCard icon="bi-cash-stack"              label="Today Collected"       value={<MaskedAmount amount={s.today_collected} />}   sub="Received today"    accent={C.green}  />
         <StatCard icon="bi-graph-up-arrow"          label={curMonth + ' Collected'} value={<MaskedAmount amount={s.month_collected} />} sub="This month total"  accent={C.teal}   />
         <StatCard icon="bi-exclamation-circle-fill" label="Pending Fees"          value={<MaskedAmount amount={s.pending_fees} />}      sub="Unpaid + partial"  accent={C.red}    />
         <StatCard icon="bi-people-fill"             label="Total Students"        value={fmt(s.total_students)}       sub="Enrolled"          accent={C.orange} />
-      </div>
+              </div>
+        )}
 
-      {/* Daily chart + Recent Payments */}
-      <div className="dash-side-grid dash-side-grid-right" style={{ display:'grid', gridTemplateColumns:'1fr 420px', gap:14, marginBottom:20, alignItems:'start' }}>
+        {/* Daily chart + Recent Payments */}
+        {hasPermission('dash.acc_charts', 'read') && (
+        <div className="dash-side-grid dash-side-grid-right" style={{ display:'grid', gridTemplateColumns:'1fr 420px', gap:14, marginBottom:20, alignItems:'start' }}>
         <Panel title="Daily Collection â€” Last 14 Days" icon="bi-graph-up-arrow"
           action={<span style={{ fontSize:12, color:'#94a3b8', fontWeight:600 }}>{<MaskedAmount amount={s.month_collected} />} this month</span>}>
           {data!.daily_chart.length === 0 ? <EmptyChart /> : (
@@ -112,12 +117,14 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
             </Link>
           }>
           <RecentPaymentsTable rows={data!.recent_payments.slice(0,7)} />
-        </Panel>
-      </div>
+                  </Panel>
+        </div>
+        )}
 
-      {/* Monthly chart */}
-      <div style={{ marginBottom:20 }}>
-        <Panel title="Monthly Collection — Last 6 Months" icon="bi-calendar3">
+        {/* Monthly chart */}
+        {hasPermission('dash.acc_charts', 'read') && (
+        <div style={{ marginBottom:20 }}>
+          <Panel title="Monthly Collection — Last 6 Months" icon="bi-calendar3">
           {data!.monthly_chart.length === 0 ? <EmptyChart /> : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data!.monthly_chart} margin={{top:8,right:16,left:8,bottom:0}} barCategoryGap="40%">
@@ -131,12 +138,13 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Panel>
-      </div>
+                          </ResponsiveContainer>
+            )}
+          </Panel>
+        </div>
+        )}
 
-      {/* Quick Actions */}
+        {/* Quick Actions */}
       <Panel title="Quick Actions" icon="bi-lightning-charge-fill">
         <div style={{ display:'flex', flexWrap:'wrap', gap:12, padding:'4px 0' }}>
           {[
@@ -168,8 +176,9 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
               <span style={{ fontSize:13, fontWeight:700, color:'#374151', transition:'color 0.2s' }}>{a.label}</span>
             </Link>
           ))}
-        </div>
-      </Panel>
-    </DashShell>
+                  </div>
+        </Panel>
+        
+      </DashShell>
   );
 }

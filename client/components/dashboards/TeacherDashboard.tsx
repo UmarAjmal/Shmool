@@ -69,7 +69,8 @@ export default function TeacherDashboard({ userId }: { userId: number }) {
       }
     >
       {/* KPI Row */}
-      <div className="dash-stat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:20 }}>
+        {hasPermission('dash.teacher_kpi', 'read') && (
+        <div className="dash-stat-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:20 }}>
         <StatCard icon="bi-people-fill"         label="My Students"     value={fmt(totalStudents)}           sub="Across all classes"    accent={C.teal}   />
         <StatCard icon="bi-building"            label="Classes Assigned" value={fmt(classes.length)}  sub="Teaching today"        accent={C.dark}   />
         <StatCard icon="bi-journal-bookmark"    label="Subjects"        value={fmt(subjects.length)}  sub="Assigned to me"        accent={C.orange} />
@@ -91,12 +92,14 @@ export default function TeacherDashboard({ userId }: { userId: number }) {
           <div>
             <div style={{ fontSize:26, fontWeight:800, color:attMeta.color, lineHeight:1 }}>{attMeta.label}</div>
             {myAtt?.check_in && <div style={{ fontSize:12, color:'#94a3b8', marginTop:5 }}>Check-in: {myAtt.check_in}</div>}
+                      </div>
           </div>
         </div>
-      </div>
+        )}
 
-      {/* Today's class attendance table */}
-      <div style={{ marginBottom:20 }}>
+        {/* Today's class attendance table */}
+        {hasPermission('dash.teacher_att', 'read') && (
+        <div style={{ marginBottom:20 }}>
         <Panel title="Today's Class Attendance" icon="bi-calendar-check-fill"
           action={<span style={{ fontSize:12, color:'#94a3b8', fontWeight:600 }}>{today}</span>}
           noPad>
@@ -147,13 +150,15 @@ export default function TeacherDashboard({ userId }: { userId: number }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          )}
-        </Panel>
-      </div>
+                          </table>
+            )}
+          </Panel>
+        </div>
+        )}
 
-      {/* Classes + Subjects grid */}
-      <div className="dash-side-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
+        {/* Classes + Subjects grid */}
+        {hasPermission('dash.teacher_classes', 'read') && (
+        <div className="dash-side-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:20 }}>
         <Panel title="My Classes" icon="bi-building"
           action={
             <Link href="/attendance/students" style={{ fontSize:12, color:C.orange, fontWeight:700, textDecoration:'none', display:'flex', alignItems:'center', gap:4 }}>
@@ -207,15 +212,16 @@ export default function TeacherDashboard({ userId }: { userId: number }) {
                   </div>
                   <div style={{ fontWeight:700, fontSize:13, color:'#1a2e3b' }}>{s.subject_name}</div>
                 </div>
-                <span style={{ fontSize:12, color:'#94a3b8' }}>{s.class_name}{s.section_name ? ' · ' : ''}</span>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      </div>
+                <span style={{ fontSize:12, color:'#94a3b8' }}>{s.class_name}{s.section_name ? ' · ' : ''}                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+        )}
 
-      {/* Recent Attendance */}
-      {recentAtt.length > 0 && (
+        {/* Recent Attendance */}
+        {hasPermission('dash.teacher_att', 'read') && recentAtt.length > 0 && (
         <Panel title="Recent Attendance Records" icon="bi-clock-history" noPad>
           <table style={{ width:'100%', borderCollapse:'collapse' as const, fontSize:13 }}>
             <thead>
