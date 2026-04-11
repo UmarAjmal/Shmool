@@ -13,8 +13,8 @@ StatCard, Panel, DashShell, DashLoading, DashError, EmptyChart, RecentPaymentsTa
 
 type AccountantData = {
   stats: { today_collected:number; month_collected:number; pending_fees:number; total_students:number };
-  daily_chart:   { date:string; label:string; amount:number }[];
-  monthly_chart: { month:string; amount:number }[];
+  fee_chart:     { date:string; label:string; amount:number }[];
+  monthly_chart: { label:string; amount:number }[];
   recent_payments: any[];
 };
 
@@ -47,7 +47,7 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
   const s        = data!.stats;
   const today    = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const curMonth = MONTHS[new Date().getMonth()];
-  const maxAmt   = Math.max(...data!.monthly_chart.map(r => r.amount), 1);
+  const maxAmt   = Math.max(...(data?.monthly_chart || []).map(r => r.amount), 1);
 
   return (
     <DashShell
@@ -86,11 +86,11 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
         {/* Daily chart + Recent Payments */}
         {hasPermission('dash.acc_charts', 'read') && (
         <div className="dash-side-grid dash-side-grid-right" style={{ display:'grid', gridTemplateColumns:'1fr 420px', gap:14, marginBottom:20, alignItems:'start' }}>
-        <Panel title="Daily Collection â€” Last 14 Days" icon="bi-graph-up-arrow"
-          action={<span style={{ fontSize:12, color:'#94a3b8', fontWeight:600 }}>{<MaskedAmount amount={s.month_collected} />} this month</span>}>
-          {data!.daily_chart.length === 0 ? <EmptyChart /> : (
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={data!.daily_chart.slice(-14)} margin={{top:8,right:16,left:8,bottom:0}}>
+          <Panel title="Daily Collection — Last 14 Days" icon="bi-graph-up-arrow"
+            action={<span style={{ fontSize:12, color:'#94a3b8', fontWeight:600 }}>{<MaskedAmount amount={s.month_collected} />} this month</span>}>
+            {data!.fee_chart?.length === 0 ? <EmptyChart /> : (
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={data!.fee_chart?.slice(-14)} margin={{top:8,right:16,left:8,bottom:0}}>
                 <defs>
                   <linearGradient id="dayGrd" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%"   stopColor={C.orange} stopOpacity={0.3} />
@@ -116,7 +116,7 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
               All <i className="bi bi-arrow-right-short" style={{ fontSize:15 }} />
             </Link>
           }>
-          <RecentPaymentsTable rows={data!.recent_payments.slice(0,7)} />
+          <RecentPaymentsTable rows={(data!.recent_payments || []).slice(0,7)} />
                   </Panel>
         </div>
         )}
@@ -125,15 +125,15 @@ export default function AccountantDashboard({ userName }: { userName: string }) 
         {hasPermission('dash.acc_charts', 'read') && (
         <div style={{ marginBottom:20 }}>
           <Panel title="Monthly Collection — Last 6 Months" icon="bi-calendar3">
-          {data!.monthly_chart.length === 0 ? <EmptyChart /> : (
+          {!data!.monthly_chart?.length ? <EmptyChart /> : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data!.monthly_chart} margin={{top:8,right:16,left:8,bottom:0}} barCategoryGap="40%">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="label" tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={fmt} tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} width={52} />
                 <Tooltip content={<CUSTOM_TOOLTIP />} />
                 <Bar dataKey="amount" radius={[7,7,0,0]} maxBarSize={48}>
-                  {data!.monthly_chart.map((r, i) => (
+                  {(data!.monthly_chart || []).map((r, i) => (
                     <Cell key={i} fill={r.amount === maxAmt ? C.orange : C.teal} fillOpacity={r.amount === maxAmt ? 1 : 0.65} />
                   ))}
                 </Bar>
