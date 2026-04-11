@@ -16,14 +16,32 @@ router.post('/generate', async (req, res) => {
 
         // SECURITY CHECK: Verify none of the requested months are already generated
         const checkQuery = `
-            SELECT DISTINCT month
+            SELECT DISTINCT month, months_list
             FROM monthly_fee_slips
-            WHERE class_id = $1 AND year = $2 AND month = ANY($3::int[])
+            WHERE class_id = $1 AND year = $2 
+              AND (
+                 month = ANY($3::int[]) 
+                 OR 
+                 $3::int[] && months_list
+              )
         `;
         const checkRes = await client.query(checkQuery, [class_id, year, monthsArray]);
         if (checkRes.rows.length > 0) {
             client.release();
-            const conflictingMonths = checkRes.rows.map(r => r.month).join(', ');
+            let conflictingSet = new Set();
+            for (const r of checkRes.rows) {
+                if (r.months_list && r.months_list.length > 0) {
+                    r.months_list.forEach(m => conflictingSet.add(m));
+                } else {
+                    conflictingSet.add(r.month);
+                }
+            }
+            // Intersect with requested to show EXACTLY which ones collide
+            const conflictingMonths = [...conflictingSet]
+                .filter(m => monthsArray.includes(m))
+                .sort((a,b)=>a-b)
+                .join(', ');
+                
             return res.status(400).json({ error: `Cannot generate. The following month(s) are already generated for this class: ${conflictingMonths}. Please select only ungenerated months or undo the existing ones first.` });
         }
 
@@ -195,12 +213,13 @@ router.post('/generate', async (req, res) => {
         };
 
         const insertSlip = async (student, totalAmount, lineItems, isFamilySlip) => {
+            const hasMulti = monthsArray.length > 1;
             const slip = await client.query(
                 `INSERT INTO monthly_fee_slips
-                    (student_id, family_id, class_id, month, year, due_date, issue_date, total_amount, is_family_slip)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING slip_id`,
+                    (student_id, family_id, class_id, month, year, due_date, issue_date, total_amount, is_family_slip, has_multi_months, months_list)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING slip_id`,
                 [student.student_id, student.family_id, class_id,
-                 month, year, due_date || null, issue_date || null, totalAmount, isFamilySlip]
+                 month, year, due_date || null, issue_date || null, totalAmount, isFamilySlip, hasMulti, monthsArray]
             );
             const slipId = slip.rows[0].slip_id;
             for (const item of lineItems)
@@ -223,7 +242,8 @@ router.post('/generate', async (req, res) => {
             // Check if ANY member already has a slip for ANY of the selected months
             const existing = await client.query(
                 `SELECT slip_id FROM monthly_fee_slips
-                 WHERE family_id = $1 AND year = $2 AND month = ANY($3)`,
+                 WHERE family_id = $1 AND year = $2 
+                   AND (month = ANY($3::int[]) OR $3::int[] && months_list)`,
                 [fid, year, monthsArray]
             );
             if (existing.rows.length > 0) { skippedCount++; continue; }
@@ -268,7 +288,9 @@ router.post('/generate', async (req, res) => {
         // ─── INDIVIDUAL SLIPS: Solo students (no family or single-member family) ──
         for (const student of soloStudents) {
             const existing = await client.query(
-                'SELECT slip_id FROM monthly_fee_slips WHERE student_id=$1 AND year=$2 AND month = ANY($3)',
+                `SELECT slip_id FROM monthly_fee_slips 
+                 WHERE student_id=$1 AND year=$2 
+                   AND (month = ANY($3::int[]) OR $3::int[] && months_list)`,
                 [student.student_id, year, monthsArray]
             );
             if (existing.rows.length > 0) { skippedCount++; continue; }
@@ -318,7 +340,7 @@ router.post('/generate', async (req, res) => {
 router.get('/available-months', async (req, res) => {
     try {
         const { year, class_id } = req.query;
-        let query = 'SELECT DISTINCT month FROM monthly_fee_slips WHERE 1=1';
+        let query = 'SELECT DISTINCT unnest(COALESCE(months_list, ARRAY[month])) as month_val FROM monthly_fee_slips WHERE 1=1';
         let params = [];
         if (year) { 
             params.push(year);
@@ -328,9 +350,9 @@ router.get('/available-months', async (req, res) => {
             params.push(class_id);
             query += ` AND class_id = $${params.length}`;
         }
-        query += ' ORDER BY month ASC';
+        query += ' ORDER BY month_val ASC';
         const result = await pool.query(query, params);
-        res.json({ months: result.rows.map(r => parseInt(r.month, 10)) });
+        res.json({ months: result.rows.map(r => parseInt(r.month_val, 10)) });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -342,7 +364,7 @@ router.get('/', async (req, res) => {
 
         // Build WHERE conditions dynamically
         const params = [year];
-        const monthClause  = month    ? `AND mfs.month = $${params.push(month)}`    : '';
+        const monthClause  = month    ? `AND (mfs.month = $${params.push(month)} OR $${params.length} = ANY(mfs.months_list))`    : '';
         const classClause  = class_id
             ? `AND (
                 mfs.class_id = $${params.push(class_id)}
@@ -556,7 +578,7 @@ router.get('/print-queue', async (req, res) => {
             LEFT JOIN classes c ON mfs.class_id = c.class_id       
             LEFT JOIN sections sec ON s.section_id = sec.section_id
             LEFT JOIN slip_line_items sli ON mfs.slip_id = sli.slip_id
-            WHERE mfs.month = $1 AND mfs.year = $2
+            WHERE (mfs.month = $1 OR $1 = ANY(mfs.months_list)) AND mfs.year = $2
             GROUP BY mfs.slip_id, mfs.student_id, mfs.family_id, mfs.class_id,
                      mfs.total_amount, mfs.paid_amount, mfs.status, mfs.due_date, mfs.issue_date,
                      mfs.is_printed, mfs.printed_at, mfs.is_family_slip,
@@ -1022,7 +1044,7 @@ router.delete('/class/:class_id/month/:month/year/:year', async (req, res) => {
         // Fetch all slips for this class+month+year
         const all = await client.query(
             `SELECT slip_id, status FROM monthly_fee_slips
-             WHERE class_id = $1 AND month = $2 AND year = $3`,
+             WHERE class_id = $1 AND (month = $2 OR $2 = ANY(months_list)) AND year = $3`,
             [class_id, month, year]
         );
 
