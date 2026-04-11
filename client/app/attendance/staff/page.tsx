@@ -63,29 +63,11 @@ export default function StaffAttendancePage() {
         setLoading(false);
     },[date,deptId,canEditLocked]);
 
-    // Toggle lock on a single row
-    const toggleLock = (id:number) => {
-        if (!canEditLocked) {
-            notify.warning('You do not have permission to unlock attendance.');
-            return;
-        }
-        setLockedIds(prev => {
-            const s = new Set(prev);
-            if(s.has(id)) {
-                s.delete(id); 
-                setAllSaved(false);
-            } else {
-                s.add(id);
-            }
-            return s;
-        });
-    };
-
     // Mark all UNLOCKED rows with a status
     const markAll = (status:StatusType)=>{
         setStatuses(prev=>{
             const u = {...prev};
-            staff.forEach(e=>{ if(!lockedIds.has(e.employee_id)) u[e.employee_id]=status; });
+            staff.forEach(e=>{ if(!lockedIds.has(e.employee_id) || canEditLocked) u[e.employee_id]=status; });
             return u;
         });
     };
@@ -111,7 +93,7 @@ export default function StaffAttendancePage() {
     const counts = STATUS_OPTS.reduce((a,s)=>{ a[s]=staff.filter(e=>(statuses[e.employee_id]||'Present')===s).length; return a; },{} as Record<string,number>);
     const total  = staff.length;
     const pct    = total?Math.round(((counts.Present)/total)*100):0;
-    const unlockedCount = staff.filter(e=>!lockedIds.has(e.employee_id)).length;
+    const unlockedCount = staff.filter(e=>(!lockedIds.has(e.employee_id) || canEditLocked)).length;
     const fmtDate= (d:string)=>new Date(d+'T00:00:00').toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
     // Group by department
@@ -251,7 +233,7 @@ export default function StaffAttendancePage() {
                                     <table className="table table-hover align-middle mb-0">
                                         <thead style={{background:'#f8f9fa'}}>
                                             <tr>
-                                                {['#','Employee','Designation','Status','Lock'].map((h,i)=>(
+                                                {['#','Employee','Designation','Status'].map((h,i)=>(
                                                     <th key={i} className="border-0 fw-semibold" style={{color:'var(--primary-dark)',fontSize:'0.72rem',textTransform:'uppercase',letterSpacing:'0.07em',padding:'10px 16px',whiteSpace:'nowrap'}}>
                                                         {h}
                                                     </th>
@@ -261,7 +243,7 @@ export default function StaffAttendancePage() {
                                         <tbody>
                                             {members.map((e,idx)=>{
                                                 const cur=(statuses[e.employee_id]||'Present') as StatusType;
-                                                const isLocked = lockedIds.has(e.employee_id);
+                                                const isLocked = lockedIds.has(e.employee_id) && !canEditLocked;
                                                 return (
                                                     <tr key={e.employee_id} style={{borderLeft:`3px solid ${S_COLOR[cur]}`,background:isLocked?(cur==='Absent'?'#fff0f0':cur==='Leave'?'#f0f4ff':'#f0fdf8'):cur==='Absent'?'#fff8f8':cur==='Leave'?'#f5f8ff':'#fff',transition:'background 0.2s'}}>
                                                         <td className="ps-4 text-muted" style={{fontSize:'0.8rem',width:50}}>
@@ -301,17 +283,6 @@ export default function StaffAttendancePage() {
                                                                 </div>
                                                             )}
                                                         </td>
-                                                        {/* PER-ROW LOCK BUTTON */}
-                                                        <td style={{padding:'6px 12px',width:48}}>
-                                                            <button
-                                                                onClick={()=>toggleLock(e.employee_id)}
-                                                                disabled={!canEditLocked}
-                                                                title={isLocked?'Unlock row (Admin Only)':'Lock row'}
-                                                                className="btn btn-sm d-flex align-items-center justify-content-center"
-                                                                style={{width:34,height:34,borderRadius:8,border:`1.5px solid ${isLocked?'#e13232':'#dee2e6'}`,background:isLocked?'#fde8e8':'#f8f9fa',color:isLocked?'#e13232':'#adb5bd',transition:'all 0.15s',padding:0,opacity:!canEditLocked ? 0.5 : 1,cursor:!canEditLocked ? 'not-allowed' : 'pointer'}}>
-                                                                <i className={`bi ${isLocked?'bi-lock-fill':'bi-unlock'}`} style={{fontSize:'0.88rem'}}/>
-                                                            </button>
-                                                        </td>
                                                     </tr>
                                                 );
                                             })}
@@ -330,11 +301,6 @@ export default function StaffAttendancePage() {
                                             <i className={`bi ${S_ICON[s]} me-1`} style={{fontSize:'0.72rem'}}/>{counts[s]} {s}
                                         </span>
                                     ))}
-                                    {unlockedCount>0&&(
-                                        <span className="badge rounded-pill px-2 py-1" style={{background:'#fff3cd',color:'#856404',fontSize:'0.75rem',border:'1px solid #ffc10766'}}>
-                                            <i className="bi bi-unlock me-1"/>{unlockedCount} unlocked
-                                        </span>
-                                    )}
                                 </div>
                                 {hasPermission('attendance', 'write') && (
                                 <button className="btn fw-bold px-4 rounded-3" onClick={saveAttendance}
