@@ -83,6 +83,22 @@ async function createAuthTables() {
             adminRoleId = roleCheck.rows[0].id;
         }
 
+        // 5. Seed Core Roles (Teacher, Accountant, Student)
+        const coreRoles = [
+            { name: 'Teacher', desc: 'Faculty & teaching staff' },
+            { name: 'Accountant', desc: 'Finance & fee management' },
+            { name: 'Student', desc: 'Student portal access' }
+        ];
+
+        for (const r of coreRoles) {
+            await pool.query(
+                "INSERT INTO app_roles (role_name, description, is_system_default) VALUES ($1, $2, $3) ON CONFLICT (role_name) DO UPDATE SET is_system_default = true",
+                [r.name, r.desc, true]
+            );
+        }
+        
+        console.log("Core roles secured.");
+
         console.log("Auth tables setup complete.");
 
     } catch (err) {
