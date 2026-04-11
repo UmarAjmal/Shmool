@@ -340,7 +340,7 @@ router.post('/generate', async (req, res) => {
 router.get('/available-months', async (req, res) => {
     try {
         const { year, class_id } = req.query;
-        let query = 'SELECT DISTINCT unnest(COALESCE(months_list, ARRAY[month])) as month_val FROM monthly_fee_slips WHERE 1=1';
+        let query = 'SELECT DISTINCT COALESCE(months_list, ARRAY[month]) AS months_array FROM monthly_fee_slips WHERE 1=1';
         let params = [];
         if (year) { 
             params.push(year);
@@ -350,9 +350,22 @@ router.get('/available-months', async (req, res) => {
             params.push(class_id);
             query += ` AND class_id = $${params.length}`;
         }
-        query += ' ORDER BY month_val ASC';
         const result = await pool.query(query, params);
-        res.json({ months: result.rows.map(r => parseInt(r.month_val, 10)) });
+        
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        
+        const data = result.rows.map(r => {
+            const arr = r.months_array.map(Number).sort((a,b)=>a-b);
+            const val = arr.join(',');
+            let lbl = arr.length === 1 
+                ? MONTH_NAMES[arr[0]-1] 
+                : `${MONTH_NAMES[arr[0]-1]} - ${MONTH_NAMES[arr[arr.length-1]-1]}`;
+            return { value: val, label: lbl, months: arr };
+        });
+        
+        data.sort((a, b) => a.months[0] - b.months[0]);
+        
+        res.json({ months: data });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -364,7 +377,11 @@ router.get('/', async (req, res) => {
 
         // Build WHERE conditions dynamically
         const params = [year];
-        const monthClause  = month    ? `AND (mfs.month = $${params.push(month)} OR $${params.length} = ANY(mfs.months_list))`    : '';
+        let monthClause = '';
+        if (month) {
+            params.push(month.split(',').map(Number));
+            monthClause  = `AND COALESCE(mfs.months_list, ARRAY[mfs.month]) = $${params.length}::int[]`;
+        }
         const classClause  = class_id
             ? `AND (
                 mfs.class_id = $${params.push(class_id)}
@@ -562,6 +579,7 @@ router.get('/print-queue', async (req, res) => {
     const { month, year, class_id } = req.query;
     if (!month || !year) return res.status(400).json({ error: 'month and year required' });
     try {
+        const mArr = month.split(',').map(Number);
         // Fetch all slips for this month/year with student + class info + line items
         const result = await pool.query(`
             SELECT mfs.slip_id, mfs.student_id, mfs.family_id, mfs.class_id,
@@ -578,7 +596,7 @@ router.get('/print-queue', async (req, res) => {
             LEFT JOIN classes c ON mfs.class_id = c.class_id       
             LEFT JOIN sections sec ON s.section_id = sec.section_id
             LEFT JOIN slip_line_items sli ON mfs.slip_id = sli.slip_id
-            WHERE (mfs.month = $1 OR $1 = ANY(mfs.months_list)) AND mfs.year = $2
+            WHERE COALESCE(mfs.months_list, ARRAY[mfs.month]) = $1::int[] AND mfs.year = $2
             GROUP BY mfs.slip_id, mfs.student_id, mfs.family_id, mfs.class_id,
                      mfs.total_amount, mfs.paid_amount, mfs.status, mfs.due_date, mfs.issue_date,
                      mfs.is_printed, mfs.printed_at, mfs.is_family_slip,
@@ -1041,11 +1059,13 @@ router.delete('/class/:class_id/month/:month/year/:year', async (req, res) => {
         const { class_id, month, year } = req.params;
         await client.query('BEGIN');
 
+        const mArr = month.split(',').map(Number);
+        
         // Fetch all slips for this class+month+year
         const all = await client.query(
             `SELECT slip_id, status FROM monthly_fee_slips
-             WHERE class_id = $1 AND (month = $2 OR $2 = ANY(months_list)) AND year = $3`,
-            [class_id, month, year]
+             WHERE class_id = $1 AND COALESCE(months_list, ARRAY[month]) = $2::int[] AND year = $3`,
+            [class_id, mArr, year]
         );
 
         const paidSlips    = all.rows.filter(r => r.status === 'paid');
