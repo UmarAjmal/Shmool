@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 interface ClassItem { class_id: number; class_name: string; }
 interface FeeHead { head_id: number; head_name: string; head_type: string; }
@@ -48,7 +49,6 @@ export default function FeeGeneratePage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [generating, setGenerating] = useState(false);
     const [loadingSlips, setLoadingSlips] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
     const [planInfo, setPlanInfo] = useState<any | null>(null);
     const [matchingPlans, setMatchingPlans] = useState<any[]>([]);
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
@@ -183,10 +183,10 @@ export default function FeeGeneratePage() {
 
     const handleGenerate = async () => {
         if (!selectedClass || selectedMonths.length === 0 || !selectedYear) {
-            setMessage({ type: 'danger', text: 'Please select class, at least one month and year.' });
+            toast.error('Please select class, at least one month and year.');
             return;
         }
-        setGenerating(true); setMessage(null);
+        setGenerating(true);
         const sortedMonths = [...selectedMonths].sort((a, b) => parseInt(a) - parseInt(b));
         try {
             // Send ONE request with all selected months — server creates a single combined slip
@@ -205,16 +205,16 @@ export default function FeeGeneratePage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                setMessage({ type: 'danger', text: data.error || 'Generation failed' });
+                toast.error(data.error || 'Generation failed');
             } else {
                 const monthLabels = sortedMonths.map(m => MONTHS[parseInt(m) - 1]).join(' + ');
                 const slipNote = sortedMonths.length > 1 ? ` (combined ${sortedMonths.length}-month slip per student)` : '';
-                setMessage({ type: 'success', text: `✅ Generated slips for ${monthLabels}${slipNote} — ${data.generated} created, ${data.skipped} skipped.` });
+                toast.success(`Generated slips for ${monthLabels}${slipNote} — ${data.generated} created, ${data.skipped} skipped.`);
             }
             fetchSlips();
             fetchGeneratedMonths();
         } catch (err: any) {
-            setMessage({ type: 'danger', text: err.message });
+            toast.error(err.message);
         } finally { setGenerating(false); }
     };
 
@@ -236,7 +236,9 @@ export default function FeeGeneratePage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
-            setShowEdit(false); fetchSlips();
+            setShowEdit(false); 
+            fetchSlips();
+            toast.success("Fee slip updated successfully");
         } catch (err: any) { setEditError(err.message); }
         finally { setEditLoading(false); }
     };
@@ -273,14 +275,15 @@ export default function FeeGeneratePage() {
             const data = await r.json();
             if (!r.ok) throw new Error(data.error);
             setShowUndoModal(false);
-            setMessage({
-                type: data.blocked_paid > 0 ? 'danger' : 'success',
-                text: data.message
-            });
+            if (data.blocked_paid > 0) {
+                toast.warning(data.message);
+            } else {
+                toast.success(data.message);
+            }
             fetchSlips();
             fetchGeneratedMonths();
         } catch (err: any) {
-            setMessage({ type: 'danger', text: err.message });
+            toast.error(err.message);
             setShowUndoModal(false);
         } finally { setUndoLoading(false); }
     };
@@ -324,13 +327,6 @@ export default function FeeGeneratePage() {
                     <i className="bi bi-printer"></i> Print Slips
                 </button>
             </div>
-
-            {message && (
-                <div className={`alert alert-${message.type} d-flex align-items-center animate__animated animate__fadeIn`}>
-                    <i className={`bi ${message.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} me-2`}></i>
-                    {message.text}
-                </div>
-            )}
 
             <div className="row g-4">
                 {/* LEFT: Controls */}
