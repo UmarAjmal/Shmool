@@ -10,8 +10,15 @@ const pool = require('../db');
 // Returns all students in a class with their attendance status for the given date
 router.get('/students/daily', async (req, res) => {
     try {
-        const { class_id, date } = req.query;
+        const { class_id, section_id, date } = req.query;
         if (!class_id || !date) return res.status(400).json({ error: 'class_id and date required' });
+
+        let sectionFilter = '';
+        const params = [class_id, date];
+        if (section_id) {
+            params.push(section_id);
+            sectionFilter = `AND s.section_id = $3`;
+        }
 
         const result = await pool.query(
             `SELECT s.student_id, s.first_name, s.last_name, s.admission_no, s.roll_no,
@@ -20,9 +27,9 @@ router.get('/students/daily', async (req, res) => {
              FROM students s
              LEFT JOIN classes c ON s.class_id = c.class_id
              LEFT JOIN student_attendance sa ON sa.student_id = s.student_id AND sa.attendance_date = $2
-             WHERE s.class_id = $1 AND s.status = 'Active'
+             WHERE s.class_id = $1 AND s.status = 'Active' ${sectionFilter}
              ORDER BY s.roll_no NULLS LAST, s.first_name`,
-            [class_id, date]
+            params
         );
         res.json(result.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
