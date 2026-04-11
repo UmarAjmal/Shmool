@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
@@ -1011,8 +1011,8 @@ const getWaLink = (phone: string) => {
                                         {/* Monthly Fee Card */}
                                         <div className="row g-4 mb-4">
 {/* Monthly / Family Fee Card */}
-                                        <div className="col-md-4">
-                                            <div className="card border-0 shadow-sm rounded-4 text-center overflow-hidden">
+                                        <div className="col-xl-4 col-lg-5">
+                                            <div className="card border-0 shadow-sm rounded-4 text-center overflow-hidden h-100">
                                                 <div className="card-header text-white py-3" style={{ background: 'linear-gradient(135deg, var(--primary-dark), var(--primary-teal))' }}>
                                                     <i className={`bi ${(student.family_size || 1) > 1 ? 'bi-people-fill' : 'bi-arrow-repeat'} fs-4 d-block mb-1`}></i>
                                                     <h6 className="mb-0 fw-bold">{(student.family_size || 1) > 1 ? 'Family Monthly Fee' : 'Monthly Fee (Tuition)'}</h6>
@@ -1024,14 +1024,14 @@ const getWaLink = (phone: string) => {
                                                     {(student.family_size || 1) > 1 ? (
                                                         <>
                                                             <div className="text-muted small mt-1">Shared by {student.family_size} family members</div>
-                                                            <div className="badge bg-warning bg-opacity-10 text-warning border border-warning mt-3">
+                                                            <div className="badge bg-warning bg-opacity-10 text-warning border border-warning mt-3 text-wrap px-3 py-2" style={{lineHeight: 1.4}}>
                                                                 <i className="bi bi-people-fill me-1"></i>Family Slip — 1 slip per family
                                                             </div>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <div className="text-muted small mt-1">Billed every month</div>
-                                                            <div className="badge bg-success bg-opacity-10 text-success border border-success mt-3">Auto-applied on slip generation</div>
+                                                            <div className="badge bg-success bg-opacity-10 text-success border border-success mt-3 text-wrap px-3 py-2" style={{lineHeight: 1.4}}>Auto-applied on slip generation</div>
                                                         </>
                                                     )}
                                                     </div>
@@ -1039,18 +1039,20 @@ const getWaLink = (phone: string) => {
                                             </div>
 
                                             {/* Admission Fee Card */}
-                                            <div className="col-md-8">
+                                            <div className="col-xl-8 col-lg-7">
                                                 {loadingFees ? (
-                                                    <div className="card border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-center" style={{ minHeight: 180 }}>
+                                                    <div className="card border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-center h-100" style={{ minHeight: 180 }}>
                                                         <div className="spinner-border text-primary"></div>
                                                     </div>
                                                 ) : !admissionFee ? (
-                                                    <div className="card border-0 shadow-sm rounded-4 text-center py-5">
-                                                        <i className="bi bi-receipt fs-1 text-muted d-block mb-2"></i>
-                                                        <p className="text-muted mb-0">No admission fee recorded for this student.</p>
+                                                    <div className="card border-0 shadow-sm rounded-4 text-center py-5 d-flex align-items-center justify-content-center h-100">
+                                                        <div>
+                                                            <i className="bi bi-receipt fs-1 text-muted d-block mb-2"></i>
+                                                            <p className="text-muted mb-0">No admission fee recorded for this student.</p>
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                                                    <div className="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                                                         <div className="card-header py-3" style={{ borderLeft: admissionFee.status !== 'paid' ? '4px solid #dc3545' : '4px solid #198754', backgroundColor: 'white' }}>
                                                             <div className="d-flex justify-content-between align-items-center">
                                                                 <h6 className="fw-bold mb-0" style={{ color: 'var(--primary-dark)' }}>
@@ -1075,7 +1077,7 @@ const getWaLink = (phone: string) => {
                                                                     { label: 'Paid', value: fmt(admissionFee.paid_amount), color: '#198754' },
                                                                     { label: 'Remaining', value: fmt(admissionFee.remaining_amount), color: admissionFee.status !== 'paid' ? '#dc3545' : '#198754' },
                                                                 ].map((s, i) => (
-                                                                    <div className="col-4" key={i}>
+                                                                    <div className="col-12 col-md-4" key={i}>
                                                                         <div className="rounded-3 py-3" style={{ backgroundColor: `${s.color}0f` }}>
                                                                             <div className="text-muted small">{s.label}</div>
                                                                             <div className="fw-bold fs-5" style={{ color: s.color }}>{s.value}</div>
@@ -1236,7 +1238,7 @@ const getWaLink = (phone: string) => {
                                                     { label: 'Collected via Slips', value: fmt(student.opening_balance_paid), color: '#0d9e6e', bg: '#e6f9f3' },
                                                     { label: 'Still Remaining', value: fmt(student.opb_remaining), color: parseFloat(student.opb_remaining || '0') > 0 ? '#e13232' : '#0d9e6e', bg: parseFloat(student.opb_remaining || '0') > 0 ? '#fde8e8' : '#e6f9f3' },
                                                 ].map((s, i) => (
-                                                    <div className="col-4" key={i}>
+                                                    <div className="col-12 col-md-4" key={i}>
                                                         <div className="rounded-3 py-3" style={{ background: s.bg }}>
                                                             <div className="text-muted small">{s.label}</div>
                                                             <div className="fw-bold fs-6" style={{ color: s.color }}>{s.value}</div>
