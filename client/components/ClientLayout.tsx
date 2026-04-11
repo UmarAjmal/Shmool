@@ -156,7 +156,7 @@ const SidebarInner = memo(function SidebarInner({ user, isLoggedIn, logout, hasP
     if (isMobile) setOpen(false);
   }, [isMobile, startNav]);
 
-  const expanded = open || isMobile;
+  const expanded = open;
 
   return (
     <>

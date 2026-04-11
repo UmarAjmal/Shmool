@@ -770,3 +770,15 @@ html, body { overflow-x: hidden; }
   background-color: transparent !important;
 }
 
+/* --- Student Profile Mobile Fixes --- */
+@media (max-width: 991px) {
+  .profile-hero { height: auto !important; min-height: 250px; padding-bottom: 70px; }
+  .profile-hero .d-flex.align-items-end { flex-direction: column; align-items: center !important; text-align: center; gap: 15px !important; margin-bottom: -130px !important; }
+  .profile-hero img.rounded-circle { width: 120px !important; height: 120px !important; }
+  .profile-hero .mb-5 { margin-bottom: 0 !important; }
+  .profile-side-grid > .col-lg-3 { margin-top: 60px; }
+  .nav-tabs.nav-fill { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; justify-content: flex-start !important; padding-bottom: 5px; }
+  .nav-tabs.nav-fill .nav-item { flex: 0 0 auto; width: auto !important; }
+  .nav-tabs.nav-fill .nav-link { padding: 0.6rem 1rem !important; }
+}
+

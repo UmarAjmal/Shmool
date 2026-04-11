@@ -274,7 +274,7 @@ const getWaLink = (phone: string) => {
     return (
         <div className="container-fluid p-0 bg-light min-vh-100">
             {/* HERO SECTION */}
-            <div className="position-relative" style={{ height: '280px', background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)' }}>
+            <div className="position-relative profile-hero" style={{ height: '280px', background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)' }}>
                 <div className="position-absolute top-0 start-0 w-100 h-100 opacity-10" 
                      style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                 
