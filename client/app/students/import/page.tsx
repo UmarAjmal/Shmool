@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as XLSX from 'xlsx';
-import { notify } from '@/app/utils/notify';
+import { notify, toast } from '@/app/utils/notify';
 
 export default function ImportStudents() {
     const router = useRouter();

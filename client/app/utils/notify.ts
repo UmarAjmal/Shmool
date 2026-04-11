@@ -38,3 +38,6 @@ export const notify = {
     error: (msg: string) => { toast.error(msg); playNotifySound('error'); },
     warning: (msg: string) => { toast.warning(msg); playNotifySound('warning'); }
 };
+
+
+export { toast };

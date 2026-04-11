@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { notify } from '@/app/utils/notify';
+import { notify, toast } from '@/app/utils/notify';
 import { useAuth } from '@/contexts/AuthContext';
 
 type SubjectItem = {
