@@ -397,8 +397,8 @@ router.get('/admission-fees', async (req, res) => {
         else if (!status) { whereClause += ` AND afl.status IN ('unpaid','partial')`; }
         if (class_id) { params.push(class_id); whereClause += ` AND s.class_id = $${params.length}`; }
         const result = await pool.query(`
-            SELECT afl.ledger_id, afl.student_id, afl.total_amount, afl.paid_amount,
-                (afl.total_amount - afl.paid_amount) AS remaining_amount, afl.status, afl.admission_date,
+            SELECT afl.ledger_id, afl.student_id, afl.total_amount, afl.paid_amount, COALESCE(afl.discount_amount, 0) AS discount_amount,
+                (afl.total_amount - afl.paid_amount - COALESCE(afl.discount_amount, 0)) AS remaining_amount, afl.status, afl.admission_date,
                 s.first_name, s.last_name, s.admission_no, s.father_name, s.student_mobile, s.monthly_fee,
                 c.class_name, sec.section_name
             FROM admission_fee_ledger afl
@@ -409,14 +409,14 @@ router.get('/admission-fees', async (req, res) => {
             ORDER BY CASE afl.status WHEN 'unpaid' THEN 1 WHEN 'partial' THEN 2 ELSE 3 END, afl.admission_date DESC
         `, params);
         const statsResult = await pool.query(`
-            SELECT COUNT(*) FILTER (WHERE status='unpaid') AS unpaid_count,
+            SELECT COUNT(*) FILTER (WHERE status='unpaid') AS unpaid_count,  
                    COUNT(*) FILTER (WHERE status='partial') AS partial_count,
-                   COUNT(*) FILTER (WHERE status='paid') AS paid_count,
+                   COUNT(*) FILTER (WHERE status='paid') AS paid_count,      
                    COALESCE(SUM(total_amount),0) AS total_billed,
                    COALESCE(SUM(paid_amount),0) AS total_collected,
-                   COALESCE(SUM(total_amount-paid_amount),0) AS total_outstanding
+                   COALESCE(SUM(total_amount - paid_amount - COALESCE(discount_amount, 0)),0) AS total_outstanding
             FROM admission_fee_ledger`);
-        res.json({ ledgers: result.rows, stats: statsResult.rows[0] });
+        res.json({ ledgers: result.rows, stats: statsResult.rows[0] });      
     } catch (err) { console.error(err); res.status(500).json({ error: err.message }); }
 });
 
@@ -425,7 +425,7 @@ router.get('/admission-fees/student/:student_id', async (req, res) => {
     try {
         const { student_id } = req.params;
         const ledger = await pool.query(`
-            SELECT afl.*, (afl.total_amount - afl.paid_amount) AS remaining_amount,
+            SELECT afl.*, (afl.total_amount - afl.paid_amount - COALESCE(afl.discount_amount, 0)) AS remaining_amount,
                 s.first_name, s.last_name, s.admission_no, s.monthly_fee, s.father_name,
                 c.class_name, sec.section_name
             FROM admission_fee_ledger afl
@@ -435,7 +435,7 @@ router.get('/admission-fees/student/:student_id', async (req, res) => {
             WHERE afl.student_id = $1`, [student_id]);
         if (ledger.rows.length === 0) return res.json({ ledger: null, payments: [] });
         const payments = await pool.query(`SELECT * FROM admission_fee_payments WHERE ledger_id=$1 ORDER BY payment_date DESC`, [ledger.rows[0].ledger_id]);
-        res.json({ ledger: ledger.rows[0], payments: payments.rows });
+        res.json({ ledger: ledger.rows[0], payments: payments.rows });       
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -444,33 +444,58 @@ router.post('/admission-fees/:ledger_id/pay', async (req, res) => {
     const client = await pool.connect();
     try {
         const { ledger_id } = req.params;
-        const { amount_paid, payment_method, received_by, reference_no, notes, payment_date } = req.body;
-        if (!amount_paid || parseFloat(amount_paid) <= 0)
-            return res.status(400).json({ error: 'amount_paid must be greater than 0' });
+        const { amount_paid, discount_amount, payment_method, received_by, reference_no, notes, payment_date } = req.body;
+        
+        const payVal = parseFloat(amount_paid) || 0;
+        const discVal = parseFloat(discount_amount) || 0;
+        
+        if (payVal < 0 || discVal < 0 || (payVal === 0 && discVal === 0))
+            return res.status(400).json({ error: 'amount_paid or discount must be greater than 0' });
+            
         await client.query('BEGIN');
         const ledger = await client.query('SELECT * FROM admission_fee_ledger WHERE ledger_id=$1 FOR UPDATE', [ledger_id]);
-        if (ledger.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Admission fee ledger not found' }); }
+        if (ledger.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Admission fee ledger not found' }); }       
+        
         const current = ledger.rows[0];
-        const newPaid = parseFloat(current.paid_amount) + parseFloat(amount_paid);
-        const total = parseFloat(current.total_amount);
-        if (newPaid > total) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Overpayment not allowed. Remaining: Rs. ${(total - parseFloat(current.paid_amount)).toFixed(0)}` }); }
-        const newStatus = newPaid >= total ? 'paid' : newPaid > 0 ? 'partial' : 'unpaid';
-        await client.query(`INSERT INTO admission_fee_payments (ledger_id, amount_paid, payment_date, payment_method, received_by, reference_no, notes) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-            [ledger_id, amount_paid, payment_date || new Date(), payment_method || 'cash', received_by, reference_no, notes]);
-        const updated = await client.query(`UPDATE admission_fee_ledger SET paid_amount=$1, status=$2 WHERE ledger_id=$3 RETURNING *, (total_amount-paid_amount) AS remaining_amount`, [newPaid, newStatus, ledger_id]);
-        await client.query('COMMIT');
-        res.json({ message: `Payment of Rs. ${parseFloat(amount_paid).toFixed(0)} recorded`, ledger: updated.rows[0], status: newStatus });
-    } catch (err) { await client.query('ROLLBACK'); console.error(err); res.status(500).json({ error: err.message }); }
-    finally { client.release(); }
-});
+        const oldPaid = parseFloat(current.paid_amount) || 0;
+        const oldDisc = parseFloat(current.discount_amount) || 0;
+        const total = parseFloat(current.total_amount) || 0;
+        
+        const newPaid = oldPaid + payVal;
+        const newDisc = oldDisc + discVal;
+        const totalCleared = newPaid + newDisc;
+        const remaining = total - totalCleared;
 
-// ============================================================
-// PRINT QUEUE — family-grouped vouchers with print tracking
-// GET /fee-slips/print-queue?month=&year=&class_id=
-// ============================================================
-router.get('/print-queue', async (req, res) => {
-    const { month, year, class_id } = req.query;
-    if (!month || !year) return res.status(400).json({ error: 'month and year required' });
+        if (remaining < 0) { 
+            await client.query('ROLLBACK'); 
+            return res.status(400).json({ error: `Overpayment/overdiscount not allowed. Remaining: Rs. ${(total - oldPaid - oldDisc).toFixed(0)}` }); 
+        }
+
+        const newStatus = remaining <= 0 ? 'paid' : (totalCleared > 0 ? 'partial' : 'unpaid');
+
+        const insertRes = await client.query(`
+            INSERT INTO admission_fee_payments (ledger_id, amount_paid, discount_amount, payment_date, payment_method, received_by, reference_no, notes) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING payment_id
+        `, [ledger_id, payVal, discVal, payment_date || new Date(), payment_method || 'cash', received_by, reference_no, notes]);
+        
+        const updated = await client.query(`
+            UPDATE admission_fee_ledger 
+            SET paid_amount=$1, discount_amount=$2, status=$3 
+            WHERE ledger_id=$4 
+            RETURNING *, (total_amount - paid_amount - discount_amount) AS remaining_amount
+        `, [newPaid, newDisc, newStatus, ledger_id]);
+
+        await client.query('COMMIT');
+        
+        let msg = `Payment of Rs. ${payVal.toFixed(0)} recorded`;
+        if (discVal > 0) msg += ` with Rs. ${discVal.toFixed(0)} discount`;
+        
+        res.json({ message: msg, ledger: updated.rows[0], status: newStatus, payment_id: insertRes.rows[0].payment_id });
+    } catch (err) { 
+        await client.query('ROLLBACK'); 
+        console.error(err); 
+        res.status(500).json({ error: err.message }); 
+    }
     try {
         // Fetch all slips for this month/year with student + class info + line items
         const result = await pool.query(`

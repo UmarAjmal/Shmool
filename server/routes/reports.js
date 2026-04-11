@@ -285,4 +285,85 @@ router.get('/family-fee', async (req, res) => {
     }
 });
 
+// ─── 7. Admission Fee Report ────────────────────────────────────────────────
+router.get('/admission-fee', async (req, res) => {
+    try {
+        const { from_date, to_date, status } = req.query;
+
+        let query = `
+            SELECT
+                afl.id as ledger_id,
+                afl.student_id,
+                afl.total_amount,
+                afl.paid_amount,
+                afl.remaining_amount,
+                COALESCE(afl.discount, 0) AS discount_percentage,
+                COALESCE(afl.discount_amount, 0) AS discount_amount,
+                afl.status,
+                afl.last_payment_date,
+                afl.created_at,
+                s.admission_no,
+                CONCAT(s.first_name, ' ', s.last_name) AS student_name,      
+                s.admission_date,
+                c.class_name,
+                sec.section_name
+            FROM admission_fee_ledger afl
+            JOIN students s ON afl.student_id = s.student_id
+            LEFT JOIN classes c ON s.class_id = c.class_id
+            LEFT JOIN sections sec ON s.section_id = sec.section_id
+            WHERE 1=1
+        `;
+        const params = [];
+        let idx = 1;
+
+        if (from_date) { query += ` AND s.admission_date >= $${idx++}`; params.push(from_date); }
+        if (to_date)   { query += ` AND s.admission_date <= $${idx++}`; params.push(to_date); }
+        if (status)    { query += ` AND afl.status = $${idx++}`; params.push(status); }
+
+        query += ` ORDER BY s.admission_date DESC`;
+
+        const result = await pool.query(query, params);
+        
+        // Month Summary
+        const monthlySummary = {};
+        result.rows.forEach(r => {
+            if (!r.admission_date) return;
+            const dateObj = new Date(r.admission_date);
+            const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+            
+            if (!monthlySummary[monthKey]) {
+                monthlySummary[monthKey] = {
+                    month: monthKey,
+                    admissions: 0,
+                    total_amount: 0,
+                    paid_amount: 0,
+                    discount_amount: 0,
+                    remaining_amount: 0
+                };
+            }
+            monthlySummary[monthKey].admissions++;
+            monthlySummary[monthKey].total_amount += parseFloat(r.total_amount) || 0;
+            monthlySummary[monthKey].paid_amount += parseFloat(r.paid_amount) || 0;
+            monthlySummary[monthKey].discount_amount += parseFloat(r.discount_amount) || 0;
+            monthlySummary[monthKey].remaining_amount += parseFloat(r.remaining_amount) || 0;
+        });
+
+        const monthlyStats = Object.values(monthlySummary).sort((a,b) => b.month.localeCompare(a.month));
+
+        // Grand Totals
+        const summary = {
+            total_admissions: result.rows.length,
+            total_billed: result.rows.reduce((sum, r) => sum + parseFloat(r.total_amount || 0), 0),
+            total_collected: result.rows.reduce((sum, r) => sum + parseFloat(r.paid_amount || 0), 0),
+            total_discount: result.rows.reduce((sum, r) => sum + parseFloat(r.discount_amount || 0), 0),
+            total_pending: result.rows.reduce((sum, r) => sum + parseFloat(r.remaining_amount || 0), 0)
+        };
+
+        res.json({ admission_fees: result.rows, monthlyStats, summary });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
