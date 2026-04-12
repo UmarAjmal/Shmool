@@ -36,6 +36,7 @@ export default function SystemConfigPage() {
     const [backups, setBackups] = useState<BackupFile[]>([]);
     const [creatingBackup, setCreatingBackup] = useState(false);
     const [restoring, setRestoring] = useState(false);
+    const [resetting, setResetting] = useState(false);
 
     useEffect(() => {
         fetchSettings();
@@ -169,6 +170,34 @@ export default function SystemConfigPage() {
         } finally {
             setRestoring(false);
             e.target.value = ''; // Reset input
+        }
+    };
+
+    const handleResetDatabase = async () => {
+        const input = prompt("DANGER: This will delete ALL records in the database and factory reset settings!\nType 'DELETE' to confirm:");
+        if (input !== 'DELETE') {
+            return;
+        }
+
+        setResetting(true);
+        // Using alert since react-toastify doesn't natively have a blocking modal
+        try {
+            const res = await fetch('https://shmool.onrender.com/settings/reset-database', { method: 'POST' });
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Clear token/session since admin password might have reset to default
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                alert("Database Factory Reset Successful! You will now be redirected to login. Default admin login is usually admin / admin123");
+                window.location.href = '/login';
+            } else {
+                showToast.error('Error: ' + (data.error || 'Failed to reset'));
+            }
+        } catch (err) {
+            showToast.error('Network error during reset.');
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -353,16 +382,34 @@ export default function SystemConfigPage() {
                                 <label className={`btn btn-sm btn-outline-danger ${restoring ? 'disabled' : ''}`}>
                                     {restoring ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-upload me-1"></i>}
                                     Upload & Restore
-                                    <input type="file" hidden accept=".sql" onChange={handleRestoreBackup} disabled={restoring} />
-                                </label>
-                                )}
-                                           </div>
-                                        </div>
-                                     </div>
-                                </div>
-                            </div>
+                                              <input type="file" hidden accept=".sql" onChange={handleRestoreBackup} disabled={restoring} />
+                                          </label>
+                                      )}
+                                      </div>
 
-                            {/* Backups List */}
+                                      {/* DANGER ZONE */}
+                                      <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                          <div>
+                                              <h6 className="card-subtitle text-danger fw-bold mb-0">Factory Reset Database</h6>
+                                              <small className="text-secondary d-block">Wipes all tables & auto-seeds initial data. Cannot be undone!</small>
+                                          </div>
+                                          {hasPermission('settings', 'delete') && (
+                                              <button 
+                                                  className={`btn btn-sm btn-danger ${resetting ? 'disabled' : ''}`}
+                                                  onClick={handleResetDatabase}
+                                              >
+                                                  {resetting ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-exclamation-triangle-fill me-1"></i>}
+                                                  Reset Database
+                                              </button>
+                                          )}
+                                      </div>
+                                      {/* END DANGER ZONE */}
+                                  </div>
+                               </div>
+                            </div>
+                        </div>
+
+                        {/* Backups List */}
                             <h5 className="mb-3 text-primary-teal">Available Backups</h5>
                             <div className="table-responsive mb-5 border rounded">
                                 <table className="table table-hover mb-0">

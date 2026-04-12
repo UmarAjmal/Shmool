@@ -134,7 +134,12 @@ async function createAuthTables() {
             if (roleName !== 'Administrator') {
                 await pool.query("DELETE FROM role_permissions WHERE role_id = $1", [roleId]);
             }
-                    ON CONFLICT (role_id, module_name) 
+
+            for (const mod of modules) {
+                await pool.query(`
+                    INSERT INTO role_permissions (role_id, module_name, can_read, can_write, can_delete)
+                    VALUES ($1, $2, true, true, true)
+                    ON CONFLICT (role_id, module_name)
                     DO UPDATE SET can_read=true, can_write=true, can_delete=true;
                 `, [roleId, mod]);
             }

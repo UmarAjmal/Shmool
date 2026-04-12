@@ -80,6 +80,30 @@ router.put('/', async (req, res) => {
     }
 });
 
+// Reset Database API (Danger Zone)
+router.post('/reset-database', async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        const path = require('path');
+        const resetScript = path.join(__dirname, '..', 'reset-db.js');
+        
+        exec(`node "${resetScript}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing reset: ${error.message}`);
+                return res.status(500).json({ error: 'Failed to reset database' });
+            }
+            if (stderr && !stderr.includes('Created') && !stderr.includes('already exists')) {
+                console.error(`Reset stderr: ${stderr}`);
+            }
+            console.log(`Reset stdout: ${stdout}`);
+            res.json({ message: 'Database reset successfully!' });
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Server Error during reset' });
+    }
+});
+
 // Upload School Logo
 router.post('/logo', upload.single('logo'), async (req, res) => {
     try {
