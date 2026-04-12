@@ -286,6 +286,35 @@ const getWaLink = (phone: string) => {
 
     return (
         <div className="container-fluid p-0 bg-light min-vh-100">
+            {/* Change Password Modal */}
+            {changePwdModalOpen && (
+                <>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }}></div>
+                    <div className="modal fade show d-block" tabIndex={-1} style={{ zIndex: 1050 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content border-0 shadow-lg">
+                                <div className="modal-header text-white" style={{ backgroundColor: 'var(--primary-dark)' }}>
+                                    <h5 className="modal-title"><i className="bi bi-key-fill me-2"></i>Change Password</h5>
+                                    <button className="btn-close btn-close-white" onClick={() => setChangePwdModalOpen(false)}></button>
+                                </div>
+                                <div className="modal-body p-4">
+                                    <div className="mb-3">
+                                        <label className="form-label text-secondary small text-uppercase fw-bold">New Password</label>
+                                        <input type="text" className="form-control form-control-lg bg-light" value={newAdminPwd} onChange={e => setNewAdminPwd(e.target.value)} placeholder="Type new password" />
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-2 mt-4">
+                                        <button className="btn btn-light px-4" onClick={() => setChangePwdModalOpen(false)}>Cancel</button>
+                                        <button className="btn btn-primary px-4" style={{ backgroundColor: 'var(--primary-dark)' }} onClick={handleChangePassword} disabled={isChangingPwd || !newAdminPwd.trim()}>
+                                            {isChangingPwd ? <span className="spinner-border spinner-border-sm me-2"></span> : 'Change Password'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+            
             {/* HERO SECTION */}
             <div className="position-relative profile-hero" style={{ height: '280px', background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)' }}>
                 <div className="position-absolute top-0 start-0 w-100 h-100 opacity-10" 
@@ -368,7 +397,6 @@ const getWaLink = (phone: string) => {
                                           </div>
                                         </div>
                                     </div>
-                                </div>
                                 <InfoRow icon="bi-person" label="Gender" value={student.gender} />
                                 <InfoRow icon="bi-calendar-event" label="Date of Birth" value={new Date(student.dob).toLocaleDateString()} />
                                 <InfoRow icon="bi-droplet" label="Blood Group" value={student.blood_group} />
