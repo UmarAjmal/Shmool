@@ -15,6 +15,12 @@ export default function StudentDashboard({ user }: { user: any }) {
     const [activeTab, setActiveTab] = useState('overview');
     const router = useRouter();
     const { hasPermission } = useAuth();
+    
+    // Auth related
+    const [changePwdModalOpen, setChangePwdModalOpen] = useState(false);
+    const [newAdminPwd, setNewAdminPwd] = useState('');
+    const [isChangingPwd, setIsChangingPwd] = useState(false);
+    const [showPwd, setShowPwd] = useState(false);
 
     // Attendance states
     const now = new Date();
@@ -204,20 +210,26 @@ export default function StudentDashboard({ user }: { user: any }) {
         } catch(e) { notify.error("Connection Error"); }
     };
 
-    const handleChangePassword = async (password: string) => {
+    const handleChangePassword = async () => {
+        if (!newAdminPwd.trim()) return;
+        setIsChangingPwd(true);
         try {
             const res = await fetch(`${API}/students/${currentId}/change-password`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
+                body: JSON.stringify({ password: newAdminPwd })
             });
             if(res.ok) {
                 notify.success("Password changed successfully");
+                setChangePwdModalOpen(false);
+                setNewAdminPwd('');
+                setStudent({ ...student, system_pwd: newAdminPwd });
             } else {
                 const d = await res.json();
                 notify.error(d.error || "Failed to change password");
             }
         } catch(e) { notify.error("Connection Error"); }
+        finally { setIsChangingPwd(false); }
     };
 
     // ── Academic helpers ─────────────────────────────────────────────────────
@@ -280,6 +292,35 @@ export default function StudentDashboard({ user }: { user: any }) {
 
     return (
         <div className="container-fluid p-0 bg-light min-vh-100">
+            {/* Change Password Modal */}
+            {changePwdModalOpen && (
+                <>
+                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }}></div>
+                    <div className="modal fade show d-block" tabIndex={-1} style={{ zIndex: 1050 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content border-0 shadow-lg">
+                                <div className="modal-header text-white" style={{ backgroundColor: 'var(--primary-dark)' }}>
+                                    <h5 className="modal-title"><i className="bi bi-key-fill me-2"></i>Change Password</h5>
+                                    <button className="btn-close btn-close-white" onClick={() => setChangePwdModalOpen(false)}></button>
+                                </div>
+                                <div className="modal-body p-4">
+                                    <div className="mb-3">
+                                        <label className="form-label text-secondary small text-uppercase fw-bold">New Password</label>
+                                        <input type="text" className="form-control form-control-lg bg-light" value={newAdminPwd} onChange={e => setNewAdminPwd(e.target.value)} placeholder="Type new password" />
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-2 mt-4">
+                                        <button className="btn btn-light px-4" onClick={() => setChangePwdModalOpen(false)}>Cancel</button>
+                                        <button className="btn btn-primary px-4" style={{ backgroundColor: 'var(--primary-dark)' }} onClick={handleChangePassword} disabled={isChangingPwd || !newAdminPwd.trim()}>
+                                            {isChangingPwd ? <span className="spinner-border spinner-border-sm me-2"></span> : 'Change Password'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
             {/* HERO SECTION */}
             <div className="position-relative" style={{ height: '280px', background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%)' }}>
                 <div className="position-absolute top-0 start-0 w-100 h-100 opacity-10" 
@@ -329,17 +370,21 @@ export default function StudentDashboard({ user }: { user: any }) {
                                     </div>
                                     <div className="flex-grow-1">
                                         <small className="text-muted d-block text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>System Username</small>
-                                        <div className="fw-medium text-dark d-flex align-items-center justify-content-between">
+                                        <div className="fw-medium text-dark mt-1">
                                             {student.username ? (
-                                                <>
-                                                    <span className="font-monospace bg-light border px-2 py-1 rounded small text-primary">{student.username}</span>
-                                                    <button className="btn btn-sm text-primary p-0 ms-2" title="Change Password" onClick={() => {
-                                                        const newPwd = prompt("Enter new password for student:");
-                                                        if(newPwd) handleChangePassword(newPwd);
-                                                    }}>
-                                                        <i className="bi bi-key-fill"></i>
-                                                    </button>
-                                                </>
+                                                <div className="d-flex flex-column gap-2 w-100">
+                                                    <div className="d-flex flex-wrap align-items-center justify-content-between gap-1">
+                                                        <div className="d-flex align-items-center gap-2" style={{ maxWidth: '100%' }}>
+                                                            <span className="font-monospace bg-light border px-2 py-1 rounded small text-primary text-truncate" style={{ display: 'inline-block', maxWidth: 'calc(100% - 30px)' }}>{student.username}</span>
+                                                            <button className="btn btn-sm text-secondary p-0 flex-shrink-0" title="Copy Username" onClick={() => { navigator.clipboard.writeText(student.username); notify.success('Username copied'); }}>
+                                                                <i className="bi bi-copy" style={{fontSize: '0.85rem'}}></i>
+                                                            </button>      
+                                                        </div>
+                                                        <button className="btn btn-sm text-primary p-0 flex-shrink-0" title="Change Password" onClick={() => setChangePwdModalOpen(true)}>
+                                                            <i className="bi bi-key-fill p-1 fs-6"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             ) : (
                                                 <button className="btn btn-sm btn-outline-primary py-0" style={{fontSize:'0.75rem'}} onClick={handleGenerateCredentials}>
                                                     Generate Login
