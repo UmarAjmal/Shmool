@@ -850,16 +850,40 @@ router.post('/bulk', async (req, res) => {
             return found ? found.section_id : null;
         };
         
-        for (const s of students) {
+        for (const rawS of students) {
             try {
+                // Normalize incoming keys to handle Excel header variations
+                const s = {};
+                Object.keys(rawS).forEach(key => {
+                    const normKey = key.trim().toLowerCase().replace(/\s+/g, '_');
+                    s[normKey] = rawS[key];
+                    // Also support common variants
+                    if (normKey === 'class_name' || normKey === 'class') s.class_name = rawS[key];
+                    if (normKey === 'section_name' || normKey === 'section') s.section_name = rawS[key];
+                    if (normKey === 'firstname' || normKey === 'first_name') s.first_name = rawS[key];
+                    if (normKey === 'lastname' || normKey === 'last_name') s.last_name = rawS[key];
+                });
+
+                // Helper to parse Excel dates (which might come as epoch numbers)
+                const parseDate = (d) => {
+                    if (!d) return null;
+                    if (!isNaN(d) && typeof d === 'number') {
+                        // Excel epoch to JS Date
+                        return new Date(Math.round((d - 25569) * 86400 * 1000));
+                    }
+                    return new Date(d);
+                };
+
                 // Resolve IDs
-                // Users might provide 'class_name' in Excel, or 'class_id'. We check both/either.
-                // The template will now use 'class_name' and 'section_name', but we map them to our variables.
                 let targetClassId = getClassId(s.class_name || s.class_id);
                 let targetSectionId = getSectionId(s.section_name || s.section_id, targetClassId);
 
-                if (!targetClassId) throw new Error(`Class '${s.class_name || s.class_id}' not found.`);
-                if (!targetSectionId) throw new Error(`Section '${s.section_name || s.section_id}' not found in Class.`);
+                if (!targetClassId) throw new Error(`Class '${s.class_name || s.class_id || 'Empty'}' not found.`);
+                if (!targetSectionId) throw new Error(`Section '${s.section_name || s.section_id || 'Empty'}' not found in Class.`);
+
+                // Parse dates properly
+                s.dob = parseDate(s.dob);
+                s.admission_date = parseDate(s.admission_date);
 
                 // Auto ID Generation Logic if not provided
                 let finalAdmissionNo = s.admission_no;
