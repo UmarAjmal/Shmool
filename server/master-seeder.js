@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const pool = require('./db');
 const bcrypt = require('bcryptjs');
 
@@ -208,10 +210,10 @@ async function createSettingsTable() {
         }
 
         console.log("School Settings table created successfully!");
-        // process.exit removed
+        /* process.exit removed */
     } catch (err) {
         console.error("Error creating settings table:", err.message);
-        // process.exit removed
+        /* process.exit removed */
     }
 }
 
@@ -266,11 +268,11 @@ async function createSystemSettingsTable() {
         }
 
         console.log("System Settings table ready with defaults.");
-        // process.exit removed
+        /* process.exit removed */
 
     } catch (err) {
         console.error("Error setting up system settings:", err.message);
-        // process.exit removed
+        /* process.exit removed */
     }
 }
 
@@ -314,7 +316,7 @@ const createClassesTables = async () => {
     } catch (err) {
         console.error("Error creating Classes tables:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -340,7 +342,7 @@ const updateClassesTable = async () => {
     } catch (err) {
         console.error("Error updating classes table:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -374,7 +376,7 @@ const createSubjectsTable = async () => {
     } catch (err) {
         console.error("Error creating subjects table:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -442,7 +444,7 @@ const createStudentsTable = async () => {
     } catch (err) {
         console.error("Error creating students table:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -635,7 +637,7 @@ const updateStudentsForFamilySystem = async () => {
         console.error("❌ Error updating students table:", err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -688,7 +690,7 @@ const createHRMTables = async () => {
     } catch (err) {
         console.error("Error creating HRM tables:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -727,7 +729,7 @@ const updateEmployeeSchema = async () => {
     } catch (err) {
         console.error("Error updating schema:", err.message);
     } finally {
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -836,7 +838,7 @@ const enhanceEmployeesForTeachers = async () => {
         console.error("❌ Error:", err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 };
 
@@ -878,12 +880,44 @@ async function run() {
         )
     `);
     console.log('Attendance tables created successfully');
-    // pool.end() removed for master seeder;
+    /* pool.end() removed for master seeder; */
 }
 await run();
 
     } catch(err) {
       console.error('[Error Details in create-attendance-tables.js]:', err.message);
+    }
+  })();
+  // ====== FROM: init-expenses.js ======
+  await (async () => {
+    try {
+
+
+
+
+async function initExpenseTables() {
+    try {
+        console.log('Creating expense tables...');
+        
+        const sql = fs.readFileSync(
+            path.join(__dirname, 'create-expenses-tables.sql'),
+            'utf8'
+        );
+        
+        await pool.query(sql);
+        
+        console.log('Expense tables created successfully!');
+        /* process.exit removed */
+    } catch (err) {
+        console.error('Error creating expense tables:', err.message);
+        /* process.exit removed */
+    }
+}
+
+await initExpenseTables();
+
+    } catch(err) {
+      console.error('[Error Details in init-expenses.js]:', err.message);
     }
   })();
   // ====== FROM: create-fee-tables.js ======
@@ -1013,7 +1047,7 @@ async function createFeeTables() {
         console.error('❌ Error creating tables:', err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 }
 
@@ -1021,6 +1055,79 @@ await createFeeTables();
 
     } catch(err) {
       console.error('[Error Details in create-fee-tables.js]:', err.message);
+    }
+  })();
+  // ====== FROM: add-opening-balance.js ======
+  await (async () => {
+    try {
+/**
+ * Migration: Add Opening Balance (OPB) system to families
+ * 
+ * Adds:
+ *   - families.opening_balance       — original OPB amount set by admin
+ *   - families.opening_balance_paid  — total amount paid towards OPB so far
+ *   - family_opb_payments table      — ledger of all OPB payment transactions
+ */
+
+
+
+async function addOpeningBalance() {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        console.log('🔄 Adding Opening Balance system...');
+
+        // 1. Add opening_balance column to families
+        await client.query(`
+            ALTER TABLE families
+            ADD COLUMN IF NOT EXISTS opening_balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS opening_balance_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS opb_notes TEXT;
+        `);
+        console.log('✅ families.opening_balance, opening_balance_paid, opb_notes columns added');
+
+        // 2. Create OPB payments ledger table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS family_opb_payments (
+                payment_id    SERIAL PRIMARY KEY,
+                family_id     VARCHAR(50) NOT NULL REFERENCES families(family_id) ON DELETE CASCADE,
+                amount        DECIMAL(10,2) NOT NULL CHECK(amount > 0),
+                payment_date  DATE NOT NULL DEFAULT CURRENT_DATE,
+                payment_method VARCHAR(30) DEFAULT 'cash' CHECK(payment_method IN ('cash','bank','cheque','online','other')),
+                received_by   VARCHAR(100),
+                reference_no  VARCHAR(100),
+                notes         TEXT,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log('✅ family_opb_payments table created');
+
+        // 3. Index for fast family lookups
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_opb_payments_family
+            ON family_opb_payments(family_id);
+        `);
+        console.log('✅ Index on family_opb_payments(family_id) created');
+
+        await client.query('COMMIT');
+        console.log('');
+        console.log('✅ Opening Balance migration complete!');
+        console.log('   → families.opening_balance      : original OPB amount');
+        console.log('   → families.opening_balance_paid : total paid towards OPB');
+        console.log('   → family_opb_payments           : full payment ledger');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ Migration failed:', err.message);
+    } finally {
+        client.release();
+        /* pool.end() removed for master seeder; */
+    }
+}
+
+await addOpeningBalance();
+
+    } catch(err) {
+      console.error('[Error Details in add-opening-balance.js]:', err.message);
     }
   })();
   // ====== FROM: add-opb-head.js ======
@@ -1095,7 +1202,7 @@ async function addOPBHead() {
         console.error('❌ Migration failed:', err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 }
 
@@ -1103,6 +1210,228 @@ await addOPBHead();
 
     } catch(err) {
       console.error('[Error Details in add-opb-head.js]:', err.message);
+    }
+  })();
+  // ====== FROM: rename-opb-head.js ======
+  await (async () => {
+    try {
+
+async function run() {
+    const r = await pool.query(
+        `UPDATE fee_heads SET head_name='Previous Balance', head_type='prev_balance'
+         WHERE head_type='opb' RETURNING head_id, head_name, head_type`
+    );
+    console.log('Updated rows:', r.rows);
+
+    // Also update any existing slip_line_items that still say 'Opening Balance'
+    const li = await pool.query(
+        `UPDATE slip_line_items SET head_name='Previous Balance'
+         WHERE head_name='Opening Balance' RETURNING item_id`
+    );
+    console.log('Line items renamed:', li.rowCount);
+
+    /* pool.end() removed for master seeder; */
+}
+await run();
+
+    } catch(err) {
+      console.error('[Error Details in rename-opb-head.js]:', err.message);
+    }
+  })();
+  // ====== FROM: create-admission-fee-table.js ======
+  await (async () => {
+    try {
+
+
+async function createAdmissionFeeTables() {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        console.log('Creating Admission Fee tables...');
+
+        // 1. Admission Fee Ledger — one row per student, tracks lifetime admission fee outstanding
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS admission_fee_ledger (
+                ledger_id   SERIAL PRIMARY KEY,
+                student_id  INTEGER NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+                total_amount   DECIMAL(10,2) NOT NULL DEFAULT 0,
+                paid_amount    DECIMAL(10,2) NOT NULL DEFAULT 0,
+                status         VARCHAR(20)   NOT NULL DEFAULT 'unpaid',
+                -- unpaid | partial | paid
+                admission_date DATE,
+                notes       TEXT,
+                created_at  TIMESTAMP DEFAULT NOW(),
+                UNIQUE(student_id)   -- Each student has exactly one ledger entry
+            );
+        `);
+        console.log('✅ admission_fee_ledger created');
+
+        // 2. Admission Fee Payments — payment history against a ledger entry
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS admission_fee_payments (
+                payment_id     SERIAL PRIMARY KEY,
+                ledger_id      INTEGER NOT NULL REFERENCES admission_fee_ledger(ledger_id) ON DELETE CASCADE,
+                amount_paid    DECIMAL(10,2) NOT NULL,
+                payment_date   DATE NOT NULL DEFAULT CURRENT_DATE,
+                payment_method VARCHAR(30) DEFAULT 'cash',
+                -- cash | bank | online | cheque
+                received_by    VARCHAR(100),
+                reference_no   VARCHAR(100),
+                notes          TEXT,
+                created_at     TIMESTAMP DEFAULT NOW()
+            );
+        `);
+        console.log('✅ admission_fee_payments created');
+
+        // 3. Backfill existing students who already have admission_fee > 0
+        //    (Only runs if there are students already in DB)
+        const backfill = await client.query(`
+            INSERT INTO admission_fee_ledger (student_id, total_amount, paid_amount, status, admission_date)
+            SELECT 
+                student_id,
+                COALESCE(admission_fee, 0)  AS total_amount,
+                0                           AS paid_amount,
+                CASE WHEN COALESCE(admission_fee, 0) = 0 THEN 'paid' ELSE 'unpaid' END AS status,
+                admission_date
+            FROM students
+            WHERE COALESCE(admission_fee, 0) > 0
+            ON CONFLICT (student_id) DO NOTHING
+        `);
+        console.log(`✅ Backfilled ${backfill.rowCount} existing students into admission_fee_ledger`);
+
+        await client.query('COMMIT');
+        console.log('\n🎉 All admission fee tables created successfully!');
+        console.log('');
+        console.log('Tables created:');
+        console.log('  • admission_fee_ledger        — outstanding balance per student');
+        console.log('  • admission_fee_payments      — payment history per ledger entry');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ Error:', err.message);
+        /* process.exit removed */
+    } finally {
+        client.release();
+        /* process.exit removed */
+    }
+}
+
+await createAdmissionFeeTables();
+
+    } catch(err) {
+      console.error('[Error Details in create-admission-fee-table.js]:', err.message);
+    }
+  })();
+  // ====== FROM: add-discount-columns.js ======
+  await (async () => {
+    try {
+
+async function run() {
+    try {
+        await pool.query('ALTER TABLE admission_fee_ledger ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) DEFAULT 0');
+        await pool.query('ALTER TABLE admission_fee_payments ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0');
+        console.log('Columns added successfully');
+    } catch(e) {
+        console.error('Error adding columns:', e);
+    } finally {
+        /* pool.end() removed for master seeder; */
+    }
+}
+await run();
+
+    } catch(err) {
+      console.error('[Error Details in add-discount-columns.js]:', err.message);
+    }
+  })();
+  // ====== FROM: add_admission_discounts.js ======
+  await (async () => {
+    try {
+
+async function run() {
+    try {
+        await pool.query('ALTER TABLE admission_fee_ledger ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2) DEFAULT 0');
+        await pool.query('ALTER TABLE admission_fee_payments ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0');
+        console.log('Columns added successfully');
+    } catch(e) {
+        console.error('Error adding columns:', e);
+    } finally {
+        /* pool.end() removed for master seeder; */
+    }
+}
+await run();
+    } catch(err) {
+      console.error('[Error Details in add_admission_discounts.js]:', err.message);
+    }
+  })();
+  // ====== FROM: add_paid_amount_to_line_items.js ======
+  await (async () => {
+    try {
+ async function run() { try { await pool.query('ALTER TABLE slip_line_items ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(10,2) DEFAULT 0'); console.log('success'); } catch(e) { console.error(e); } finally { /* pool.end() removed for master seeder; */ } } run();
+
+    } catch(err) {
+      console.error('[Error Details in add_paid_amount_to_line_items.js]:', err.message);
+    }
+  })();
+  // ====== FROM: create-exam-fee-collection-table.js ======
+  await (async () => {
+    try {
+
+
+async function createExamFeeCollectionTable() {
+    try {
+        console.log("Creating exam_fee_collections table...");
+        
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS exam_fee_collections (
+                id SERIAL PRIMARY KEY,
+                collection_name VARCHAR(100) NOT NULL,
+                student_id INTEGER NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
+                class_id INTEGER NOT NULL REFERENCES classes(class_id) ON DELETE CASCADE,
+                section_id INTEGER NOT NULL REFERENCES sections(section_id) ON DELETE CASCADE,
+                amount NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (amount >= 0),
+                remarks TEXT,
+                collected_by INTEGER REFERENCES app_users(id) ON DELETE SET NULL,
+                collection_date DATE DEFAULT CURRENT_DATE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(collection_name, student_id)
+            );
+        `);
+        
+        console.log("✅ exam_fee_collections table created successfully.");
+        /* process.exit removed */
+    } catch (err) {
+        console.error("❌ Error creating table:", err.message);
+        /* process.exit removed */
+    }
+}
+
+await createExamFeeCollectionTable();
+
+    } catch(err) {
+      console.error('[Error Details in create-exam-fee-collection-table.js]:', err.message);
+    }
+  })();
+  // ====== FROM: update-multi-months.js ======
+  await (async () => {
+    try {
+
+
+async function run() {
+    try {
+        console.log('Adding multi-month columns to monthly_fee_slips...');
+        await pool.query('ALTER TABLE monthly_fee_slips ADD COLUMN IF NOT EXISTS has_multi_months boolean DEFAULT false;');
+        await pool.query('ALTER TABLE monthly_fee_slips ADD COLUMN IF NOT EXISTS months_list integer[];');
+        console.log('Columns added successfully.');
+    } catch(e) {
+        console.error('Error adding columns:', e.message);
+    } finally {
+        /* process.exit removed */
+    }
+}
+
+await run();
+
+    } catch(err) {
+      console.error('[Error Details in update-multi-months.js]:', err.message);
     }
   })();
   // ====== FROM: add-family-fee-column.js ======
@@ -1153,7 +1482,7 @@ async function addFamilyFeeColumn() {
         console.error('❌ Migration failed:', err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 }
 
@@ -1220,10 +1549,10 @@ async function createAcademicTables() {
         }
 
         console.log("Academic Setup Tables created successfully!");
-        // process.exit removed
+        /* process.exit removed */
     } catch (err) {
         console.error("Error creating academic tables:", err.message);
-        // process.exit removed
+        /* process.exit removed */
     }
 }
 
@@ -1277,7 +1606,7 @@ async function run() {
         console.error('❌ Error:', err.message);
     } finally {
         client.release();
-        // pool.end() removed for master seeder;
+        /* pool.end() removed for master seeder; */
     }
 }
 await run();
@@ -1306,7 +1635,7 @@ async function run() {
         );
         console.log('Seeded:', key);
     }
-    // pool.end() removed for master seeder;
+    /* pool.end() removed for master seeder; */
 }
 await run();
 
@@ -1327,10 +1656,10 @@ async function seed() {
             ('backup_time', '00:00', 'backup', 'Time to run backup (HH:MM)') 
             ON CONFLICT (setting_key) DO NOTHING;`);
         console.log('Backup settings seeded');
-        // process.exit removed
+        /* process.exit removed */
     } catch (e) {
         console.log(e);
-        // process.exit removed
+        /* process.exit removed */
     }
 }
 await seed();
