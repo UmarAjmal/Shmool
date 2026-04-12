@@ -1054,13 +1054,11 @@ router.get('/', async (req, res) => {
         const { class_id, section_id, gender, keyword, category, status, blood_group, is_orphan, family_id } = req.query;
         
         let query = `
-            SELECT s.*, c.class_name, sec.section_name 
+            SELECT s.*, c.class_name, sec.section_name, u.username, u.plain_password as system_pwd
             FROM students s
             LEFT JOIN classes c ON s.class_id = c.class_id
             LEFT JOIN sections sec ON s.section_id = sec.section_id
-            WHERE 1=1
-        `;
-        
+            LEFT JOIN app_users u ON s.user_id = u.id
         const params = [];
         let paramCount = 1;
 
