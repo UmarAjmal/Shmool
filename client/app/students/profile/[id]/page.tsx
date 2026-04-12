@@ -335,36 +335,37 @@ const getWaLink = (phone: string) => {
                                     </div>
                                     <div className="flex-grow-1">
                                         <small className="text-muted d-block text-uppercase" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>System Username</small>
-                                        <div className="fw-medium text-dark d-flex align-items-center justify-content-between">
-                                            {student.username ? (
-                                                <>
-                                                    <div className="d-flex flex-column gap-1">
-                                                        <div className="d-flex align-items-center gap-2">
-                                                            <span className="font-monospace bg-light border px-2 py-1 rounded small text-primary">{student.username}</span>
-                                                            <button className="btn btn-sm text-secondary p-0" title="Copy Username" onClick={() => { navigator.clipboard.writeText(student.username); notify.success('Username copied'); }}>
-                                                                <i className="bi bi-copy" style={{fontSize: '0.8rem'}}></i>
-                                                            </button>
-                                                        </div>
-                                                        {user?.role_name === 'Administrator' && (
-                                                            <div className="d-flex align-items-center gap-2 mt-1">
-                                                                <span className="font-monospace text-muted small user-select-all" style={{fontSize:'0.75rem'}}>
-                                                                    {showPwd ? (student.system_pwd || 'student123') : '••••••••'}
-                                                                </span>
-                                                                <button className="btn btn-sm text-secondary p-0" title={showPwd ? 'Hide Password' : 'Show Password'} onClick={() => setShowPwd(!showPwd)}>
-                                                                    <i className={`bi bi-eye${showPwd ? '-slash' : ''}`} style={{fontSize: '0.8rem'}}></i>
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <button className="btn btn-sm text-primary p-0 ms-2" title="Change Password" onClick={() => setChangePwdModalOpen(true)}>
-                                                        <i className="bi bi-key-fill dropdown-icon-fix p-1 fs-6"></i> Change
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <button className="btn btn-sm btn-outline-primary py-0" style={{fontSize:'0.75rem'}} onClick={handleGenerateCredentials}>
-                                                    Generate Login
-                                                </button>
-                                            )}
+                                          <div className="fw-medium text-dark mt-1">
+                                              {student.username ? (
+                                                  <div className="d-flex flex-column gap-2 w-100">
+                                                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-1">
+                                                          <div className="d-flex align-items-center gap-2" style={{ maxWidth: '100%' }}>
+                                                              <span className="font-monospace bg-light border px-2 py-1 rounded small text-primary text-truncate" style={{ display: 'inline-block', maxWidth: 'calc(100% - 30px)' }}>{student.username}</span>
+                                                              <button className="btn btn-sm text-secondary p-0 flex-shrink-0" title="Copy Username" onClick={() => { navigator.clipboard.writeText(student.username); notify.success('Username copied'); }}>
+                                                                  <i className="bi bi-copy" style={{fontSize: '0.85rem'}}></i>
+                                                              </button>
+                                                          </div>
+                                                          <button className="btn btn-sm text-primary p-0 flex-shrink-0" title="Change Password" onClick={() => setChangePwdModalOpen(true)}>
+                                                              <i className="bi bi-key-fill p-1 fs-6"></i>
+                                                          </button>
+                                                      </div>
+                                                      {user?.role_name === 'Administrator' && (
+                                                          <div className="d-flex align-items-center gap-2 mt-1">
+                                                              <span className="font-monospace text-muted small user-select-all text-break" style={{fontSize:'0.75rem', wordBreak: 'break-all'}}>
+                                                                  {showPwd ? (student.system_pwd || 'student123') : '••••••••'}
+                                                              </span>    
+                                                              <button className="btn btn-sm text-secondary p-0" title={showPwd ? 'Hide Password' : 'Show Password'} onClick={() => setShowPwd(!showPwd)}>
+                                                                  <i className={`bi bi-eye${showPwd ? '-slash' : ''}`} style={{fontSize: '0.85rem'}}></i>
+                                                              </button>  
+                                                          </div>
+                                                      )}
+                                                  </div>
+                                              ) : (
+                                                  <button className="btn btn-sm btn-outline-primary py-0 mt-1" style={{fontSize:'0.75rem'}} onClick={handleGenerateCredentials}>
+                                                      Generate Login
+                                                  </button>
+                                              )}
+                                          </div>
                                         </div>
                                     </div>
                                 </div>
