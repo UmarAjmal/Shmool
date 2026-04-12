@@ -850,7 +850,12 @@ router.post('/bulk', async (req, res) => {
             return found ? found.section_id : null;
         };
         
+        let studentIdx = 0;
         for (const rawS of students) {
+            studentIdx++;
+            const spName = "sp_student_" + studentIdx;
+            try { await client.query("SAVEPOINT " + spName); } catch(e) {}
+
             let s = {};
             try {
                 // Normalize incoming keys to handle Excel header variations
@@ -1055,6 +1060,8 @@ router.post('/bulk', async (req, res) => {
                 results.success++;
                 results.familyStats.totalStudents++;
             } catch (err) {
+                try { await client.query("ROLLBACK TO SAVEPOINT " + spName); } catch (e) {}
+
                 // If collision on generated ID (race condition), retry logic could be added here
                 results.failed++;
                 results.errors.push({ name: s.first_name || rawS.first_name || rawS['First Name'] || 'Unknown Student', error: err.message });
