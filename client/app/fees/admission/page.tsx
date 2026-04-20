@@ -54,7 +54,7 @@ interface SchoolInfo {
 
 export default function AdmissionFeePage() {
   const router = useRouter();
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [ledgers, setLedgers] = useState<Ledger[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -275,7 +275,7 @@ export default function AdmissionFeePage() {
     setPayForm({
       amount_paid: ledger.remaining_amount.toString(),
       payment_method: "cash",
-      received_by: auth?.user?.username || "",
+      received_by: user?.username || "",
       reference_no: "",
       notes: "",
       payment_date: new Date().toISOString().split("T")[0],
