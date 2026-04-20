@@ -941,10 +941,15 @@ export default function NewAdmission() {
                                                 <label className="form-label fw-bold fs-5">
                                                     <i className="bi bi-house-heart-fill me-2 text-warning"></i>Family Monthly Fee
                                                 </label>
-                                                {familyFeeInfo && familyFeeInfo.family_fee > 0 && (
-                                                    <div className="text-muted small mb-1">
-                                                        Current family fee: <strong className="text-success">Rs. {familyFeeInfo.family_fee.toLocaleString()}</strong>
-                                                        &nbsp;— you can update it below.
+                                                {familyFeeInfo !== null && (
+                                                    <div className="alert alert-info py-2 px-3 mb-2 d-flex align-items-center">
+                                                        <i className="bi bi-info-circle-fill me-2 fs-5"></i>
+                                                        <div>
+                                                            Current Family Fee: <strong className="text-success fs-5">Rs. {familyFeeInfo.family_fee.toLocaleString()}</strong>
+                                                            <div className="small text-muted mt-1">
+                                                                Update the amount below if adding this student changes the total family fee.
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 <div className="input-group">
