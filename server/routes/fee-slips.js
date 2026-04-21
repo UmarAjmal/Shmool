@@ -634,12 +634,16 @@ router.post('/admission-fees/:ledger_id/pay', async (req, res) => {
             }
         }
 
-        await client.query('ROLLBACK'); 
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
+            await client.query('COMMIT');
+            res.json({ message: 'Payment recorded successfully', ledger: updated.rows[0] });
+        } catch (err) {
+            await client.query('ROLLBACK'); 
+            console.error('Error during admission fee payment:', err);
+            res.status(500).json({ error: err.message });
+        } finally {
+            client.release();
+        }
 });
-
 // ============================================================
 // PRINT QUEUE — family-grouped vouchers with print tracking
 // GET /fee-slips/print-queue?month=&year=&class_id=
