@@ -857,7 +857,7 @@ export default function CollectFeePage() {
                                                             <span className="text-muted ms-2">via {p.payment_method}</span>
                                                             {p.received_by && <span className="text-muted ms-2">· {p.received_by}</span>}
                                                             {p.reference_no && <span className="text-muted ms-2">· Ref: {p.reference_no}</span>}
-                                                            <span className="ms-2 px-1 rounded text-white" style={{ fontSize: '0.65rem' }}>{p.is_printed ? 'Printed' : 'Not Printed'}</span>
+                                                            <span className={`ms-2 px-1 rounded text-white ${p.is_printed ? 'bg-success' : 'bg-warning text-dark'}`} style={{ fontSize: '0.65rem' }}>{p.is_printed ? 'Printed' : 'Not Printed'}</span>
                                                             {p.notes && <div style={{ fontSize: '0.7rem', color: '#888' }}>{p.notes}</div>}
                                                         </div>
                                                         <div className="d-flex align-items-center gap-2">
@@ -1094,9 +1094,9 @@ export default function CollectFeePage() {
                                 </div>
 
                                 <div className="modal-footer border-0 px-4 py-3">
-                                    <button className="btn btn-sm btn-outline-secondary" onClick={() => setPayModal(false)}>
+                                    {/* <button className="btn btn-sm btn-outline-secondary" onClick={() => setPayModal(false)}>
                                         <i className="bi bi-x me-1"></i>Close
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
                         </div>

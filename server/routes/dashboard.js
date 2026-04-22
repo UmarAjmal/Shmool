@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router  = express.Router();
 const pool    = require('../db');
 
@@ -484,6 +484,28 @@ router.get('/attendance-details', async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({error: err.message});
+    }
+});
+
+router.get('/daily-fee-receipts', async (req, res) => {
+    try {
+        const { date } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const result = await pool.query(
+            `SELECT 
+                COALESCE(SUM(CASE WHEN is_printed = true THEN amount_paid ELSE 0 END), 0) as printed_amount,
+                COALESCE(SUM(CASE WHEN is_printed = false THEN amount_paid ELSE 0 END), 0) as unprinted_amount,
+                COUNT(CASE WHEN is_printed = true THEN 1 END) as printed_count,
+                COUNT(CASE WHEN is_printed = false THEN 1 END) as unprinted_count,
+                COALESCE(SUM(amount_paid), 0) as total_amount
+            FROM fee_payments
+            WHERE payment_date::date = $1`,
+            [targetDate]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({error: err.message});
     }
 });
 

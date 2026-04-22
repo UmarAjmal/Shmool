@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -56,6 +56,64 @@ function ActionBtn({ href, icon, label, primary }: { href:string; icon:string; l
     >
       <i className={'bi ' + icon} />{label}
     </Link>
+  );
+}
+
+function FeeReceiptStatsCard() {
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showValues, setShowValues] = useState(false);
+  const [data, setData] = useState({ printed_amount:0, unprinted_amount:0, printed_count:0, unprinted_count:0, total_amount:0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(API + '/dashboard/daily-fee-receipts?date=' + date)
+      .then(async r => {
+        if(r.ok) setData(await r.json());
+        setLoading(false);
+      }).catch(() => setLoading(false));
+  }, [date]);
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <Panel title="Fee Collection & Receipts" icon="bi-receipt-cutoff"
+        action={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button className="btn btn-sm btn-light" onClick={() => setShowValues(!showValues)} style={{ padding: '2px 8px', fontSize: 13, color: '#64748b' }} title="Toggle View">
+              <i className={`bi bi-eye${showValues ? '-slash' : ''}`} />
+            </button>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              className="form-control form-control-sm"
+              style={{ fontSize: 12, padding: '2px 8px', width: 130, color: '#64748b', borderColor: '#e2e8f0' }} />
+          </div>
+        }>
+        {loading ? <DashLoading /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, padding: '10px 4px' }}>
+            <div style={{ padding: 14, borderRadius: 12, backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: 12, color: '#166534', fontWeight: 600, marginBottom: 4 }}><i className="bi bi-printer-fill me-1" /> Printed & Confirmed</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#15803d' }}>
+                {showValues ? fmtPKR(data.printed_amount) : '••••••'}
+              </div>
+              <div style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>{data.printed_count} slips issued</div>
+            </div>
+            <div style={{ padding: 14, borderRadius: 12, backgroundColor: '#fffbeb', border: '1px solid #fef08a' }}>
+              <div style={{ fontSize: 12, color: '#92400e', fontWeight: 600, marginBottom: 4 }}><i className="bi bi-exclamation-circle-fill me-1" /> Confirmed (Only)</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#b45309' }}>
+                {showValues ? fmtPKR(data.unprinted_amount) : '••••••'}
+              </div>
+              <div style={{ fontSize: 11, color: '#d97706', marginTop: 2 }}>{data.unprinted_count} slips pending prints</div>
+            </div>
+            <div style={{ padding: 14, borderRadius: 12, backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: 12, color: '#334155', fontWeight: 600, marginBottom: 4 }}><i className="bi bi-bank me-1" /> Total Collected</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+                {showValues ? fmtPKR(data.total_amount) : '••••••'}
+              </div>
+              <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>For selected date</div>
+            </div>
+          </div>
+        )}
+      </Panel>
+    </div>
   );
 }
 
@@ -139,6 +197,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {  co
 
       {hasPermission('dash.admin_charts', 'read') && (
       <>
+      <FeeReceiptStatsCard />
       {/* Fee Area Chart */}
       <div style={{ marginBottom:20 }}>
         <Panel title="Daily Fee Collection â€” Last 14 Days" icon="bi-graph-up-arrow"
