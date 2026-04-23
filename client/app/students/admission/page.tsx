@@ -801,8 +801,8 @@ export default function NewAdmission() {
                                     
                                     {/* MOTHER */}
                                     <div className="col-md-3">
-                                        <label className="form-label fw-bold">Mother Name <span className="text-danger">*</span></label>
-                                        <input type="text" className="form-control" required={!form.is_orphan}
+                                        <label className="form-label fw-bold">Mother Name</label>
+                                        <input type="text" className="form-control" 
                                             value={form.mother_name} onChange={e=>handleTextChange("mother_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
@@ -939,7 +939,7 @@ export default function NewAdmission() {
                                         <div className="row g-3">
                                             <div className="col-12">
                                                 <label className="form-label fw-bold fs-5">
-                                                    <i className="bi bi-house-heart-fill me-2 text-warning"></i>Family Monthly Fee
+                                                    <i className="bi bi-house-heart-fill me-2 text-warning"></i>Family Monthly Fee <span className="text-danger">*</span>
                                                 </label>
                                                 {familyFeeInfo !== null && (
                                                     <div className="alert alert-info py-2 px-3 mb-2 d-flex align-items-center">
@@ -989,7 +989,7 @@ export default function NewAdmission() {
                                         </div>
                                         <div className="row g-3">
                                             <div className="col-12">
-                                                <label className="form-label fw-bold display-6 fs-5">Monthly Tuition Fee</label>
+                                                <label className="form-label fw-bold display-6 fs-5">Monthly Tuition Fee <span className="text-danger">*</span></label>
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control form-control-lg" placeholder="0.00" required
