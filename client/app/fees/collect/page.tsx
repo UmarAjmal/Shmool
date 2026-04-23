@@ -211,8 +211,8 @@ export default function CollectFeePage() {
   <meta charset="UTF-8">
   <title>Fee Receipt</title>
   <style>
-    @page { margin: 0; }
-    html, body { margin: 0; padding: 0; width: 78mm; box-sizing: border-box; font-family: Arial, sans-serif; color: #000; }
+    @page { size: 80mm 297mm; margin: 0; }
+    html, body { margin: 0; padding: 0; width: 78mm; max-width: 78mm; box-sizing: border-box; font-family: Arial, sans-serif; color: #000; }
     .voucher { width: 100%; padding: 3mm; display: flex; flex-direction: column; box-sizing: border-box; }
     .header { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2mm; }
     .school-name { font-size: 12pt; font-weight: bold; line-height: 1.2; text-transform: uppercase; text-align: center; margin-top: 1mm; }

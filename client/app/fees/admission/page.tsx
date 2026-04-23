@@ -208,8 +208,8 @@ export default function AdmissionFeePage() {
   <meta charset="UTF-8">
   <title>Admission Fee Receipt</title>
   <style>
-    @page { margin: 0; }
-    html, body { margin: 0; padding: 0; width: 78mm; box-sizing: border-box; font-family: Arial, sans-serif; color: #000; }
+    @page { size: 80mm 297mm; margin: 0; }
+    html, body { margin: 0; padding: 0; width: 78mm; max-width: 78mm; box-sizing: border-box; font-family: Arial, sans-serif; color: #000; }
     .voucher { width: 100%; padding: 3mm; display: flex; flex-direction: column; box-sizing: border-box; }
     .header { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2mm; }
     .school-name { font-size: 12pt; font-weight: bold; line-height: 1.2; text-transform: uppercase; text-align: center; margin-top: 1mm; }
@@ -632,9 +632,27 @@ export default function AdmissionFeePage() {
                             </button>
                           )}
                         {ledger.status === "paid" && (
-                          <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success small px-3 py-2">
-                            <i className="bi bi-check2 me-1"></i>Cleared
-                          </span>
+                          <div className="d-flex align-items-center gap-2 justify-content-end">
+                            <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success small px-3 py-2">
+                              <i className="bi bi-check2 me-1"></i>Cleared
+                            </span>
+                            <button
+                              className="btn btn-sm btn-light border"
+                              title="Print Receipt"
+                              onClick={() =>
+                                openReceiptWindow(
+                                  ledger,
+                                  ledger.paid_amount,
+                                  0,
+                                  new Date().toISOString(),
+                                  0,
+                                  ledger.ledger_id
+                                )
+                              }
+                            >
+                              <i className="bi bi-printer text-primary"></i>
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
