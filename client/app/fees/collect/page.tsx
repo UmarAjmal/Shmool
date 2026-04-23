@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { notify } from '@/app/utils/notify';
@@ -15,6 +15,7 @@ interface SlipRow {
     father_name: string | null;
     father_phone: string | null;
     class_name: string;
+    section_name?: string;
     family_id: string | null;
     is_family_slip: boolean;
     total_amount: number;
@@ -25,7 +26,7 @@ interface SlipRow {
     month: number;
     year: number;
     line_items: { item_id: number; head_name: string; amount: number; note?: string }[];
-    family_members?: { student_id: number; first_name: string; last_name: string; class_name: string; admission_no: string }[];
+    family_members?: { student_id: number; first_name: string; last_name: string; class_name: string; admission_no: string; section_name?: string; father_name?: string; }[];
 }
 interface Stats {
     total_students: number; total_amount: number; paid_amount: number;
@@ -183,7 +184,7 @@ export default function CollectFeePage() {
 
         const members: any[] = (slip.family_members && slip.family_members.length > 0)
             ? slip.family_members
-            : [{ first_name: slip.first_name, last_name: slip.last_name, father_name: '', class_name: slip.class_name }];
+            : [{ first_name: slip.first_name, last_name: slip.last_name, father_name: slip.father_name || '', class_name: slip.class_name, section_name: slip.section_name }];
         const rows9 = [...members];
         while (rows9.length < 9) rows9.push({ first_name: '', last_name: '', father_name: '', class_name: '' });
 
@@ -197,7 +198,7 @@ export default function CollectFeePage() {
         feeBody += `<tr class="thick"><td>${sr++}</td><td><strong>Balance Amount</strong></td><td><strong>${fmtR(balance)}</strong></td></tr>`;
 
         const studentBody = rows9.map(m =>
-            `<tr><td>${m.first_name || ''} ${m.last_name || ''}</td><td>${m.father_name || ''}</td><td>${m.class_name || ''}</td></tr>`
+            `<tr><td>${m.first_name || ''} ${m.last_name || ''}</td><td>${m.father_name || ''}</td><td>${m.class_name || ''} ${m.section_name ? m.section_name : ''}</td></tr>`
         ).join('');
 
         const phones = [school.phone_number, school.school_phone2, school.school_phone3].filter(Boolean).join(' ; ');
@@ -348,7 +349,7 @@ export default function CollectFeePage() {
         const map = new Map<string, {
             key: string; student_id: number; first_name: string; last_name: string;
             admission_no: string; father_name: string | null; father_phone: string | null;
-            class_name: string; family_id: string | null; is_family_slip: boolean;
+            class_name: string; section_name?: string; family_id: string | null; is_family_slip: boolean;
             family_members?: any[];
             latest_slip: SlipRow;      // the most recent slip (highest year then month)
             latest_unpaid: SlipRow;    // most recent unpaid/partial slip — collect THIS one
@@ -364,7 +365,7 @@ export default function CollectFeePage() {
                     key, student_id: slip.student_id,
                     first_name: slip.first_name, last_name: slip.last_name,
                     admission_no: slip.admission_no, father_name: slip.father_name,
-                    father_phone: slip.father_phone, class_name: slip.class_name,
+                    father_phone: slip.father_phone, class_name: slip.class_name, section_name: slip.section_name,
                     family_id: slip.family_id, is_family_slip: slip.is_family_slip,
                     family_members: slip.family_members,
                     latest_slip: slip, latest_unpaid: slip,
@@ -636,7 +637,7 @@ export default function CollectFeePage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-2">
-                                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem' }}>{g.class_name}</span>
+                                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem' }}>{g.class_name} {g.section_name ? g.section_name : ''}</span>
                                                     </td>
                                                     <td className="px-2 text-center">
                                                         {g.slips.length === 1 ? (
@@ -866,7 +867,8 @@ export default function CollectFeePage() {
                                                                 className="btn btn-sm"
                                                                 title="Print Receipt"
                                                                 onClick={() => {
-                                                                    openReceiptWindow(activeSlip!, parseFloat(p.amount_paid as any), p.payment_date, parseFloat(activeSlip!.paid_amount as any) - parseFloat(p.amount_paid as any));
+                                                                    const prevPaid = slipPayments.slice(i + 1).reduce((sum, pay) => sum + parseFloat(pay.amount_paid as any), 0);
+                                                                    openReceiptWindow(activeSlip!, parseFloat(p.amount_paid as any), p.payment_date, prevPaid);
                                                                     if (!p.is_printed) {
                                                                         fetch(`${API}/fee-slips/payments/${p.payment_id}/print`, { method: 'PUT' })
                                                                            .then((res) => {
@@ -877,7 +879,7 @@ export default function CollectFeePage() {
                                                                 style={{ fontSize: '0.7rem', backgroundColor: '#e8f5e9', color: '#198754', border: '1px solid #c3e6cb', borderRadius: 6, padding: '2px 7px' }}>
                                                                 <i className="bi bi-printer"></i>
                                                             </button>
-                                                            <button
+                                                            {/* <button
                                                                 className="btn btn-sm"
                                                                 title="Print Receipt"
                                                                 onClick={() => {
@@ -920,7 +922,7 @@ export default function CollectFeePage() {
                                                                   }}
                                                                   style={{ fontSize: '0.7rem', backgroundColor: '#e8f5e9', color: '#198754', border: '1px solid #c3e6cb', borderRadius: 6, padding: '2px 7px' }}>
                                                                   <i className="bi bi-printer"></i>
-                                                              </button>
+                                                              </button> */}
                                                             {hasPermission('fees', 'delete') && (
                                                             <button
                                                                 className="btn btn-sm"

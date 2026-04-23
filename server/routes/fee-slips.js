@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
@@ -429,7 +429,7 @@ router.get('/', async (req, res) => {
             .map(r => r.family_id);
         if (familySlipIds.length > 0) {
             const membersResult = await pool.query(
-                `SELECT s.student_id, s.first_name, s.last_name, s.admission_no, s.family_id,
+                `SELECT s.student_id, s.first_name, s.last_name, s.admission_no, s.family_id, s.father_name,
                         c.class_name, c.class_id, sec.section_name
                  FROM students s
                  LEFT JOIN classes c ON s.class_id = c.class_id
