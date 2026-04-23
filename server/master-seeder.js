@@ -255,8 +255,13 @@ async function createSystemSettingsTable() {
             { key: 'password_min_length', value: '8', category: 'security', desc: 'Minimum allowed password length' },
             
             // Database / Maintenance
-            { key: 'backup_frequency', value: 'daily', category: 'database', desc: 'Scheduled backup frequency' },
-            { key: 'maintenance_mode', value: 'false', category: 'system', desc: 'Put system in read-only mode for maintenance' }
+            { key: 'maintenance_mode', value: 'false', category: 'system', desc: 'Put system in read-only mode for maintenance' },
+            
+            // Backup
+            { key: 'auto_backup_enabled', value: 'false', category: 'backup', desc: 'Enable automatic scheduled backups' },
+            { key: 'backup_frequency', value: 'daily', category: 'backup', desc: 'Scheduled backup frequency' },
+            { key: 'backup_time', value: '00:00', category: 'backup', desc: 'Time to run backup (HH:MM)' },
+            { key: 'backup_path', value: '', category: 'backup', desc: 'Local folder path where auto-backup file will be downloaded (e.g. C:\\Backups\\School)' }
         ];
 
         for (const setting of defaults) {
@@ -1653,9 +1658,12 @@ async function seed() {
         await pool.query(`INSERT INTO system_settings (setting_key, setting_value, category, description) VALUES 
             ('auto_backup_enabled', 'false', 'backup', 'Enable automatic scheduled backups'), 
             ('backup_frequency', 'daily', 'backup', 'Frequency of backups: daily, weekly, monthly'), 
-            ('backup_time', '00:00', 'backup', 'Time to run backup (HH:MM)') 
+            ('backup_time', '00:00', 'backup', 'Time to run backup (HH:MM)'),
+            ('backup_path', '', 'backup', 'Local folder path where auto-backup file will be downloaded (e.g. C:\\Backups\\School)')
             ON CONFLICT (setting_key) DO NOTHING;`);
-        console.log('Backup settings seeded');
+        // Ensure backup_frequency is in correct category (fix for older installs)
+        await pool.query(`UPDATE system_settings SET category = 'backup' WHERE setting_key = 'backup_frequency'`);
+        console.log('Backup settings seeded (including backup_path)');
         /* process.exit removed */
     } catch (e) {
         console.log(e);
