@@ -142,14 +142,14 @@ export default function NewAdmission() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch('https://shmool.onrender.com/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
             if(res.ok) setClasses(await res.json());
         } catch(e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch('https://shmool.onrender.com/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
             if(res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));
@@ -166,7 +166,7 @@ export default function NewAdmission() {
 
         setSearchingSiblings(true);
         try {
-            const res = await fetch(`https://shmool.onrender.com/students/search-siblings?query=${encodeURIComponent(query)}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/students/search-siblings?query=${encodeURIComponent(query)}`);
             if (res.ok) {
                 const results = await res.json();
                 setSearchResults(results);
@@ -299,7 +299,7 @@ export default function NewAdmission() {
                 }
             }
 
-            const res = await fetch('https://shmool.onrender.com/students', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students', {
                 method: 'POST',
                 // HEADERS MUST NOT BE SET MANUALLY FOR MULTIPART
                 body: formData
@@ -560,7 +560,7 @@ export default function NewAdmission() {
                                                             <div className="flex-shrink-0 me-3">
                                                                 {student.image_url ? (
                                                                     <img 
-                                                                        src={`https://shmool.onrender.com/${student.image_url}`} 
+                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${student.image_url}`} 
                                                                         alt={student.first_name}
                                                                         className="rounded-circle"
                                                                         style={{ width: '45px', height: '45px', objectFit: 'cover' }}
@@ -625,7 +625,7 @@ export default function NewAdmission() {
                                                             <div className="me-2">
                                                                 {sibling.image_url ? (
                                                                     <img 
-                                                                        src={`https://shmool.onrender.com/${sibling.image_url}`} 
+                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${sibling.image_url}`} 
                                                                         alt={sibling.first_name}
                                                                         className="rounded-circle"
                                                                         style={{ width: '40px', height: '40px', objectFit: 'cover' }}

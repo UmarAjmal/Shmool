@@ -27,9 +27,9 @@ export default function ResultsReportPage() {
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch('https://shmool.onrender.com/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
-        fetch('https://shmool.onrender.com/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
-        fetch('https://shmool.onrender.com/academic/years').then(r => r.json()).then(data => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/years').then(r => r.json()).then(data => {
             setYears(data);
             const active = data.find((y: AcademicYear) => y.status === 'active');
             if (active) setYearId(String(active.id));
@@ -45,7 +45,7 @@ export default function ResultsReportPage() {
         setTermId('');
         setFilteredTerms([]);
         if (yearId) {
-            fetch(`https://shmool.onrender.com/academic/terms/${yearId}`)
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/terms/${yearId}`)
                 .then(r => r.json())
                 .then(data => { setFilteredTerms(data); })
                 .catch(console.error);
@@ -60,7 +60,7 @@ export default function ResultsReportPage() {
             if (termId) params.append('term_id', termId);
             if (classId) params.append('class_id', classId);
             if (sectionId) params.append('section_id', sectionId);
-            const res = await fetch(`https://shmool.onrender.com/reports/results?${params}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/reports/results?${params}`);
             if (!res.ok) throw new Error((await res.json()).error || 'Failed');
             const data = await res.json();
             setResults(data.results.map((r: ResultRow) => ({

@@ -24,7 +24,7 @@ export default function EmployeeProfile() {
         try {
             const month = m || attMonth;
             const year = y || attYear;
-            const res = await fetch(`https://shmool.onrender.com/attendance/staff/${id}/history?month=${month}&year=${year}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/attendance/staff/${id}/history?month=${month}&year=${year}`);
             if (res.ok) {
                 const data = await res.json();
                 setAttRecords(data.records || []);
@@ -38,7 +38,7 @@ export default function EmployeeProfile() {
 
     const fetchEmployee = async () => {
         try {
-            const res = await fetch(`https://shmool.onrender.com/hrm/employees/${id}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/hrm/employees/${id}`);
             if (res.ok) {
                 setEmployee(await res.json());
             } else {
@@ -53,7 +53,7 @@ export default function EmployeeProfile() {
         const newStatus = employee.status === 'Active' ? 'Inactive' : 'Active';
         if (!confirm(`Mark this employee as ${newStatus}?`)) return;
         try {
-            const res = await fetch(`https://shmool.onrender.com/hrm/employees/${id}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/hrm/employees/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus }),
@@ -67,7 +67,7 @@ export default function EmployeeProfile() {
         const newPwd = prompt('Enter new password for this employee:');
         if (!newPwd) return;
         try {
-            const res = await fetch(`https://shmool.onrender.com/users/${employee.user_id}/password`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/users/${employee.user_id}/password`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: newPwd }),

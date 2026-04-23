@@ -40,7 +40,7 @@ export default function StaffAttendanceHistoryPage() {
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     useEffect(()=>{
-        fetch('https://shmool.onrender.com/hrm/departments').then(r=>r.json()).then(setDepartments).catch(()=>{});
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments').then(r=>r.json()).then(setDepartments).catch(()=>{});
     },[]);
 
     const showToast = (type:'success'|'danger',msg:string)=>{ setToast({type,msg}); setTimeout(()=>setToast(null),4000); };
@@ -49,7 +49,7 @@ export default function StaffAttendanceHistoryPage() {
         if(!month||!year) return;
         setLoading(true);
         try {
-            const url = `https://shmool.onrender.com/attendance/staff/history?month=${month}&year=${year}${deptId?`&department_id=${deptId}`:''}`;
+            const url = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/attendance/staff/history?month=${month}&year=${year}${deptId?`&department_id=${deptId}`:''}`;
             const res = await fetch(url);
             const d   = await res.json();
             if(d.staff) setData(d); else showToast('danger','Failed to load history');

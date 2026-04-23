@@ -28,7 +28,7 @@ export default function ExpenseReportPage() {
         const m = String(now.getMonth() + 1).padStart(2, '0');
         setFromDate(`${y}-${m}-01`);
         setToDate(`${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`);
-        fetch('https://shmool.onrender.com/reports/expense-categories').then(r => r.json()).then(setCategories).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/expense-categories').then(r => r.json()).then(setCategories).catch(console.error);
     }, []);
 
     const loadReport = async () => {
@@ -38,7 +38,7 @@ export default function ExpenseReportPage() {
             if (fromDate) params.append('from_date', fromDate);
             if (toDate) params.append('to_date', toDate);
             if (categoryId) params.append('category_id', categoryId);
-            const res = await fetch(`https://shmool.onrender.com/reports/expenses?${params}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/reports/expenses?${params}`);
             if (!res.ok) throw new Error((await res.json()).error || 'Failed');
             const data = await res.json();
             setExpenses(data.expenses.map((e: Expense) => ({ ...e, amount: Number(e.amount) })));

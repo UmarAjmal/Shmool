@@ -67,7 +67,7 @@ export default function AdmissionFeeReportPage() {
             if (toDate) params.append('to_date', toDate);
             if (status) params.append('status', status);
 
-            const res = await fetch(`https://shmool.onrender.com/reports/admission-fee?${params}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/reports/admission-fee?${params}`);
             if (!res.ok) throw new Error((await res.json()).error || 'Failed to fetch report');
             
             const data = await res.json();

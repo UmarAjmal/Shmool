@@ -85,7 +85,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
 
     const fetchStudentData = async () => {
         try {
-            const res = await fetch(`https://shmool.onrender.com/students/${params.id}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/students/${params.id}`);
             if (res.ok) {
                 const data = await res.json();
                 
@@ -110,7 +110,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                 // Fetch family info if student has a family
                 if (data.family_id) {
                     try {
-                        const fRes = await fetch(`https://shmool.onrender.com/students/families/${data.family_id}`);
+                        const fRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/students/families/${data.family_id}`);
                         if (fRes.ok) {
                             const fData = await fRes.json();
                             const memberCount = fData.members ? fData.members.length : 1;
@@ -149,14 +149,14 @@ export default function EditStudent({ params }: { params: { id: string } }) {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch('https://shmool.onrender.com/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
             if(res.ok) setClasses(await res.json());
         } catch(e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch('https://shmool.onrender.com/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
             if(res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));
@@ -202,7 +202,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                 }
             }
 
-            const res = await fetch(`https://shmool.onrender.com/students/${params.id}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/students/${params.id}`, {
                 method: 'PUT',
                 body: formData
             });
@@ -255,7 +255,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                                 <img src={URL.createObjectURL(imageFile)} alt="Preview" 
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : existingImage ? (
-                                                <img src={`https://shmool.onrender.com/${existingImage}`} alt="Current" 
+                                                <img src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${existingImage}`} alt="Current" 
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
                                                 <div className="text-secondary small">

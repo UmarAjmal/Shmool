@@ -48,7 +48,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch('https://shmool.onrender.com/expense-categories/active');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expense-categories/active');
             const data = await response.json();
             setCategories(data);
         } catch (err) {
@@ -58,7 +58,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
 
     const fetchExpenseDetails = async () => {
         try {
-            const response = await fetch(`https://shmool.onrender.com/expenses/${params.id}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/expenses/${params.id}`);
             if (!response.ok) throw new Error('Failed to fetch expense details');
             
             const data = await response.json();
@@ -86,7 +86,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
         setLoading(true);
 
         try {
-            const response = await fetch(`https://shmool.onrender.com/expenses/${params.id}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/expenses/${params.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

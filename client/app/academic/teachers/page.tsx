@@ -69,7 +69,7 @@ export default function TeacherAssign() {
     const fetchAllData = async () => {
         setLoading(true);
         setError(null);
-        const API_URL = 'https://shmool.onrender.com';
+        const API_URL = `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '';
         
         try {
             console.log("Fetching from:", API_URL);
@@ -180,7 +180,7 @@ export default function TeacherAssign() {
                 if (isSelected && !wasSelected) {
                     // ADD
                     apiCalls.push(
-                        fetch(`https://shmool.onrender.com/academic/teachers/${employeeId}/subjects`, {
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/subjects`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ subject_id: subId })
@@ -191,7 +191,7 @@ export default function TeacherAssign() {
                     const assignId = initialSubjectMap[subId];
                     if (assignId) {
                         apiCalls.push(
-                            fetch(`https://shmool.onrender.com/academic/teachers/${employeeId}/subjects/${assignId}`, {
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/subjects/${assignId}`, {
                                 method: 'DELETE'
                             })
                         );
@@ -217,7 +217,7 @@ export default function TeacherAssign() {
 
                 // POST (Upsert)
                 apiCalls.push(
-                    fetch(`https://shmool.onrender.com/academic/teachers/${employeeId}/classes`, {
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/classes`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
@@ -237,7 +237,7 @@ export default function TeacherAssign() {
                     if (!activeSectionsMap.has(secId)) {
                         // Section is no longer active (no subjects, not CT) -> Remove it
                          apiCalls.push(
-                            fetch(`https://shmool.onrender.com/academic/teachers/${employeeId}/classes/${cls.assignment_id}`, {
+                            fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/classes/${cls.assignment_id}`, {
                                 method: 'DELETE'
                             })
                         );

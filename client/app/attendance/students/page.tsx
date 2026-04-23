@@ -44,8 +44,8 @@ export default function StudentAttendancePage() {
     const canMarkAdvance = isAdmin || hasPermission('attendance.mark_advance', 'write');
 
     useEffect(() => {
-        fetch('https://shmool.onrender.com/academic').then(r=>r.json()).then(d=>Array.isArray(d)?setClasses(d):null).catch(()=>{});
-        fetch('https://shmool.onrender.com/academic/sections').then(r=>r.json()).then(d=>Array.isArray(d)?setSections(d):null).catch(()=>{});
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic').then(r=>r.json()).then(d=>Array.isArray(d)?setClasses(d):null).catch(()=>{});
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r=>r.json()).then(d=>Array.isArray(d)?setSections(d):null).catch(()=>{});
     }, []);
 
     const loadAttendance = useCallback(async () => {
@@ -53,7 +53,7 @@ export default function StudentAttendancePage() {
         setLoading(true);
         try {
             const secParam = sectionId ? `&section_id=${sectionId}` : '';
-            const res = await fetch(`https://shmool.onrender.com/attendance/students/daily?class_id=${classId}&date=${date}${secParam}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/attendance/students/daily?class_id=${classId}&date=${date}${secParam}`);
             const data = await res.json();
             if (!Array.isArray(data)) { notify.error('Failed to load students'); setLoading(false); return; }
             setStudents(data);
@@ -88,7 +88,7 @@ export default function StudentAttendancePage() {
                 status:statuses[s.student_id]||'Present',
                 remarks:remarks[s.student_id]||''
             }));
-            const res = await fetch('https://shmool.onrender.com/attendance/students/daily',{
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/attendance/students/daily',{
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({class_id:classId, date, records})
             });

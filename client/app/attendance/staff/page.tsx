@@ -35,14 +35,14 @@ export default function StaffAttendancePage() {
     const canMarkAdvance = isAdmin || hasPermission('attendance.mark_advance', 'write');
 
     useEffect(()=>{
-        fetch('https://shmool.onrender.com/hrm/departments').then(r=>r.json()).then(setDepartments).catch(()=>{});
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments').then(r=>r.json()).then(setDepartments).catch(()=>{});
     },[]);
 
     const loadAttendance = useCallback(async ()=>{
         if(!date) return;
         setLoading(true);
         try {
-            const url = `https://shmool.onrender.com/attendance/staff/daily?date=${date}${deptId?`&department_id=${deptId}`:''}`;
+            const url = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/attendance/staff/daily?date=${date}${deptId?`&department_id=${deptId}`:''}`;
             const res = await fetch(url);
             const data = await res.json();
             if(!Array.isArray(data)){ notify.error('Failed to load staff'); setLoading(false); return; }
@@ -89,7 +89,7 @@ export default function StaffAttendancePage() {
         try {
             // Save ALL staff regardless of lock status
             const records = staff.map(e=>({ employee_id:e.employee_id, status:statuses[e.employee_id]||'Present' }));
-            const res = await fetch('https://shmool.onrender.com/attendance/staff/daily',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({date,records}) });
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/attendance/staff/daily',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({date,records}) });
             const d = await res.json();
             if(res.ok){
                 // Lock all rows after save
