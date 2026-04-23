@@ -166,24 +166,23 @@ export default function AdmissionFeePage() {
         class_name: "",
       });
 
-    let feeBody = `<tr><td>1</td><td>Admission Fee</td><td>${fmtR(total)}</td></tr>`;
-    let sr = 2;
+    let feeBody = `<tr><td>Admission Fee</td><td>${fmtR(total)}</td></tr>`;
     if (prevPaid > 0)
-      feeBody += `<tr><td>${sr++}</td><td>Previous Payment (Credit)</td><td>\u2212 ${fmtR(prevPaid)}</td></tr>`;
+      feeBody += `<tr><td>Previous Payment (Credit)</td><td>\u2212 ${fmtR(prevPaid)}</td></tr>`;
     if (discountAmt > 0)
-      feeBody += `<tr><td>${sr++}</td><td>Discount</td><td>\u2212 ${fmtR(discountAmt)}</td></tr>`;
+      feeBody += `<tr><td>Discount</td><td>\u2212 ${fmtR(discountAmt)}</td></tr>`;
     
     if (tuitionAmount > 0) {
-      feeBody += `<tr><td>${sr++}</td><td>Current Month Tuition Fee</td><td>${fmtR(tuitionAmount)}</td></tr>`;
+      feeBody += `<tr><td>Current Month Tuition Fee</td><td>${fmtR(tuitionAmount)}</td></tr>`;
     }
 
     const netTotalPayable = total + (tuitionAmount > 0 ? tuitionAmount : 0);
     const netReceivingAmt = receivingAmt + (tuitionAmount > 0 ? tuitionReceived : 0);
     const netBalance = balance + (tuitionAmount > 0 ? (tuitionAmount - tuitionReceived) : 0);
 
-    feeBody += `<tr><td>${sr++}</td><td><strong>Total Payable Amount</strong></td><td><strong>${fmtR(netTotalPayable)}</strong></td></tr>`;
-    feeBody += `<tr class="thick"><td>${sr++}</td><td><strong>Receiving Amount</strong></td><td><strong>${fmtR(netReceivingAmt)}</strong></td></tr>`;
-    feeBody += `<tr class="thick"><td>${sr++}</td><td><strong>Balance Amount</strong></td><td><strong>${fmtR(netBalance)}</strong></td></tr>`;
+    feeBody += `<tr><td><strong>Total Payable Amount</strong></td><td><strong>${fmtR(netTotalPayable)}</strong></td></tr>`;
+    feeBody += `<tr class="thick"><td><strong>Receiving Amount</strong></td><td><strong>${fmtR(netReceivingAmt)}</strong></td></tr>`;
+    feeBody += `<tr class="thick"><td><strong>Balance Amount</strong></td><td><strong>${fmtR(netBalance)}</strong></td></tr>`;
 
     const studentBody = rows9
       .map(
@@ -221,14 +220,17 @@ export default function AdmissionFeePage() {
     .info { font-size: 9pt; margin-bottom: 1mm; line-height: 1.4; }
     .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
     .info-row2 { margin-bottom: 0.5mm; }
-    .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 0.5mm; }
-    table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 1mm; }
-    th, td { border: 1px solid #000; padding: 0.5mm 1mm; text-align: center; }
-    th { background-color: #f0f0f0; font-weight: bold; }
-    .details tbody td:nth-child(2) { text-align: left; }
-    tr.thick td { border: 2px solid #000; }
-    .students tbody tr { height: 5mm; }
-    .students tbody td:nth-child(1), .students tbody td:nth-child(2) { text-align: left; }
+    .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 0; margin-top: 3mm; text-align: center; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 1mm 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 3mm; }
+    th, td { padding: 1.5mm 0.5mm; text-align: center; }
+    th { border-bottom: 1.5px solid #000; font-weight: bold; }
+    td { border-bottom: 1px dotted #ccc; }
+    .details tbody td:nth-child(1) { text-align: left; }
+    .details tbody td:nth-child(2) { text-align: right; }
+    tr.thick td { border-top: 1.5px dashed #000; border-bottom: none; font-weight: bold; padding-top: 1.5mm; }
+    .students th:nth-child(1), .students td:nth-child(1) { text-align: left; }
+    .students th:nth-child(2), .students td:nth-child(2) { text-align: left; }
+    .students th:nth-child(3), .students td:nth-child(3) { text-align: right; }
     .spacer { flex-grow: 1; }
     .thank-you { text-align: center; font-size: 10pt; font-weight: bold; margin-bottom: 1mm; }
     .print-btn { display: block; width: 100%; margin-top: 4mm; padding: 2mm; font-size: 10pt; font-weight: bold; background: #007bff; color: #fff; border: none; border-radius: 2mm; cursor: pointer; }
@@ -250,12 +252,11 @@ export default function AdmissionFeePage() {
     <div class="section-label">Students Details</div>
     <table class="students"><thead><tr><th>Student Name</th><th>Father Name</th><th>Class</th></tr></thead><tbody>${studentBody}</tbody></table>
     <div class="section-label">Fee Details</div>
-    <table class="details"><thead><tr><th>Sr.#</th><th>Fee Description</th><th>Amount</th></tr></thead><tbody>${feeBody}</tbody></table>
+    <table class="details"><thead><tr><th>Fee Description</th><th>Amount</th></tr></thead><tbody>${feeBody}</tbody></table>
     <div class="thank-you">Thank You</div>
     <div class="spacer"></div>
   </div>
   <button class="print-btn" onclick="window.print()">&#128438; Print Receipt</button>
-  <script>window.onload = function(){ window.print(); }<\/script>
 </body>
 </html>`;
 
@@ -267,6 +268,8 @@ export default function AdmissionFeePage() {
     if (w) {
       w.document.write(html);
       w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 250);
     }
   };
 

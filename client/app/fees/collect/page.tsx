@@ -223,10 +223,10 @@ export default function CollectFeePage() {
     .info { font-size: 8.5pt; margin-bottom: 2mm; line-height: 1.4; }
     .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
     .info-row2 { margin-bottom: 0.5mm; }
-    .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 1mm; text-align: center; }
+    .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 0; margin-top: 3mm; text-align: center; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 1mm 0; }
     table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 3mm; }
     th, td { padding: 1.5mm 0.5mm; text-align: center; }
-    th { border-bottom: 1.5px solid #000; border-top: 1.5px solid #000; font-weight: bold; }
+    th { border-bottom: 1.5px solid #000; font-weight: bold; }
     td { border-bottom: 1px dotted #ccc; }
     .details tbody td:nth-child(1) { text-align: left; }
     .details tbody td:nth-child(2) { text-align: right; }
@@ -260,12 +260,16 @@ export default function CollectFeePage() {
     <div class="spacer"></div>
   </div>
   <button class="print-btn" onclick="window.print()">&#128438; Print Receipt</button>
-  <script>setTimeout(function() { window.print(); }, 250);<\/script>
 </body>
 </html>`;
 
         const w = window.open('', '_blank', 'width=420,height=680,toolbar=0,menubar=0,scrollbars=1');
-        if (w) { w.document.write(html); w.document.close(); }
+        if (w) { 
+            w.document.write(html); 
+            w.document.close(); 
+            w.focus();
+            setTimeout(() => w.print(), 250);
+        }
     };
 
     const deletePayment = async (paymentId: number) => {
