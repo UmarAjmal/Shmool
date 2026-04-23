@@ -1,3 +1,16 @@
 node_modules/
 .DS_Store
 .next/
+.env
+.env.local
+.env.*.local
+backups/
+uploads/
+temp/
+*.sql
+*.log
+dist/
+build/
+out/
+.vercel
+.vscode/
