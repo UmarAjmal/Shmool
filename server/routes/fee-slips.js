@@ -214,11 +214,12 @@ router.post('/generate', async (req, res) => {
 
         const insertSlip = async (student, totalAmount, lineItems, isFamilySlip) => {
             const hasMulti = monthsArray.length > 1;
+            const actualClassId = student.sort_class_id || student.class_id || class_id;
             const slip = await client.query(
                 `INSERT INTO monthly_fee_slips
                     (student_id, family_id, class_id, month, year, due_date, issue_date, total_amount, is_family_slip, has_multi_months, months_list)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING slip_id`,
-                [student.student_id, student.family_id, class_id,
+                [student.student_id, student.family_id, actualClassId,
                  month, year, due_date || null, issue_date || null, totalAmount, isFamilySlip, hasMulti, monthsArray]
             );
             const slipId = slip.rows[0].slip_id;
@@ -248,8 +249,19 @@ router.post('/generate', async (req, res) => {
             );
             if (existing.rows.length > 0) { skippedCount++; continue; }
 
-            // Primary = member in highest class (most senior sibling)
-            const primary = members[0]; // already ordered by class_id DESC
+            // Primary = member in highest class (most senior sibling across all classes)
+            const famPrimaryRes = await client.query(
+                `SELECT s.*, COALESCE(f.family_fee, 0) AS family_fee,
+                        (SELECT COUNT(*) FROM students s2 WHERE s2.family_id = s.family_id AND s2.status = 'Active') AS total_family_size,
+                        c.class_id AS sort_class_id
+                 FROM students s
+                 LEFT JOIN families f ON f.family_id = s.family_id
+                 LEFT JOIN classes c ON c.class_id = s.class_id
+                 WHERE s.family_id = $1 AND s.status = 'Active'
+                 ORDER BY c.class_id DESC NULLS LAST, s.first_name LIMIT 1`,
+                [fid]
+            );
+            const primary = famPrimaryRes.rows.length > 0 ? famPrimaryRes.rows[0] : members[0];
             const familyFee = parseFloat(primary.family_fee) || 0;
             const familySize = parseInt(primary.total_family_size) || 1;
 
