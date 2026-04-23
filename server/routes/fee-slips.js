@@ -14,9 +14,9 @@ router.post('/generate', async (req, res) => {
 
         const monthsArray = rawMonths.map(Number).sort((a, b) => a - b); // sorted ascending
 
-        // SECURITY CHECK: Verify none of the requested months are already generated
-        // Must also catch family slips where the primary is in a DIFFERENT class
-        // (e.g., Class 2 student whose family slip is stored under Class 5 primary)
+        // SECURITY CHECK: Only block if DIRECT slips already exist for students in this class.
+        // Cross-class family coverage (sibling's slip in a higher class) is NOT a reason to block —
+        // the generation loops handle that gracefully by checking family_id and skipping with skippedCount++.
         const checkQuery = `
             SELECT DISTINCT month, months_list
             FROM monthly_fee_slips mfs
@@ -32,12 +32,6 @@ router.post('/generate', async (req, res) => {
                     SELECT student_id FROM students 
                     WHERE class_id = $1 AND status = 'Active'
                 )
-                OR (
-                    mfs.is_family_slip = TRUE AND mfs.family_id IN (
-                        SELECT family_id FROM students 
-                        WHERE class_id = $1 AND status = 'Active' AND family_id IS NOT NULL
-                    )
-                )
               )
         `;
         const checkRes = await client.query(checkQuery, [class_id, year, monthsArray]);
@@ -51,12 +45,10 @@ router.post('/generate', async (req, res) => {
                     conflictingSet.add(r.month);
                 }
             }
-            // Intersect with requested to show EXACTLY which ones collide
             const conflictingMonths = [...conflictingSet]
                 .filter(m => monthsArray.includes(m))
                 .sort((a,b)=>a-b)
                 .join(', ');
-                
             return res.status(400).json({ error: `Cannot generate. The following month(s) are already generated for this class: ${conflictingMonths}. Please select only ungenerated months or undo the existing ones first.` });
         }
 
