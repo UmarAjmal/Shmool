@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect } from 'react';
 
 // Constants
@@ -449,6 +449,7 @@ export function DailyFeeReceipts() {
   const [tab, setTab] = useState<'not_printed'|'printed'>('not_printed');
   const [data, setData] = useState<any>({ stats: {}, payments: [] });
   const [loading, setLoading] = useState(true);
+  const [showAmounts, setShowAmounts] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -460,83 +461,210 @@ export function DailyFeeReceipts() {
   }, [date]);
 
   const filtered = data.payments?.filter((p: any) => tab === 'printed' ? p.is_printed : !p.is_printed) || [];
+  const totalCollected = data.stats?.total_collected || 0;
+  const unprintedCount = data.stats?.unprinted_count || 0;
+  const printedCount   = data.stats?.printed_count   || 0;
+
+  const AmtCell = ({ v }: { v: number }) => (
+    <span style={{ fontWeight: 700, color: '#1a2e3b' }}>
+      {showAmounts ? fmtPKR(v) : 'Rs *****'}
+    </span>
+  );
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <Panel title="Daily Fee Collection & Receipts" icon="bi-receipt-cutoff"
-        action={
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)}
-              className="form-control form-control-sm"
-              style={{ fontSize: 12, padding: '2px 8px', width: 130, color: '#64748b', borderColor: '#e2e8f0' }} />
-          </div>
-        }>
-        
-        {loading ? <DashLoading /> : (
-          <>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 15, padding: '0 4px' }}>
-              <button onClick={() => setTab('not_printed')}
-                style={{ flex: 1, padding: '8px', fontSize: 13, fontWeight: 600, border: '1px solid', borderRadius: 8,
-                         backgroundColor: tab === 'not_printed' ? '#fffbeb' : '#fff',
-                         borderColor: tab === 'not_printed' ? '#fef08a' : '#e2e8f0',
-                         color: tab === 'not_printed' ? '#b45309' : '#64748b' }}>
-                <i className="bi bi-exclamation-circle me-2" />
-                Not Printed ({data.stats?.unprinted_count || 0})
-              </button>
-              <button onClick={() => setTab('printed')}
-                style={{ flex: 1, padding: '8px', fontSize: 13, fontWeight: 600, border: '1px solid', borderRadius: 8,
-                         backgroundColor: tab === 'printed' ? '#f0fdf4' : '#fff',
-                         borderColor: tab === 'printed' ? '#bbf7d0' : '#e2e8f0',
-                         color: tab === 'printed' ? '#15803d' : '#64748b' }}>
-                <i className="bi bi-printer me-2" />
-                Printed ({data.stats?.printed_count || 0})
-              </button>
+      <div style={{
+        background: '#fff',
+        borderRadius: 18,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05),0 4px 20px rgba(35,61,77,0.06)',
+        border: '1px solid #f1f5f9',
+        borderLeft: `4px solid ${C.teal}`,
+        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '15px 22px',
+          borderBottom: '1px solid #f1f5f9',
+          background: 'linear-gradient(135deg,#fafcff 0%,#f0f9f4 100%)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8, background: `${C.teal}1a`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <i className="bi bi-receipt-cutoff" style={{ fontSize: 13, color: C.teal }} />
             </div>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#1a2e3b', letterSpacing: '-0.01em' }}>
+              Daily Fee Collection &amp; Receipts
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Eye Toggle */}
+            <button
+              onClick={() => setShowAmounts(s => !s)}
+              title={showAmounts ? 'Hide Amounts' : 'Show Amounts'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, borderRadius: 8, border: '1px solid #e2e8f0',
+                background: showAmounts ? `${C.teal}1a` : '#f8fafc',
+                cursor: 'pointer', transition: 'all 0.2s',
+                color: showAmounts ? C.teal : '#94a3b8',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.teal; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; }}
+            >
+              <i className={showAmounts ? 'bi bi-eye-slash' : 'bi bi-eye'} style={{ fontSize: 13 }} />
+            </button>
+            {/* Date Picker */}
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              style={{
+                fontSize: 12, padding: '4px 10px', width: 135,
+                border: '1px solid #e2e8f0', borderRadius: 8, color: '#475569',
+                outline: 'none', background: '#f8fafc',
+              }} />
+          </div>
+        </div>
 
-            {filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: 13 }}>
-                <i className="bi bi-inbox fs-3 d-block mb-2" style={{ opacity: 0.5 }} />
-                No {tab === 'printed' ? 'printed' : 'unprinted'} receipts for this date.
+        <div style={{ padding: '18px 22px', flex: 1 }}>
+          {/* Summary stats row */}
+          {!loading && (
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <div style={{
+                flex: 1, background: `${C.teal}0d`, borderRadius: 12,
+                padding: '12px 16px', border: `1px solid ${C.teal}22`,
+                display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: C.teal, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  Total Collected
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#1a2e3b', lineHeight: 1.2 }}>
+                  {showAmounts ? fmtPKR(totalCollected) : 'Rs *****'}
+                </div>
               </div>
-            ) : (
-              <div style={{ overflowX: 'auto', border: '1px solid #f1f5f9', borderRadius: 10 }}>
-                <table className="table table-hover align-middle mb-0" style={{ fontSize: 12 }}>
-                  <thead style={{ backgroundColor: '#f8fafc', color: '#64748b' }}>
-                    <tr>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>STUDENT</th>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>CLASS</th>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>MONTH</th>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>AMOUNT</th>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>METHOD</th>
-                      <th style={{ fontWeight: 600, padding: '10px 14px' }}>STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((p: any, i: number) => (
-                      <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                        <td style={{ padding: '12px 14px', fontWeight: 600, color: '#334155' }}>
-                          {p.is_family_slip ? `Family ID: ${p.family_id}` : p.student_name}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: '#64748b' }}>
-                          {p.is_family_slip ? 'Family' : (p.class_name || '-')}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: '#64748b' }}>{p.month} {p.year}</td>
-                        <td style={{ padding: '12px 14px', fontWeight: 600, color: '#0f172a' }}>{fmtPKR(p.amount_paid)}</td>
-                        <td style={{ padding: '12px 14px', color: '#64748b' }}>{p.payment_method}</td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <span className={`badge ${p.is_printed ? 'bg-success' : 'bg-warning text-dark'}`} style={{ fontSize: 10, padding: '4px 6px', borderRadius: 4 }}>
-                            {p.is_printed ? 'Printed' : 'Not Printed'}
-                          </span>
-                        </td>
+              <div style={{
+                flex: 1, background: '#fffbeb', borderRadius: 12,
+                padding: '12px 16px', border: '1px solid #fef08a',
+                display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Not Printed</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#1a2e3b', lineHeight: 1.2 }}>{unprintedCount}</div>
+              </div>
+              <div style={{
+                flex: 1, background: '#f0fdf4', borderRadius: 12,
+                padding: '12px 16px', border: '1px solid #bbf7d0',
+                display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Printed</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#1a2e3b', lineHeight: 1.2 }}>{printedCount}</div>
+              </div>
+            </div>
+          )}
+
+          {loading ? <DashLoading /> : (
+            <>
+              {/* Tab Buttons */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                <button onClick={() => setTab('not_printed')}
+                  style={{
+                    flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600,
+                    border: '1px solid', borderRadius: 8, cursor: 'pointer', transition: 'all 0.18s',
+                    backgroundColor: tab === 'not_printed' ? '#fffbeb' : '#fff',
+                    borderColor:     tab === 'not_printed' ? '#fef08a' : '#e2e8f0',
+                    color:           tab === 'not_printed' ? '#b45309' : '#64748b',
+                  }}>
+                  <i className="bi bi-exclamation-circle me-2" />
+                  Not Printed ({unprintedCount})
+                </button>
+                <button onClick={() => setTab('printed')}
+                  style={{
+                    flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 600,
+                    border: '1px solid', borderRadius: 8, cursor: 'pointer', transition: 'all 0.18s',
+                    backgroundColor: tab === 'printed' ? '#f0fdf4' : '#fff',
+                    borderColor:     tab === 'printed' ? '#bbf7d0' : '#e2e8f0',
+                    color:           tab === 'printed' ? '#15803d' : '#64748b',
+                  }}>
+                  <i className="bi bi-printer me-2" />
+                  Printed ({printedCount})
+                </button>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 10px', color: '#94a3b8', fontSize: 13,
+                  background: '#f8fafc', borderRadius: 10, border: '1px dashed #e2e8f0' }}>
+                  <i className="bi bi-inbox" style={{ fontSize: 32, display: 'block', marginBottom: 8, opacity: 0.5 }} />
+                  No {tab === 'printed' ? 'printed' : 'unprinted'} receipts for this date.
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', border: '1px solid #f1f5f9', borderRadius: 10 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc' }}>
+                        {['Student', 'Class', 'Month', 'Amount', 'Method', 'Status'].map(h => (
+                          <th key={h} style={{
+                            padding: '9px 14px', textAlign: 'left', fontWeight: 700,
+                            fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+                            color: '#64748b', borderBottom: '2px solid #f1f5f9', whiteSpace: 'nowrap',
+                          }}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
-      </Panel>
+                    </thead>
+                    <tbody>
+                      {filtered.map((p: any, i: number) => (
+                        <tr key={i}
+                          style={{ borderBottom: i < filtered.length - 1 ? '1px solid #f8fafc' : 'none', transition: 'background 0.15s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#f8fdf7'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+                        >
+                          <td style={{ padding: '11px 14px', fontWeight: 600, color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{
+                                width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                                background: `linear-gradient(135deg,${C.teal},${C.dark})`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, fontWeight: 800, color: '#fff',
+                              }}>
+                                {(p.is_family_slip ? 'F' : (p.student_name||'?').charAt(0)).toUpperCase()}
+                              </div>
+                              <span>{p.is_family_slip ? `Family: ${p.family_id}` : p.student_name}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: '11px 14px', color: '#64748b' }}>
+                            {p.is_family_slip ? (
+                              <span style={{ background: `${C.teal}1a`, color: C.teal, borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Family</span>
+                            ) : (p.class_name || '—')}
+                          </td>
+                          <td style={{ padding: '11px 14px', color: '#64748b' }}>{p.month} {p.year}</td>
+                          <td style={{ padding: '11px 14px' }}><AmtCell v={parseFloat(p.amount_paid)} /></td>
+                          <td style={{ padding: '11px 14px' }}>
+                            <span style={{
+                              padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                              textTransform: 'capitalize',
+                              background: p.payment_method === 'cash' ? '#16a34a1a' : '#4f46e51a',
+                              color:      p.payment_method === 'cash' ? '#16a34a'   : '#4f46e5',
+                            }}>{p.payment_method || 'cash'}</span>
+                          </td>
+                          <td style={{ padding: '11px 14px' }}>
+                            <span style={{
+                              padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                              background: p.is_printed ? '#16a34a1a' : '#fef9c3',
+                              color:      p.is_printed ? '#16a34a'   : '#b45309',
+                            }}>
+                              <i className={`bi ${p.is_printed ? 'bi-printer-fill' : 'bi-exclamation-circle'} me-1`} />
+                              {p.is_printed ? 'Printed' : 'Not Printed'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
