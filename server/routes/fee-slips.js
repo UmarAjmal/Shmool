@@ -780,8 +780,11 @@ router.get('/print-queue', async (req, res) => {
             }
         }
 
-        // Sort: pending first, then by name
+        // Sort: class_id DESC, then pending first, then by name
         filteredVouchers.sort((a, b) => {
+            const classA = a.primary.c_class_id || 0;
+            const classB = b.primary.c_class_id || 0;
+            if (classA !== classB) return classB - classA;
             if (!a.is_printed && b.is_printed) return -1;
             if (a.is_printed && !b.is_printed) return 1;
             return (a.primary.first_name || '').localeCompare(b.primary.first_name || '');
