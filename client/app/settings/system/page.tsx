@@ -272,7 +272,8 @@ export default function SystemConfigPage() {
 
     // Filter settings by category
     const securitySettings = settings.filter(s => s.category === 'security');
-    const dbSettings = settings.filter(s => s.category === 'database' || s.category === 'system');
+    const dbSettings = settings.filter(s => s.category === 'system'); // maintenance_mode only
+    const backupEnabled = formData['auto_backup_enabled'] === 'true';
 
     return (
         <div className="container-fluid animate__animated animate__fadeIn">
@@ -464,18 +465,125 @@ export default function SystemConfigPage() {
                                 </table>
                             </div>
 
-                            {/* Config Form */}
-                            <h5 className="mb-3 text-primary-teal">Maintenance Configuration</h5>
-                            <div className="row g-4">
-                                    {dbSettings.map(setting => (
-                                    <div key={setting.setting_key} className="col-12 col-md-6">
-                                        <label className="form-label fw-semibold">
-                                            {setting.setting_key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                                        </label>
-                                        {renderSettingInput(setting)}
-                                        <small className="text-muted">{setting.description}</small>
+                            {/* Maintenance Mode Setting */}
+                            {dbSettings.length > 0 && (
+                                <>
+                                    <h5 className="mb-3 text-primary-teal">Maintenance Configuration</h5>
+                                    <div className="row g-4 mb-5">
+                                        {dbSettings.map(setting => (
+                                            <div key={setting.setting_key} className="col-12 col-md-6">
+                                                <label className="form-label fw-semibold">
+                                                    {setting.setting_key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                                </label>
+                                                {renderSettingInput(setting)}
+                                                <small className="text-muted">{setting.description}</small>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                </>
+                            )}
+
+                            {/* AUTO BACKUP CONFIGURATION */}
+                            <h5 className="mb-3 text-primary-teal">
+                                <i className="bi bi-cloud-download-fill me-2"></i>Auto Backup Configuration
+                            </h5>
+                            <div className="card border-0 shadow-sm mb-4" style={{ borderLeft: '4px solid #215E61', borderRadius: 12 }}>
+                                <div className="card-body p-4">
+                                    <div className="row g-4">
+
+                                        {/* Enable / Disable */}
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label fw-semibold">
+                                                <i className="bi bi-toggle-on me-2 text-success"></i>Auto Backup Status
+                                            </label>
+                                            <select
+                                                className="form-select"
+                                                value={formData['auto_backup_enabled'] || 'false'}
+                                                onChange={e => handleChange('auto_backup_enabled', e.target.value)}
+                                            >
+                                                <option value="false">Disabled</option>
+                                                <option value="true">Enabled</option>
+                                            </select>
+                                            <small className="text-muted">Enable to auto-download a fresh database backup at scheduled time.</small>
+                                        </div>
+
+                                        {/* Frequency */}
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label fw-semibold">
+                                                <i className="bi bi-calendar-event me-2 text-primary"></i>Backup Frequency
+                                            </label>
+                                            <select
+                                                className="form-select"
+                                                value={formData['backup_frequency'] || 'daily'}
+                                                disabled={!backupEnabled}
+                                                onChange={e => handleChange('backup_frequency', e.target.value)}
+                                            >
+                                                <option value="daily">Daily</option>
+                                                <option value="weekly">Weekly (Every Sunday)</option>
+                                                <option value="monthly">Monthly (1st of Month)</option>
+                                            </select>
+                                            <small className="text-muted">How often the backup should run automatically.</small>
+                                        </div>
+
+                                        {/* Time Picker */}
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label fw-semibold">
+                                                <i className="bi bi-clock me-2 text-warning"></i>Backup Time <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="time"
+                                                className="form-control"
+                                                value={formData['backup_time'] || '00:00'}
+                                                disabled={!backupEnabled}
+                                                onChange={e => handleChange('backup_time', e.target.value)}
+                                            />
+                                            <small className="text-muted">
+                                                Backup will auto-download at this time (24h format). Software must be open in browser at this exact time.
+                                            </small>
+                                        </div>
+
+                                        {/* Download Path */}
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label fw-semibold">
+                                                <i className="bi bi-folder2-open me-2 text-secondary"></i>Download Folder Path
+                                            </label>
+                                            <div className="input-group">
+                                                <span className="input-group-text bg-light">
+                                                    <i className="bi bi-hdd"></i>
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    className="form-control font-monospace"
+                                                    placeholder="e.g. C:\Backups\School"
+                                                    value={formData['backup_path'] || ''}
+                                                    disabled={!backupEnabled}
+                                                    onChange={e => handleChange('backup_path', e.target.value)}
+                                                />
+                                            </div>
+                                            <small className="text-muted">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Backup saves to browser <strong>Downloads</strong> folder. To use a specific path, enable
+                                                {' '}<em>&quot;Ask where to save each file&quot;</em> in Chrome → Settings → Downloads.
+                                            </small>
+                                        </div>
+
+                                    </div>
+
+                                    {backupEnabled ? (
+                                        <div className="alert alert-success d-flex align-items-center gap-2 mt-4 mb-0" role="alert">
+                                            <i className="bi bi-check-circle-fill fs-5"></i>
+                                            <div>
+                                                <strong>Auto Backup Active</strong> &mdash; A fresh .sql backup will download at{' '}
+                                                <strong>{formData['backup_time'] || '00:00'}</strong> ({formData['backup_frequency'] || 'daily'}) whenever the software is open.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="alert alert-warning d-flex align-items-center gap-2 mt-4 mb-0" role="alert">
+                                            <i className="bi bi-exclamation-triangle-fill fs-5"></i>
+                                            <div>Auto Backup is <strong>Disabled</strong>. Enable it above and click <strong>Save Configuration</strong> to activate.</div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
