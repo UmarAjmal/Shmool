@@ -28,7 +28,7 @@ export default function ExpenseReportPage() {
         const m = String(now.getMonth() + 1).padStart(2, '0');
         setFromDate(`${y}-${m}-01`);
         setToDate(`${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/expense-categories').then(r => r.json()).then(setCategories).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/expense-categories').then(r => r.json()).then(setCategories).catch(console.error);
     }, []);
 
     const loadReport = async () => {

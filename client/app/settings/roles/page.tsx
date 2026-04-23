@@ -156,7 +156,7 @@ export default function RolesPage() {
 
     const fetchRoles = async () => {
         try {
-            const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles');
+            const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles');
             const data = await res.json();
             setRoles(data);
         } catch { showToastMsg('danger', 'Failed to load roles'); }
@@ -209,7 +209,7 @@ export default function RolesPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        const url    = formData.id === 0 ? `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles' : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/roles/${formData.id}`;
+        const url    = formData.id === 0 ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles' : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/roles/${formData.id}`;
         const method = formData.id === 0 ? 'POST' : 'PUT';
         try {
             const res = await fetch(url, {

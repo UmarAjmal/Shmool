@@ -48,9 +48,9 @@ export default function FamilyFeeReportPage() {
 
     // Load dropdowns on mount
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/fee-heads').then(r => r.json()).then(setFeeHeads).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/fee-heads').then(r => r.json()).then(setFeeHeads).catch(console.error);
     }, []);
 
     useEffect(() => {

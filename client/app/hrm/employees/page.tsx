@@ -65,9 +65,9 @@ export default function EmployeesPage() {
     const fetchData = async () => {
         try {
             const [empRes, deptRes, roleRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees'),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments'),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles') // Assuming this exists from previous modules
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees'),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments'),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles') // Assuming this exists from previous modules
             ]);
             
             if (empRes.ok) setEmployees(await empRes.json());
@@ -138,7 +138,7 @@ export default function EmployeesPage() {
         
         const payload = { ...formData, create_system_user: isSysUser };
         const url = modalMode === 'create' 
-            ? `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees' 
+            ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees' 
             : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/hrm/employees/${selectedId}`;
         
         const method = modalMode === 'create' ? 'POST' : 'PUT';

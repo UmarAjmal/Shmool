@@ -35,7 +35,7 @@ export default function FeeHeadsPage() {
 
     const fetchHeads = async () => {
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads');
             setHeads(await r.json());
         } catch { setError('Failed to load fee heads'); }
         finally { setLoading(false); }
@@ -47,7 +47,7 @@ export default function FeeHeadsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setError('');
         try {
-            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-heads/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads';
+            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-heads/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads';
             const method = editMode ? 'PUT' : 'POST';
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(current) });
             const data = await res.json();

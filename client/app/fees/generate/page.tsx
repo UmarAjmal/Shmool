@@ -32,7 +32,7 @@ interface Slip {
 interface Stats { total_students: number; total_amount: number; paid_amount: number; paid_count: number; unpaid_count: number; partial_count: number; }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const API = `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '';
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
 
 export default function FeeGeneratePage() {
     const router = useRouter();
@@ -72,18 +72,18 @@ export default function FeeGeneratePage() {
     useEffect(() => { fetchClasses(); fetchHeads(); }, []);
 
     const fetchClasses = async () => {
-        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic'); setClasses(await r.json()); } catch { }
+        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic'); setClasses(await r.json()); } catch { }
     };
 
     const fetchHeads = async () => {
-        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads/active'); setAllHeads(await r.json()); } catch { }
+        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads/active'); setAllHeads(await r.json()); } catch { }
     };
 
     const fetchPlanForClass = async (class_id: string) => {
         if (!class_id) { setMatchingPlans([]); setPlanInfo(null); setSelectedPlanId(''); return; }
         setLoadingPlan(true);
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-plans');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-plans');
             const plans: any[] = await r.json();
             const activePlans = plans.filter(p => p.is_active && (p.applies_to_all || (p.classes && p.classes.some((c:any) => c.class_id.toString() === class_id))));
             setMatchingPlans(activePlans);
@@ -190,7 +190,7 @@ export default function FeeGeneratePage() {
         const sortedMonths = [...selectedMonths].sort((a, b) => parseInt(a) - parseInt(b));
         try {
             // Send ONE request with all selected months — server creates a single combined slip
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-slips/generate', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-slips/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

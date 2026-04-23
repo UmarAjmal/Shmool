@@ -27,9 +27,9 @@ export default function ResultsReportPage() {
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/years').then(r => r.json()).then(data => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/years').then(r => r.json()).then(data => {
             setYears(data);
             const active = data.find((y: AcademicYear) => y.status === 'active');
             if (active) setYearId(String(active.id));

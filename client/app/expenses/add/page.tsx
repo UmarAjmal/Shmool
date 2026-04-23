@@ -43,7 +43,7 @@ export default function AddExpensePage() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expense-categories/active');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expense-categories/active');
             const data = await response.json();
             setCategories(data);
         } catch (err) {
@@ -57,7 +57,7 @@ export default function AddExpensePage() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expenses', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expenses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

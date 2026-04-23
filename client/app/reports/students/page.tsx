@@ -24,8 +24,8 @@ export default function StudentReportPage() {
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
     }, []);
 
     useEffect(() => {

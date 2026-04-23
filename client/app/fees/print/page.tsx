@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const API = `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '';
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
 
 interface SlipData {
     slip_id: number; student_id: number; family_id: string; class_id: number;

@@ -233,14 +233,14 @@ export default function StudentDetails() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
             if (res.ok) setClasses(await res.json());
         } catch (e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
             if (res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));

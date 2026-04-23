@@ -69,7 +69,7 @@ export default function TeacherAssign() {
     const fetchAllData = async () => {
         setLoading(true);
         setError(null);
-        const API_URL = `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '';
+        const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
         
         try {
             console.log("Fetching from:", API_URL);
