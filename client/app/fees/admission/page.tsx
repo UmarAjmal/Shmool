@@ -208,16 +208,16 @@ export default function AdmissionFeePage() {
   <meta charset="UTF-8">
   <title>Admission Fee Receipt</title>
   <style>
-    @page { size: 80mm 150mm; margin: 0; }
-    html, body { margin: 0; padding: 0; width: 80mm; height: 150mm; box-sizing: border-box; font-family: Arial, sans-serif; }
-    .voucher { width: 80mm; height: 150mm; padding: 5mm; border: 1px solid #000; border-radius: 2mm; display: flex; flex-direction: column; box-sizing: border-box; }
-    .header { display: flex; align-items: center; margin-bottom: 2mm; }
-    .school-name { font-size: 13pt; font-weight: bold; line-height: 1.2; text-transform: uppercase; }
-    .address-block { text-align: center; font-size: 9pt; margin-bottom: 1mm; line-height: 1.3; }
+    @page { margin: 0; }
+    html, body { margin: 0; padding: 0; width: 78mm; box-sizing: border-box; font-family: Arial, sans-serif; color: #000; }
+    .voucher { width: 100%; padding: 3mm; display: flex; flex-direction: column; box-sizing: border-box; }
+    .header { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 2mm; }
+    .school-name { font-size: 12pt; font-weight: bold; line-height: 1.2; text-transform: uppercase; text-align: center; margin-top: 1mm; }
+    .address-block { text-align: center; font-size: 8.5pt; margin-bottom: 1mm; line-height: 1.3; }
     .address-block p { margin: 0; }
-    hr { border: 0; border-top: 1px solid #000; margin: 1mm 0; }
-    .voucher-title { text-align: center; font-size: 13pt; font-weight: bold; text-transform: uppercase; margin: 0.5mm 0; }
-    .info { font-size: 9pt; margin-bottom: 1mm; line-height: 1.4; }
+    hr { border: 0; border-top: 1px dashed #000; margin: 1.5mm 0; }
+    .voucher-title { text-align: center; font-size: 11pt; font-weight: bold; text-transform: uppercase; margin: 1mm 0; }
+    .info { font-size: 8.5pt; margin-bottom: 2mm; line-height: 1.4; }
     .info-row { display: flex; justify-content: space-between; margin-bottom: 0.5mm; }
     .info-row2 { margin-bottom: 0.5mm; }
     .section-label { font-size: 10pt; font-weight: bold; margin-bottom: 0; margin-top: 3mm; text-align: center; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; padding: 1mm 0; }
@@ -232,9 +232,9 @@ export default function AdmissionFeePage() {
     .students th:nth-child(2), .students td:nth-child(2) { text-align: left; }
     .students th:nth-child(3), .students td:nth-child(3) { text-align: right; }
     .spacer { flex-grow: 1; }
-    .thank-you { text-align: center; font-size: 10pt; font-weight: bold; margin-bottom: 1mm; }
+    .thank-you { text-align: center; font-size: 10pt; font-weight: bold; margin-top: 3mm; margin-bottom: 2mm; }
     .print-btn { display: block; width: 100%; margin-top: 4mm; padding: 2mm; font-size: 10pt; font-weight: bold; background: #007bff; color: #fff; border: none; border-radius: 2mm; cursor: pointer; }
-    @media print { .print-btn { display: none; } @page { size: 80mm 150mm; margin: 0; } }
+    @media print { .print-btn { display: none; } }
   </style>
 </head>
 <body>
