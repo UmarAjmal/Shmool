@@ -17,11 +17,11 @@ type Teacher = {
     email: string;
 };
 
-type Subject = { 
-    subject_id: number; 
-    subject_name: string; 
-    section_id: number; 
-    class_id: number; 
+type Subject = {
+    subject_id: number;
+    subject_name: string;
+    section_id: number;
+    class_id: number;
     section_name: string;
     class_name: string;
     subject_code: string;
@@ -46,7 +46,7 @@ export default function TeacherAssign() {
     // --- Modal / Selection State ---
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
-    
+
     // Navigation State (Which Class/Section is currently being viewed)
     const [activeClassId, setActiveClassId] = useState<number | null>(null);
     const [activeSectionId, setActiveSectionId] = useState<number | null>(null);
@@ -69,13 +69,13 @@ export default function TeacherAssign() {
     const fetchAllData = async () => {
         setLoading(true);
         setError(null);
-        const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
-        
+        const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
+
         try {
             console.log("Fetching from:", API_URL);
 
             // Create a timeout promise to prevent infinite loading
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Request timed out after 10 seconds. Server might be down.')), 10000)
             );
 
@@ -83,10 +83,10 @@ export default function TeacherAssign() {
             const fetchConfig = { cache: 'no-store' } as RequestInit;
 
             const fetchPromise = Promise.all([
-                fetch(`${API_URL}/academic/teachers`, fetchConfig).then(res => { if(!res.ok) throw new Error(`Teachers: ${res.status}`); return res.json(); }),
-                fetch(`${API_URL}/academic/subjects`, fetchConfig).then(res => { if(!res.ok) throw new Error(`Subjects: ${res.status}`); return res.json(); }),
-                fetch(`${API_URL}/academic`, fetchConfig).then(res => { if(!res.ok) throw new Error(`Classes: ${res.status}`); return res.json(); }),
-                fetch(`${API_URL}/academic/sections`, fetchConfig).then(res => { if(!res.ok) throw new Error(`Sections: ${res.status}`); return res.json(); })
+                fetch(`${API_URL}/academic/teachers`, fetchConfig).then(res => { if (!res.ok) throw new Error(`Teachers: ${res.status}`); return res.json(); }),
+                fetch(`${API_URL}/academic/subjects`, fetchConfig).then(res => { if (!res.ok) throw new Error(`Subjects: ${res.status}`); return res.json(); }),
+                fetch(`${API_URL}/academic`, fetchConfig).then(res => { if (!res.ok) throw new Error(`Classes: ${res.status}`); return res.json(); }),
+                fetch(`${API_URL}/academic/sections`, fetchConfig).then(res => { if (!res.ok) throw new Error(`Sections: ${res.status}`); return res.json(); })
             ]);
 
             // Race against timeout
@@ -112,11 +112,11 @@ export default function TeacherAssign() {
     // --- Logic: Open Modal & Initialize State ---
     const handleOpenAssign = (teacher: Teacher) => {
         setSelectedTeacher(teacher);
-        
+
         // 1. Load existing subjects into Set
         const tSubjects = new Set<number>();
         const tSubMap: Record<number, number> = {};
-        
+
         teacher.assigned_subjects?.forEach(s => {
             tSubjects.add(s.subject_id);
             tSubMap[s.subject_id] = s.assignment_id;
@@ -134,7 +134,7 @@ export default function TeacherAssign() {
             }
             // Store assignment ID for ALL class links to handle deletions if needed
             // (Though currently we mainly auto-manage class links via subjects)
-            tClassMap[`${c.class_id}-${c.section_id}`] = c.assignment_id; 
+            tClassMap[`${c.class_id}-${c.section_id}`] = c.assignment_id;
         });
         setClassTeacherSections(tCTSections);
         setInitialClassMap(tClassMap);
@@ -165,14 +165,14 @@ export default function TeacherAssign() {
         if (!selectedTeacher) return;
         const employeeId = selectedTeacher.employee_id;
         const toastId = toast.loading("Saving changes...");
-        
+
         try {
             const apiCalls: Promise<Response>[] = [];
 
             // 1. Handle Subjects (Add/Remove)
             // Iterate over Union of (Initial U Selected)
             const allInvolvedSubjects = new Set([...Array.from(selectedSubjectIds), ...Object.keys(initialSubjectMap).map(Number)]);
-            
+
             for (const subId of Array.from(allInvolvedSubjects)) {
                 const wasSelected = initialSubjectMap.hasOwnProperty(subId);
                 const isSelected = selectedSubjectIds.has(subId);
@@ -201,7 +201,7 @@ export default function TeacherAssign() {
 
             // 2. Handle Class Teacher Status & Implicit Class Assignments
             const activeSectionsMap = new Map<number, boolean>(); // section_id -> is_active
-            
+
             // Mark active from subjects
             selectedSubjectIds.forEach(subId => {
                 const sub = allSubjects.find(s => s.subject_id === subId);
@@ -220,9 +220,9 @@ export default function TeacherAssign() {
                     fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/classes`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            class_id: sec.class_id, 
-                            section_id: sec.section_id, 
+                        body: JSON.stringify({
+                            class_id: sec.class_id,
+                            section_id: sec.section_id,
                             is_class_teacher: classTeacherSections.has(secId)
                         })
                     })
@@ -236,7 +236,7 @@ export default function TeacherAssign() {
                     const secId = cls.section_id;
                     if (!activeSectionsMap.has(secId)) {
                         // Section is no longer active (no subjects, not CT) -> Remove it
-                         apiCalls.push(
+                        apiCalls.push(
                             fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/teachers/${employeeId}/classes/${cls.assignment_id}`, {
                                 method: 'DELETE'
                             })
@@ -247,14 +247,14 @@ export default function TeacherAssign() {
 
             const responses = await Promise.all(apiCalls);
             const errors = responses.filter(r => !r.ok);
-            
+
             if (errors.length > 0) {
                 console.error("Some requests failed", errors);
                 toast.update(toastId, { render: "Some changes failed to save.", type: "warning", isLoading: false, autoClose: 3000 });
             } else {
                 toast.update(toastId, { render: "Assignments Updated!", type: "success", isLoading: false, autoClose: 2000 });
             }
-            
+
             fetchAllData();
             setShowAssignModal(false);
 
@@ -265,7 +265,7 @@ export default function TeacherAssign() {
     };
 
     // --- Derived UI Helpers ---
-    
+
     // Subjects for current view
     const visibleSubjects = useMemo(() => {
         if (!activeSectionId) return [];
@@ -291,89 +291,89 @@ export default function TeacherAssign() {
 
     return (
         <>
-        <div className="container-fluid p-4 animate__animated animate__fadeIn" style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
-                    <i className="bi bi-person-video3 me-2"></i>Teacher Assignments
-                </h2>
-                <div className="text-muted small">Manage subjects and class responsibilities</div>
-            </div>
+            <div className="container-fluid p-4 animate__animated animate__fadeIn" style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh' }}>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h2 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
+                        <i className="bi bi-person-video3 me-2"></i>Teacher Assignments
+                    </h2>
+                    <div className="text-muted small">Manage subjects and class responsibilities</div>
+                </div>
 
-            {/* List Grid */}
-            <div className="row g-4">
-                {loading ? (
-                    <div className="col-12 text-center py-5">
-                        <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-                            <span className="visually-hidden">Loading...</span>
+                {/* List Grid */}
+                <div className="row g-4">
+                    {loading ? (
+                        <div className="col-12 text-center py-5">
+                            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                            <div className="mt-3 text-muted">Connecting to Server (shmool.onrender.com)...</div>
                         </div>
-                        <div className="mt-3 text-muted">Connecting to Server (shmool.onrender.com)...</div>
-                    </div>
-                ) : error ? (
-                    <div className="col-12 text-center py-5">
-                        <div className="alert alert-danger d-inline-block">
-                            <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                            {error}
-                        </div>
-                        <div className="mt-3">
-                            <button className="btn btn-outline-primary" onClick={fetchAllData}>
-                                <i className="bi bi-arrow-clockwise me-2"></i>Retry
-                            </button>
-                        </div>
-                    </div>
-                ) : teachers.length === 0 ? (
-                    <div className="col-12 text-center py-5">
-                        <i className="bi bi-person-x fs-1 text-muted opacity-50"></i>
-                        <h5 className="mt-3 text-muted">No Teachers Found</h5>
-                        <p className="text-muted">Add employees with "Teacher" designation in the HRM module.</p>
-                    </div>
-                ) : (
-                    teachers.map(teacher => (
-                        <div className="col-lg-6 col-xl-4" key={teacher.employee_id}>
-                        <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s' }}>
-                            <div className="card-body">
-                                <div className="d-flex align-items-start justify-content-between mb-3">
-                                    <div className="d-flex align-items-center">
-                                        <div className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
-                                             style={{ width: '45px', height: '45px', backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
-                                            {teacher.first_name[0]}{teacher.last_name[0]}
-                                        </div>
-                                        <div>
-                                            <h5 className="card-title fw-bold mb-0 text-dark">{teacher.first_name} {teacher.last_name}</h5>
-                                            <small className="text-muted">{teacher.department_name}</small>
-                                        </div>
-                                    </div>
-                                    <span className={`badge ${teacher.status === 'Active' ? 'bg-success' : 'bg-secondary'}`}>{teacher.status}</span>
-                                </div>
-
-                                <div className="mb-3">
-                                    <small className="text-uppercase fw-bold text-muted" style={{fontSize: '0.75rem'}}>Assigned Subjects</small>
-                                    <div className="d-flex flex-wrap gap-2 mt-1">
-                                        {teacher.assigned_subjects?.length > 0 ? (
-                                            teacher.assigned_subjects.map((s, i) => (
-                                                <span key={i} className="badge bg-light text-dark border">
-                                                    {s.subject_name}
-                                                </span>
-                                            ))
-                                        ) : <span className="text-muted small fst-italic">No subjects assigned</span>}
-                                    </div>
-                                </div>
-
-                                {hasPermission('academic', 'write') && (
-                                <button 
-                                    className="btn btn-sm w-100 fw-bold text-white custom-btn-hover"
-                                    style={{ backgroundColor: 'var(--primary-dark)' }}
-                                    onClick={() => handleOpenAssign(teacher)}
-                                >
-                                    <i className="bi bi-pencil-square me-2"></i>Manage Assignments
+                    ) : error ? (
+                        <div className="col-12 text-center py-5">
+                            <div className="alert alert-danger d-inline-block">
+                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                                {error}
+                            </div>
+                            <div className="mt-3">
+                                <button className="btn btn-outline-primary" onClick={fetchAllData}>
+                                    <i className="bi bi-arrow-clockwise me-2"></i>Retry
                                 </button>
-                                )}
                             </div>
                         </div>
-                    </div>
-                ))
-                )}
+                    ) : teachers.length === 0 ? (
+                        <div className="col-12 text-center py-5">
+                            <i className="bi bi-person-x fs-1 text-muted opacity-50"></i>
+                            <h5 className="mt-3 text-muted">No Teachers Found</h5>
+                            <p className="text-muted">Add employees with "Teacher" designation in the HRM module.</p>
+                        </div>
+                    ) : (
+                        teachers.map(teacher => (
+                            <div className="col-lg-6 col-xl-4" key={teacher.employee_id}>
+                                <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform 0.2s' }}>
+                                    <div className="card-body">
+                                        <div className="d-flex align-items-start justify-content-between mb-3">
+                                            <div className="d-flex align-items-center">
+                                                <div className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3"
+                                                    style={{ width: '45px', height: '45px', backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
+                                                    {teacher.first_name[0]}{teacher.last_name[0]}
+                                                </div>
+                                                <div>
+                                                    <h5 className="card-title fw-bold mb-0 text-dark">{teacher.first_name} {teacher.last_name}</h5>
+                                                    <small className="text-muted">{teacher.department_name}</small>
+                                                </div>
+                                            </div>
+                                            <span className={`badge ${teacher.status === 'Active' ? 'bg-success' : 'bg-secondary'}`}>{teacher.status}</span>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <small className="text-uppercase fw-bold text-muted" style={{ fontSize: '0.75rem' }}>Assigned Subjects</small>
+                                            <div className="d-flex flex-wrap gap-2 mt-1">
+                                                {teacher.assigned_subjects?.length > 0 ? (
+                                                    teacher.assigned_subjects.map((s, i) => (
+                                                        <span key={i} className="badge bg-light text-dark border">
+                                                            {s.subject_name}
+                                                        </span>
+                                                    ))
+                                                ) : <span className="text-muted small fst-italic">No subjects assigned</span>}
+                                            </div>
+                                        </div>
+
+                                        {hasPermission('academic', 'write') && (
+                                            <button
+                                                className="btn btn-sm w-100 fw-bold text-white custom-btn-hover"
+                                                style={{ backgroundColor: 'var(--primary-dark)' }}
+                                                onClick={() => handleOpenAssign(teacher)}
+                                            >
+                                                <i className="bi bi-pencil-square me-2"></i>Manage Assignments
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
-        </div>
 
             {/* --- ASSIGN MODAL --- */}
             {showAssignModal && selectedTeacher && (
@@ -394,7 +394,7 @@ export default function TeacherAssign() {
                             {/* Body (3 Columns) */}
                             <div className="modal-body p-0" style={{ backgroundColor: '#f8f9fa' }}>
                                 <div className="row g-0 h-100" style={{ minHeight: '500px' }}>
-                                    
+
                                     {/* COL 1: CLASSES */}
                                     <div className="col-md-3 border-end bg-white">
                                         <div className="p-3 bg-light border-bottom fw-bold text-muted text-uppercase small">
@@ -404,7 +404,7 @@ export default function TeacherAssign() {
                                             {classes.map(cls => {
                                                 const count = getSubjectCountForClass(cls.class_id);
                                                 return (
-                                                    <button 
+                                                    <button
                                                         key={cls.class_id}
                                                         className={`list-group-item list-group-item-action py-3 px-3 border-bottom-0 d-flex justify-content-between align-items-center ${activeClassId === cls.class_id ? 'active-class-item' : ''}`}
                                                         style={activeClassId === cls.class_id ? { backgroundColor: 'var(--primary-teal)', color: 'white' } : {}}
@@ -431,7 +431,7 @@ export default function TeacherAssign() {
                                                     const count = getSubjectCountForSection(sec.section_id);
                                                     const isCT = isClassTeacher(sec.section_id);
                                                     return (
-                                                        <button 
+                                                        <button
                                                             key={sec.section_id}
                                                             className={`list-group-item list-group-item-action py-3 px-3 d-flex justify-content-between align-items-center ${activeSectionId === sec.section_id ? 'bg-white border-start border-4' : 'bg-transparent text-muted'}`}
                                                             style={activeSectionId === sec.section_id ? { borderLeftColor: 'var(--primary-teal)', color: 'var(--primary-dark)' } : {}}
@@ -457,9 +457,9 @@ export default function TeacherAssign() {
                                             </div>
                                             {activeSectionId && (
                                                 <div className="form-check form-switch cursor-pointer user-select-none">
-                                                    <input 
-                                                        className="form-check-input" 
-                                                        type="checkbox" 
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="checkbox"
                                                         id="ctSwitch"
                                                         checked={isClassTeacher(activeSectionId)}
                                                         onChange={() => toggleClassTeacher(activeSectionId)}
@@ -470,7 +470,7 @@ export default function TeacherAssign() {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="p-4">
                                             {!activeSectionId ? (
                                                 <div className="text-center py-5 text-muted">
@@ -485,16 +485,16 @@ export default function TeacherAssign() {
                                                         const isSelected = selectedSubjectIds.has(sub.subject_id);
                                                         return (
                                                             <div className="col-12" key={sub.subject_id}>
-                                                                <div 
+                                                                <div
                                                                     className={`p-3 rounded-3 border d-flex align-items-center cursor-pointer transition-all ${isSelected ? 'border-primary bg-primary bg-opacity-10' : 'border-light bg-light'}`}
                                                                     onClick={() => toggleSubject(sub.subject_id)}
                                                                 >
                                                                     <div className={`form-check me-3 ${isSelected ? 'scale-110' : ''}`}>
-                                                                        <input 
-                                                                            type="checkbox" 
+                                                                        <input
+                                                                            type="checkbox"
                                                                             className="form-check-input"
                                                                             checked={isSelected}
-                                                                            onChange={() => {}} // Handled by div click
+                                                                            onChange={() => { }} // Handled by div click
                                                                             style={{ cursor: 'pointer' }}
                                                                         />
                                                                     </div>
@@ -521,13 +521,13 @@ export default function TeacherAssign() {
                                 </div>
                                 <button className="btn btn-outline-secondary px-4 me-2" onClick={() => setShowAssignModal(false)}>Cancel</button>
                                 {hasPermission('academic', 'write') && (
-                                <button 
-                                    className="btn px-5 text-white fw-bold" 
-                                    style={{ backgroundColor: 'var(--primary-teal)' }}
-                                    onClick={handleSaveChanges}
-                                >
-                                    <i className="bi bi-check-lg me-2"></i>Confirm & Save
-                                </button>
+                                    <button
+                                        className="btn px-5 text-white fw-bold"
+                                        style={{ backgroundColor: 'var(--primary-teal)' }}
+                                        onClick={handleSaveChanges}
+                                    >
+                                        <i className="bi bi-check-lg me-2"></i>Confirm & Save
+                                    </button>
                                 )}
                             </div>
                         </div>

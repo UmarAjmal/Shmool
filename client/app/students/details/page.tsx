@@ -46,62 +46,62 @@ type Student = {
 
 // ── Column definitions ────────────────────────────────────────────────────
 const COL_DEFS: { key: string; label: string; defaultOn: boolean }[] = [
-    { key: 'sno',           label: '#',              defaultOn: true  },
-    { key: 'admission_no',  label: 'Admission No',   defaultOn: true  },
-    { key: 'roll_no',       label: 'Roll No',        defaultOn: true  },
-    { key: 'username',      label: 'Username',       defaultOn: true  },
-    { key: 'system_pwd',    label: 'Password',       defaultOn: true  },
-    { key: 'family_id',     label: 'Family ID',      defaultOn: false },
-    { key: 'name',          label: 'Name',           defaultOn: true  },
-    { key: 'father_name',   label: 'Father Name',    defaultOn: true  },
-    { key: 'mother_name',   label: 'Mother Name',    defaultOn: false },
-    { key: 'class',         label: 'Class',          defaultOn: true  },
-    { key: 'section',       label: 'Section',        defaultOn: true  },
-    { key: 'gender',        label: 'Gender',         defaultOn: false },
-    { key: 'dob',           label: 'Date of Birth',  defaultOn: false },
-    { key: 'blood_group',   label: 'Blood Group',    defaultOn: false },
-    { key: 'religion',      label: 'Religion',       defaultOn: false },
-    { key: 'category',      label: 'Category',       defaultOn: false },
-    { key: 'mobile_no',     label: 'Student Phone',  defaultOn: true  },
-    { key: 'father_phone',  label: 'Father Phone',   defaultOn: false },
-    { key: 'mother_phone',  label: 'Mother Phone',   defaultOn: false },
-    { key: 'guardian',      label: 'Guardian',       defaultOn: false },
-    { key: 'guardian_ph',   label: 'Guardian Phone', defaultOn: false },
-    { key: 'email',         label: 'Email',          defaultOn: false },
-    { key: 'address',       label: 'Address',        defaultOn: false },
-    { key: 'monthly_fee',   label: 'Monthly Fee',    defaultOn: false },
-    { key: 'status',        label: 'Status',         defaultOn: true  },
+    { key: 'sno', label: '#', defaultOn: true },
+    { key: 'admission_no', label: 'Admission No', defaultOn: true },
+    { key: 'roll_no', label: 'Roll No', defaultOn: true },
+    { key: 'username', label: 'Username', defaultOn: true },
+    { key: 'system_pwd', label: 'Password', defaultOn: true },
+    { key: 'family_id', label: 'Family ID', defaultOn: false },
+    { key: 'name', label: 'Name', defaultOn: true },
+    { key: 'father_name', label: 'Father Name', defaultOn: true },
+    { key: 'mother_name', label: 'Mother Name', defaultOn: false },
+    { key: 'class', label: 'Class', defaultOn: true },
+    { key: 'section', label: 'Section', defaultOn: true },
+    { key: 'gender', label: 'Gender', defaultOn: false },
+    { key: 'dob', label: 'Date of Birth', defaultOn: false },
+    { key: 'blood_group', label: 'Blood Group', defaultOn: false },
+    { key: 'religion', label: 'Religion', defaultOn: false },
+    { key: 'category', label: 'Category', defaultOn: false },
+    { key: 'mobile_no', label: 'Student Phone', defaultOn: true },
+    { key: 'father_phone', label: 'Father Phone', defaultOn: false },
+    { key: 'mother_phone', label: 'Mother Phone', defaultOn: false },
+    { key: 'guardian', label: 'Guardian', defaultOn: false },
+    { key: 'guardian_ph', label: 'Guardian Phone', defaultOn: false },
+    { key: 'email', label: 'Email', defaultOn: false },
+    { key: 'address', label: 'Address', defaultOn: false },
+    { key: 'monthly_fee', label: 'Monthly Fee', defaultOn: false },
+    { key: 'status', label: 'Status', defaultOn: true },
 ];
 
 // ── Plain-text value for exports ──────────────────────────────────────────
 function exportText(key: string, s: Student, idx: number): string {
     switch (key) {
-        case 'sno':           return String(idx + 1);
-        case 'admission_no':  return s.admission_no   ?? '';
-        case 'roll_no':       return s.roll_no        ?? '';
-        case 'username':      return s.username       ?? '';
-        case 'system_pwd':    return s.system_pwd     ?? '';
-        case 'family_id':     return s.family_id      ?? '';
-        case 'name':          return `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
-        case 'father_name':   return s.father_name    ?? '';
-        case 'mother_name':   return s.mother_name    ?? '';
-        case 'class':         return s.class_name     ?? '';
-        case 'section':       return s.section_name   ?? '';
-        case 'gender':        return s.gender         ?? '';
-        case 'dob':           return s.dob ? s.dob.split('T')[0] : '';
-        case 'blood_group':   return s.blood_group    ?? '';
-        case 'religion':      return s.religion       ?? '';
-        case 'category':      return s.category       ?? '';
-        case 'mobile_no':     return s.student_mobile ?? '';
-        case 'father_phone':  return s.father_phone   ?? '';
-        case 'mother_phone':  return s.mother_phone   ?? '';
-        case 'guardian':      return s.guardian_name  ?? '';
-        case 'guardian_ph':   return s.guardian_phone ?? '';
-        case 'email':         return s.email          ?? '';
-        case 'address':       return [s.current_address, s.city].filter(Boolean).join(', ');
-        case 'monthly_fee':   return s.monthly_fee    ?? '';
-        case 'status':        return s.status         ?? '';
-        default:              return '';
+        case 'sno': return String(idx + 1);
+        case 'admission_no': return s.admission_no ?? '';
+        case 'roll_no': return s.roll_no ?? '';
+        case 'username': return s.username ?? '';
+        case 'system_pwd': return s.system_pwd ?? '';
+        case 'family_id': return s.family_id ?? '';
+        case 'name': return `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
+        case 'father_name': return s.father_name ?? '';
+        case 'mother_name': return s.mother_name ?? '';
+        case 'class': return s.class_name ?? '';
+        case 'section': return s.section_name ?? '';
+        case 'gender': return s.gender ?? '';
+        case 'dob': return s.dob ? s.dob.split('T')[0] : '';
+        case 'blood_group': return s.blood_group ?? '';
+        case 'religion': return s.religion ?? '';
+        case 'category': return s.category ?? '';
+        case 'mobile_no': return s.student_mobile ?? '';
+        case 'father_phone': return s.father_phone ?? '';
+        case 'mother_phone': return s.mother_phone ?? '';
+        case 'guardian': return s.guardian_name ?? '';
+        case 'guardian_ph': return s.guardian_phone ?? '';
+        case 'email': return s.email ?? '';
+        case 'address': return [s.current_address, s.city].filter(Boolean).join(', ');
+        case 'monthly_fee': return s.monthly_fee ?? '';
+        case 'status': return s.status ?? '';
+        default: return '';
     }
 }
 
@@ -126,7 +126,7 @@ function renderCell(key: string, s: Student, idx: number) {
             return (
                 <div className="d-flex align-items-center gap-2">
                     <div className="rounded-circle bg-light border d-flex align-items-center justify-content-center text-primary fw-bold flex-shrink-0"
-                         style={{ width: 32, height: 32, fontSize: 13 }}>
+                        style={{ width: 32, height: 32, fontSize: 13 }}>
                         {s.image_url
                             ? <img src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${s.image_url}`} alt="" className="rounded-circle w-100 h-100 object-fit-cover" />
                             : (s.first_name?.charAt(0) ?? '?')}
@@ -134,10 +134,10 @@ function renderCell(key: string, s: Student, idx: number) {
                     <span className="fw-semibold text-dark">{s.first_name} {s.last_name}</span>
                 </div>
             );
-        case 'father_name':   return s.father_name   || '—';
-        case 'mother_name':   return s.mother_name   || '—';
-        case 'class':         return <span className="fw-bold">{s.class_name   || '—'}</span>;
-        case 'section':       return s.section_name  || '—';
+        case 'father_name': return s.father_name || '—';
+        case 'mother_name': return s.mother_name || '—';
+        case 'class': return <span className="fw-bold">{s.class_name || '—'}</span>;
+        case 'section': return s.section_name || '—';
         case 'gender':
             return (
                 <span className={`badge rounded-pill ${s.gender === 'Male' ? 'bg-info bg-opacity-25 text-info-emphasis' : 'bg-danger bg-opacity-10 text-danger'}`}>
@@ -150,32 +150,31 @@ function renderCell(key: string, s: Student, idx: number) {
             return s.blood_group
                 ? <span className="badge bg-danger bg-opacity-10 text-danger fw-normal">{s.blood_group}</span>
                 : '—';
-        case 'religion':      return s.religion      || '—';
-        case 'category':      return s.category      || '—';
+        case 'religion': return s.religion || '—';
+        case 'category': return s.category || '—';
         case 'mobile_no':
             return s.student_mobile
                 ? <span><i className="bi bi-telephone-fill text-muted me-1" style={{ fontSize: 11 }}></i>{s.student_mobile}</span>
                 : '—';
-        case 'father_phone':  return s.father_phone  || '—';
-        case 'mother_phone':  return s.mother_phone  || '—';
+        case 'father_phone': return s.father_phone || '—';
+        case 'mother_phone': return s.mother_phone || '—';
         case 'guardian':
             return s.guardian_name
                 ? `${s.guardian_name}${s.guardian_relation ? ` (${s.guardian_relation})` : ''}`
                 : '—';
-        case 'guardian_ph':   return s.guardian_phone || '—';
-        case 'email':         return s.email          || '—';
-        case 'address':       return [s.current_address, s.city].filter(Boolean).join(', ') || '—';
+        case 'guardian_ph': return s.guardian_phone || '—';
+        case 'email': return s.email || '—';
+        case 'address': return [s.current_address, s.city].filter(Boolean).join(', ') || '—';
         case 'monthly_fee':
             return Number(s.monthly_fee) > 0
                 ? `Rs. ${s.monthly_fee}`
                 : <span className="text-success small">Free</span>;
         case 'status':
             return (
-                <span className={`badge rounded-pill ${
-                    s.status === 'Active'  ? 'bg-success' :
-                    s.status === 'Left'    ? 'bg-danger'  :
-                    'bg-secondary'
-                }`}>{s.status || 'Active'}</span>
+                <span className={`badge rounded-pill ${s.status === 'Active' ? 'bg-success' :
+                        s.status === 'Left' ? 'bg-danger' :
+                            'bg-secondary'
+                    }`}>{s.status || 'Active'}</span>
             );
         default: return '—';
     }
@@ -187,13 +186,13 @@ export default function StudentDetails() {
 
     // ── Data state ────────────────────────────────────────────────────────
     const [students, setStudents] = useState<Student[]>([]);
-    const [classes,  setClasses]  = useState<any[]>([]);
+    const [classes, setClasses] = useState<any[]>([]);
     const [sections, setSections] = useState<any[]>([]);
-    const [loading,  setLoading]  = useState(true);
+    const [loading, setLoading] = useState(true);
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
     // ── Column visibility state ───────────────────────────────────────────
-    const [visibleCols,   setVisibleCols]   = useState<Set<string>>(
+    const [visibleCols, setVisibleCols] = useState<Set<string>>(
         () => new Set(COL_DEFS.filter(c => c.defaultOn).map(c => c.key))
     );
     const [showColPicker, setShowColPicker] = useState(false);
@@ -233,14 +232,14 @@ export default function StudentDetails() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
             if (res.ok) setClasses(await res.json());
         } catch (e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections');
             if (res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));
@@ -302,17 +301,17 @@ export default function StudentDetails() {
         const cols = COL_DEFS.filter(c => visibleCols.has(c.key));
         return {
             headers: cols.map(c => c.label),
-            rows:    students.map((s, idx) => cols.map(c => exportText(c.key, s, idx))),
+            rows: students.map((s, idx) => cols.map(c => exportText(c.key, s, idx))),
         };
     };
 
     const doExportCSV = () => {
         const { headers, rows } = buildExportData();
-        const esc  = (v: string) => `"${v.replace(/"/g, '""')}"`;
+        const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
         const lines = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))];
-        const blob  = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const url   = URL.createObjectURL(blob);
-        const a     = Object.assign(document.createElement('a'), { href: url, download: `students-${new Date().toISOString().split('T')[0]}.csv` });
+        const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = Object.assign(document.createElement('a'), { href: url, download: `students-${new Date().toISOString().split('T')[0]}.csv` });
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
@@ -322,9 +321,9 @@ export default function StudentDetails() {
         const ths = headers.map(h => `<th style="background:#1a3a5c;color:#fff;padding:6px 8px;font-size:11px">${h}</th>`).join('');
         const trs = rows.map(r => '<tr>' + r.map(v => `<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;font-size:11px">${v}</td>`).join('') + '</tr>').join('');
         const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"/><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Students</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></body></html>`;
-        const blob  = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url   = URL.createObjectURL(blob);
-        const a     = Object.assign(document.createElement('a'), { href: url, download: `students-${new Date().toISOString().split('T')[0]}.xls` });
+        const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = Object.assign(document.createElement('a'), { href: url, download: `students-${new Date().toISOString().split('T')[0]}.xls` });
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
@@ -354,7 +353,7 @@ export default function StudentDetails() {
     };
 
     // ── Derived values for rendering ───────────────────────────────────────────
-    const activeCols   = COL_DEFS.filter(c => visibleCols.has(c.key));
+    const activeCols = COL_DEFS.filter(c => visibleCols.has(c.key));
     const totalColSpan = activeCols.length; // actions col commented out
 
     return (
@@ -380,9 +379,9 @@ export default function StudentDetails() {
                             color: showAdvancedFilters ? 'white' : 'var(--primary-teal)',
                             border: '1px solid var(--primary-teal)'
                         }}
-                        onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
-                        <i className="bi bi-sliders me-1"></i> Advanced  
-                    </button>
+                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
+                            <i className="bi bi-sliders me-1"></i> Advanced
+                        </button>
                     </div>
                 </div>
                 <div className="card-body p-4 bg-light">
@@ -609,26 +608,26 @@ export default function StudentDetails() {
                                                     ))}
                                                     {/* ACTION BUTTONS — temporarily hidden */}
                                                     {false && (
-                                                    <td className="text-end pe-4" onClick={e => e.stopPropagation()}>
-                                                        <button
-                                                            className="btn btn-sm btn-outline-primary me-2 rounded-circle"
-                                                            onClick={() => router.push(`/students/profile/${s.student_id}`)}
-                                                            title="View Details"
-                                                            style={{ width: '32px', height: '32px' }}
-                                                        >
-                                                            <i className="bi bi-eye"></i>
-                                                        </button>
-                                                        {hasPermission('students', 'delete') && (
+                                                        <td className="text-end pe-4" onClick={e => e.stopPropagation()}>
                                                             <button
-                                                                className="btn btn-sm btn-outline-danger rounded-circle"
-                                                                onClick={() => handleDelete(s.student_id)}
-                                                                title="Delete"
+                                                                className="btn btn-sm btn-outline-primary me-2 rounded-circle"
+                                                                onClick={() => router.push(`/students/profile/${s.student_id}`)}
+                                                                title="View Details"
                                                                 style={{ width: '32px', height: '32px' }}
                                                             >
-                                                                <i className="bi bi-trash"></i>
+                                                                <i className="bi bi-eye"></i>
                                                             </button>
-                                                        )}
-                                                    </td>
+                                                            {hasPermission('students', 'delete') && (
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-danger rounded-circle"
+                                                                    onClick={() => handleDelete(s.student_id)}
+                                                                    title="Delete"
+                                                                    style={{ width: '32px', height: '32px' }}
+                                                                >
+                                                                    <i className="bi bi-trash"></i>
+                                                                </button>
+                                                            )}
+                                                        </td>
                                                     )}
                                                 </tr>
                                             ))

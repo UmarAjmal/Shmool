@@ -51,78 +51,78 @@ const PAGE_TREE: Record<string, ModuleDef> = {
     students: {
         label: 'Students', icon: 'bi-person-graduation', color: '#0ea5e9',
         pages: [
-            { key: 'students.details',   label: 'Student List',    icon: 'bi-list-ul',              desc: 'Browse, search and filter all students' },
-            { key: 'students.admission', label: 'New Admission',   icon: 'bi-person-plus',          desc: 'Register a new student' },
-            { key: 'students.import',    label: 'Import Students', icon: 'bi-file-earmark-arrow-up',desc: 'Bulk import via Excel file' },
-            { key: 'students.profile',   label: 'Student Profile', icon: 'bi-person-badge',         desc: 'View individual student profile page' },
-            { key: 'students.edit',      label: 'Edit Student',    icon: 'bi-pencil-square',        desc: 'Edit / update student information' },
+            { key: 'students.details', label: 'Student List', icon: 'bi-list-ul', desc: 'Browse, search and filter all students' },
+            { key: 'students.admission', label: 'New Admission', icon: 'bi-person-plus', desc: 'Register a new student' },
+            { key: 'students.import', label: 'Import Students', icon: 'bi-file-earmark-arrow-up', desc: 'Bulk import via Excel file' },
+            { key: 'students.profile', label: 'Student Profile', icon: 'bi-person-badge', desc: 'View individual student profile page' },
+            { key: 'students.edit', label: 'Edit Student', icon: 'bi-pencil-square', desc: 'Edit / update student information' },
         ],
     },
     academic: {
         label: 'Academic', icon: 'bi-book-half', color: '#10b981',
         pages: [
-            { key: 'academic.classes',       label: 'Classes',            icon: 'bi-building',         desc: 'Manage class list' },
-            { key: 'academic.sections',      label: 'Sections',           icon: 'bi-diagram-2',        desc: 'Manage class sections' },
-            { key: 'academic.subjects',      label: 'Subjects',           icon: 'bi-journal-text',     desc: 'Manage subject records' },
-            { key: 'academic.teachers',      label: 'Teacher Assignments',icon: 'bi-person-workspace', desc: 'Assign teachers to classes/subjects' },
-            { key: 'academic.promotion',     label: 'Promotion',          icon: 'bi-arrow-up-circle',  desc: 'Promote students to next class' },
-            { key: 'academic.examination',   label: 'Enter Marks',        icon: 'bi-pencil-square',    desc: 'Enter exam marks per subject' },
-            { key: 'academic.marks-sheet',   label: 'Marks Sheet',        icon: 'bi-table',            desc: 'View class-wide marks sheet' },
-            { key: 'academic.result-card',   label: 'Result Cards',       icon: 'bi-file-earmark-text',desc: 'Print individual result cards' },
+            { key: 'academic.classes', label: 'Classes', icon: 'bi-building', desc: 'Manage class list' },
+            { key: 'academic.sections', label: 'Sections', icon: 'bi-diagram-2', desc: 'Manage class sections' },
+            { key: 'academic.subjects', label: 'Subjects', icon: 'bi-journal-text', desc: 'Manage subject records' },
+            { key: 'academic.teachers', label: 'Teacher Assignments', icon: 'bi-person-workspace', desc: 'Assign teachers to classes/subjects' },
+            { key: 'academic.promotion', label: 'Promotion', icon: 'bi-arrow-up-circle', desc: 'Promote students to next class' },
+            { key: 'academic.examination', label: 'Enter Marks', icon: 'bi-pencil-square', desc: 'Enter exam marks per subject' },
+            { key: 'academic.marks-sheet', label: 'Marks Sheet', icon: 'bi-table', desc: 'View class-wide marks sheet' },
+            { key: 'academic.result-card', label: 'Result Cards', icon: 'bi-file-earmark-text', desc: 'Print individual result cards' },
         ],
     },
     hrm: {
         label: 'HR Management', icon: 'bi-people-fill', color: '#f59e0b',
         pages: [
-            { key: 'hrm.departments', label: 'Departments',    icon: 'bi-building-gear', desc: 'Manage departments' },
-            { key: 'hrm.employees',   label: 'Employees List', icon: 'bi-people',        desc: 'Employee records and profiles' },
+            { key: 'hrm.departments', label: 'Departments', icon: 'bi-building-gear', desc: 'Manage departments' },
+            { key: 'hrm.employees', label: 'Employees List', icon: 'bi-people', desc: 'Employee records and profiles' },
         ],
     },
     fees: {
         label: 'Fee Management', icon: 'bi-currency-dollar', color: '#8b5cf6',
         pages: [
-            { key: 'fees.heads',           label: 'Fee Heads',       icon: 'bi-tags',           desc: 'Define fee categories / heads' },
-            { key: 'fees.plans',           label: 'Fee Plans',       icon: 'bi-card-list',      desc: 'Create and manage fee plans' },
-            { key: 'fees.generate',        label: 'Generate Slips',  icon: 'bi-receipt',        desc: 'Generate monthly fee slips' },
-            { key: 'fees.collect',         label: 'Collect Fees',    icon: 'bi-cash-stack',     desc: 'Receive and record fee payments' },
-            { key: 'fees.admission',       label: 'Admission Fees',  icon: 'bi-cash-coin',      desc: 'Collect one-time admission fees' },
-            { key: 'fees.opening-balance', label: 'Opening Balance', icon: 'bi-clock-history',  desc: 'Set prior dues / opening balance' },
+            { key: 'fees.heads', label: 'Fee Heads', icon: 'bi-tags', desc: 'Define fee categories / heads' },
+            { key: 'fees.plans', label: 'Fee Plans', icon: 'bi-card-list', desc: 'Create and manage fee plans' },
+            { key: 'fees.generate', label: 'Generate Slips', icon: 'bi-receipt', desc: 'Generate monthly fee slips' },
+            { key: 'fees.collect', label: 'Collect Fees', icon: 'bi-cash-stack', desc: 'Receive and record fee payments' },
+            { key: 'fees.admission', label: 'Admission Fees', icon: 'bi-cash-coin', desc: 'Collect one-time admission fees' },
+            { key: 'fees.opening-balance', label: 'Opening Balance', icon: 'bi-clock-history', desc: 'Set prior dues / opening balance' },
         ],
     },
     expenses: {
         label: 'Expenses', icon: 'bi-receipt-cutoff', color: '#ef4444',
         pages: [
-            { key: 'expenses.categories', label: 'Categories',   icon: 'bi-folder',      desc: 'Manage expense categories' },
-            { key: 'expenses.list',       label: 'All Expenses', icon: 'bi-list-check',  desc: 'Browse all expense records' },
-            { key: 'expenses.add',        label: 'Add Expense',  icon: 'bi-plus-square', desc: 'Record a new expense entry' },
+            { key: 'expenses.categories', label: 'Categories', icon: 'bi-folder', desc: 'Manage expense categories' },
+            { key: 'expenses.list', label: 'All Expenses', icon: 'bi-list-check', desc: 'Browse all expense records' },
+            { key: 'expenses.add', label: 'Add Expense', icon: 'bi-plus-square', desc: 'Record a new expense entry' },
         ],
     },
     attendance: {
         label: 'Attendance', icon: 'bi-calendar-check', color: '#14b8a6',
         pages: [
-            { key: 'attendance.students',         label: 'Student Attendance',  icon: 'bi-person-check',       desc: 'Mark daily student attendance' },
-            { key: 'attendance.staff',            label: 'Staff Attendance',    icon: 'bi-person-badge-fill',  desc: 'Mark daily staff attendance' },
-            { key: 'attendance.students.history', label: 'Student History',     icon: 'bi-calendar-range',     desc: 'View past student attendance records' },
-            { key: 'attendance.staff.history',    label: 'Staff History',       icon: 'bi-calendar2-range',    desc: 'View past staff attendance records' },
+            { key: 'attendance.students', label: 'Student Attendance', icon: 'bi-person-check', desc: 'Mark daily student attendance' },
+            { key: 'attendance.staff', label: 'Staff Attendance', icon: 'bi-person-badge-fill', desc: 'Mark daily staff attendance' },
+            { key: 'attendance.students.history', label: 'Student History', icon: 'bi-calendar-range', desc: 'View past student attendance records' },
+            { key: 'attendance.staff.history', label: 'Staff History', icon: 'bi-calendar2-range', desc: 'View past staff attendance records' },
         ],
     },
     reports: {
         label: 'Reports', icon: 'bi-bar-chart-fill', color: '#64748b',
         pages: [
-            { key: 'reports.students',   label: 'Student Reports',    icon: 'bi-person-lines-fill', desc: 'Student-related report views' },
-            { key: 'reports.results',    label: 'Result Reports',     icon: 'bi-bar-chart-steps',   desc: 'Exam result reports' },
-            { key: 'reports.expenses',   label: 'Expense Reports',    icon: 'bi-graph-down',        desc: 'Financial expense summaries' },
-            { key: 'reports.family-fee', label: 'Family Fee Reports', icon: 'bi-people-fill',       desc: 'Family fee summary reports' },
+            { key: 'reports.students', label: 'Student Reports', icon: 'bi-person-lines-fill', desc: 'Student-related report views' },
+            { key: 'reports.results', label: 'Result Reports', icon: 'bi-bar-chart-steps', desc: 'Exam result reports' },
+            { key: 'reports.expenses', label: 'Expense Reports', icon: 'bi-graph-down', desc: 'Financial expense summaries' },
+            { key: 'reports.family-fee', label: 'Family Fee Reports', icon: 'bi-people-fill', desc: 'Family fee summary reports' },
         ],
     },
     settings: {
         label: 'Settings', icon: 'bi-gear-fill', color: '#d97706',
         pages: [
-            { key: 'settings.general',  label: 'General Settings', icon: 'bi-sliders',         desc: 'School name, address, logo' },
-            { key: 'settings.academic', label: 'Academic Year',    icon: 'bi-calendar-event',  desc: 'Academic year and term management' },
-            { key: 'settings.system',   label: 'System & Backup',  icon: 'bi-database-gear',   desc: 'System config, backup & restore' },
-            { key: 'settings.users',    label: 'Users',            icon: 'bi-person-fill-gear', desc: 'Manage application user accounts' },
-            { key: 'settings.roles',    label: 'Roles',            icon: 'bi-shield-fill-check',desc: 'Manage roles and page permissions' },
+            { key: 'settings.general', label: 'General Settings', icon: 'bi-sliders', desc: 'School name, address, logo' },
+            { key: 'settings.academic', label: 'Academic Year', icon: 'bi-calendar-event', desc: 'Academic year and term management' },
+            { key: 'settings.system', label: 'System & Backup', icon: 'bi-database-gear', desc: 'System config, backup & restore' },
+            { key: 'settings.users', label: 'Users', icon: 'bi-person-fill-gear', desc: 'Manage application user accounts' },
+            { key: 'settings.roles', label: 'Roles', icon: 'bi-shield-fill-check', desc: 'Manage roles and page permissions' },
         ],
     },
 };
@@ -131,10 +131,10 @@ const PAGE_TREE: Record<string, ModuleDef> = {
 const ALL_PAGES: PageDef[] = Object.values(PAGE_TREE).flatMap(m => m.pages);
 
 export default function RolesPage() {
-    const [roles, setRoles]     = useState<Role[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
-    const [view, setView]       = useState<'list' | 'form'>('list');
-    const [saving, setSaving]   = useState(false);
+    const [view, setView] = useState<'list' | 'form'>('list');
+    const [saving, setSaving] = useState(false);
     const [expanded, setExpanded] = useState<Record<string, boolean>>(
         Object.fromEntries(Object.keys(PAGE_TREE).map(k => [k, true]))
     );
@@ -156,11 +156,11 @@ export default function RolesPage() {
 
     const fetchRoles = async () => {
         try {
-            const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/roles');
             const data = await res.json();
             setRoles(data);
         } catch { showToastMsg('danger', 'Failed to load roles'); }
-        finally  { setLoading(false); }
+        finally { setLoading(false); }
     };
 
     /* ── Build initial permissions array from a role's existing DB permissions ── */
@@ -209,7 +209,7 @@ export default function RolesPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        const url    = formData.id === 0 ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles' : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/roles/${formData.id}`;
+        const url = formData.id === 0 ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/roles' : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/roles/${formData.id}`;
         const method = formData.id === 0 ? 'POST' : 'PUT';
         try {
             const res = await fetch(url, {
@@ -223,7 +223,7 @@ export default function RolesPage() {
                 showToastMsg('success', formData.id === 0 ? 'Role created successfully' : 'Role updated successfully');
             } else showToastMsg('danger', 'Failed to save role');
         } catch { showToastMsg('danger', 'Server error'); }
-        finally   { setSaving(false); }
+        finally { setSaving(false); }
     };
 
     /* ── Permission helpers ── */
@@ -232,27 +232,27 @@ export default function RolesPage() {
         { module_name: key, can_read: false, can_write: false, can_delete: false };
 
     const togglePerm = (key: string, field: 'can_read' | 'can_write' | 'can_delete') => {
-        const perms   = formData.permissions.map(p => p.module_name === key ? { ...p } : p);
-        const idx     = perms.findIndex(p => p.module_name === key);
+        const perms = formData.permissions.map(p => p.module_name === key ? { ...p } : p);
+        const idx = perms.findIndex(p => p.module_name === key);
         if (idx < 0) return;
         const updated = { ...perms[idx], [field]: !perms[idx][field] };
-        if (field === 'can_write'  && updated.can_write)  updated.can_read = true;
+        if (field === 'can_write' && updated.can_write) updated.can_read = true;
         if (field === 'can_delete' && updated.can_delete) { updated.can_read = true; updated.can_write = true; }
-        if (field === 'can_read'   && !updated.can_read)  { updated.can_write = false; updated.can_delete = false; }
-        if (field === 'can_write'  && !updated.can_write) updated.can_delete = false;
+        if (field === 'can_read' && !updated.can_read) { updated.can_write = false; updated.can_delete = false; }
+        if (field === 'can_write' && !updated.can_write) updated.can_delete = false;
         perms[idx] = updated;
         setFormData({ ...formData, permissions: perms });
     };
 
     const setModulePerms = (moduleKey: string, grant: boolean) => {
         const pageKeys = PAGE_TREE[moduleKey]?.pages.map(p => p.key) || [];
-        const perms    = formData.permissions.map(p =>
+        const perms = formData.permissions.map(p =>
             pageKeys.includes(p.module_name) ? { ...p, can_read: grant, can_write: grant, can_delete: grant } : p
         );
         setFormData({ ...formData, permissions: perms });
     };
 
-    const grantAll  = () => setFormData({ ...formData, permissions: formData.permissions.map(p => ({ ...p, can_read: true,  can_write: true,  can_delete: true  })) });
+    const grantAll = () => setFormData({ ...formData, permissions: formData.permissions.map(p => ({ ...p, can_read: true, can_write: true, can_delete: true })) });
     const revokeAll = () => setFormData({ ...formData, permissions: formData.permissions.map(p => ({ ...p, can_read: false, can_write: false, can_delete: false })) });
 
     /* ── Stat helpers ── */
@@ -262,7 +262,7 @@ export default function RolesPage() {
         return { enabled, total: pages.length };
     };
 
-    const totalPages  = ALL_PAGES.length;
+    const totalPages = ALL_PAGES.length;
     const enabledCount = formData.permissions.filter(p => p.can_read).length;
 
     const getCardSummary = (role: Role) => {
@@ -279,8 +279,8 @@ export default function RolesPage() {
     /* ── Badge color for a page perm ── */
     const permBadge = (p: Permission, moduleColor: string) => {
         if (p.can_read && p.can_write && p.can_delete) return { bg: `${moduleColor}22`, border: `${moduleColor}44`, color: moduleColor };
-        if (p.can_read && p.can_write)                 return { bg: '#d1fae522', border: '#10b98144', color: '#10b981' };
-        if (p.can_read)                                return { bg: '#e0f2fe22', border: '#0ea5e944', color: '#0ea5e9' };
+        if (p.can_read && p.can_write) return { bg: '#d1fae522', border: '#10b98144', color: '#10b981' };
+        if (p.can_read) return { bg: '#e0f2fe22', border: '#0ea5e944', color: '#0ea5e9' };
         return { bg: '#f1f5f9', border: '#e2e8f0', color: '#94a3b8' };
     };
 
@@ -319,7 +319,7 @@ export default function RolesPage() {
                     {/* Legend */}
                     <div className="d-flex flex-wrap gap-4 mb-4">
                         {[
-                            { icon: 'bi-eye-fill',    color: '#0ea5e9', label: 'Read — View only access' },
+                            { icon: 'bi-eye-fill', color: '#0ea5e9', label: 'Read — View only access' },
                             { icon: 'bi-pencil-fill', color: '#10b981', label: 'Write — Create & edit access' },
                             { icon: 'bi-trash3-fill', color: '#ef4444', label: 'Delete — Remove records access' },
                         ].map(l => (
@@ -339,9 +339,9 @@ export default function RolesPage() {
                                 const parent = p.key.includes('.') ? role.permissions?.find(r => r.module_name === p.key.split('.')[0]) : null;
                                 return parent || { module_name: p.key, can_read: false, can_write: false, can_delete: false };
                             });
-                            const fullAccess  = allPerms.filter(p => p.can_read && p.can_write && p.can_delete).length;
+                            const fullAccess = allPerms.filter(p => p.can_read && p.can_write && p.can_delete).length;
                             const writeAccess = allPerms.filter(p => p.can_write && !p.can_delete).length;
-                            const readOnly    = allPerms.filter(p => p.can_read && !p.can_write).length;
+                            const readOnly = allPerms.filter(p => p.can_read && !p.can_write).length;
 
                             return (
                                 <div key={role.id} className="col-12 col-sm-6 col-xl-4">
@@ -402,9 +402,9 @@ export default function RolesPage() {
                                             {/* Stats row */}
                                             <div className="d-flex gap-3 mb-4 pt-2 border-top">
                                                 {[
-                                                    { val: fullAccess,  label: 'Full',    color: '#ef4444' },
-                                                    { val: writeAccess, label: 'R+W',     color: '#10b981' },
-                                                    { val: readOnly,    label: 'Read',    color: '#0ea5e9' },
+                                                    { val: fullAccess, label: 'Full', color: '#ef4444' },
+                                                    { val: writeAccess, label: 'R+W', color: '#10b981' },
+                                                    { val: readOnly, label: 'Read', color: '#0ea5e9' },
                                                     { val: total - enabled, label: 'None', color: '#94a3b8' },
                                                 ].map(s => (
                                                     <div key={s.label} className="text-center">
@@ -526,8 +526,8 @@ export default function RolesPage() {
                             {/* Legend */}
                             <div className="px-4 py-2 d-flex flex-wrap gap-4 border-bottom" style={{ background: '#f8fafc' }}>
                                 {[
-                                    { icon: 'bi-eye-fill',    color: '#0ea5e9', bg: '#e0f2fe', label: 'Read',   desc: 'Can view/see the page & its data' },
-                                    { icon: 'bi-pencil-fill', color: '#10b981', bg: '#d1fae5', label: 'Write',  desc: 'Can create and edit records' },
+                                    { icon: 'bi-eye-fill', color: '#0ea5e9', bg: '#e0f2fe', label: 'Read', desc: 'Can view/see the page & its data' },
+                                    { icon: 'bi-pencil-fill', color: '#10b981', bg: '#d1fae5', label: 'Write', desc: 'Can create and edit records' },
                                     { icon: 'bi-trash3-fill', color: '#ef4444', bg: '#fee2e2', label: 'Delete', desc: 'Can permanently remove records' },
                                 ].map(l => (
                                     <div key={l.label} className="d-flex align-items-center gap-2 py-1">
@@ -546,8 +546,8 @@ export default function RolesPage() {
                             <div className="card-body p-0">
                                 {Object.entries(PAGE_TREE).map(([moduleKey, mod], modIdx) => {
                                     const { enabled: modEnabled, total: modTotal } = modulePageCount(moduleKey);
-                                    const isExpanded  = expanded[moduleKey] ?? true;
-                                    const allGranted  = modEnabled === modTotal && modTotal > 0;
+                                    const isExpanded = expanded[moduleKey] ?? true;
+                                    const allGranted = modEnabled === modTotal && modTotal > 0;
                                     const noneGranted = modEnabled === 0;
                                     return (
                                         <div key={moduleKey} className="border-bottom">
@@ -555,7 +555,7 @@ export default function RolesPage() {
                                             <div className="d-flex align-items-center gap-3 px-4 py-3 flex-wrap"
                                                 style={{ background: '#f8fafc', borderLeft: `4px solid ${mod.color}`, cursor: 'pointer' }}
                                                 onClick={() => setExpanded(prev => ({ ...prev, [moduleKey]: !isExpanded }))}>
-                                                
+
                                                 {/* Icon + label */}
                                                 <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ minWidth: 180 }}>
                                                     <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"

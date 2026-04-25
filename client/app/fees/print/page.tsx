@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
-const MONTH_SHORT = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
 
 interface SlipData {
     slip_id: number; student_id: number; family_id: string; class_id: number;
@@ -65,10 +65,10 @@ function VoucherSlip({ v, serial, month, year, school, filterClassId }: { v: Vou
             return aMatch - bMatch;
         });
     }
-    const baseStudents: StudentRow[] = membersSource.map(m => ({ 
-        first_name: m.first_name, 
-        last_name: m.last_name, 
-        father_name: (m as any).father_name, 
+    const baseStudents: StudentRow[] = membersSource.map(m => ({
+        first_name: m.first_name,
+        last_name: m.last_name,
+        father_name: (m as any).father_name,
         class_name: (m as any).class_name,
         section_name: (m as any).section_name
     }));
@@ -123,7 +123,7 @@ function VoucherSlip({ v, serial, month, year, school, filterClassId }: { v: Vou
                         <tr key={i}>
                             <td style={td()}>{s ? `${s.first_name} ${s.last_name}` : '\u00A0'}</td>
                             <td style={td()}>{s?.father_name || '\u00A0'}</td>
-                              <td style={td({ textAlign: 'center' })}>{s ? `${s.class_name}${s.section_name ? ` (${s.section_name})` : ''}` : '\u00A0'}</td>
+                            <td style={td({ textAlign: 'center' })}>{s ? `${s.class_name}${s.section_name ? ` (${s.section_name})` : ''}` : '\u00A0'}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -251,21 +251,21 @@ export default function PrintSlipsPage() {
     const [printing, setPrinting] = useState(false);
 
     useEffect(() => {
-        fetch(`${API}/academic`).then(r => r.json()).then(setClasses).catch(() => {});
+        fetch(`${API}/academic`).then(r => r.json()).then(setClasses).catch(() => { });
         // School info lives in school_settings table (via /settings), NOT system_settings
         fetch(`${API}/settings`).then(r => r.json()).then((data: any) => {
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 setSchool({
-                    school_name:    data.school_name    || '',
-                    school_address: data.address        || '',
-                    phone_number:   data.contact_number || '',
-                    school_phone2:  '',
-                    school_phone3:  '',
+                    school_name: data.school_name || '',
+                    school_address: data.address || '',
+                    phone_number: data.contact_number || '',
+                    school_phone2: '',
+                    school_phone3: '',
                     // logo_url is a relative path like /uploads/school_logo.png — prefix API host
                     school_logo_url: data.logo_url ? `${API}${data.logo_url}` : ''
                 });
             }
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     // Fetch available months for the selected year
@@ -282,14 +282,14 @@ export default function PrintSlipsPage() {
                             setMonth(data.months[data.months.length - 1].value);
                         } else {
                             const exact = data.months.find((m: AvailableMonth) => m.months.includes(parseInt(currentM)));
-                            if(exact) setMonth(exact.value);
+                            if (exact) setMonth(exact.value);
                         }
                     } else {
                         setMonth('');
                     }
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [year]);
 
@@ -351,7 +351,7 @@ export default function PrintSlipsPage() {
                 let done = 0;
                 const onDone = () => { done++; if (done >= pending.length) doAfterImagesLoad(); };
                 pending.forEach(img => {
-                    img.addEventListener('load',  onDone, { once: true });
+                    img.addEventListener('load', onDone, { once: true });
                     img.addEventListener('error', onDone, { once: true });
                 });
                 // Safety fallback: print after 3 seconds regardless
@@ -456,10 +456,10 @@ export default function PrintSlipsPage() {
                                 <label className="form-label fw-bold small text-muted">Month</label>
                                 <select className="form-select" value={month} onChange={e => setMonth(e.target.value)}>
                                     {availableMonths.length === 0 ? (
-        <option value="">No Fees Generated</option>
-    ) : (
-        availableMonths.map(m => <option key={m.value} value={m.value}>{m.label}</option>)
-    )}
+                                        <option value="">No Fees Generated</option>
+                                    ) : (
+                                        availableMonths.map(m => <option key={m.value} value={m.value}>{m.label}</option>)
+                                    )}
                                 </select>
                             </div>
                             <div className="col-md-2">

@@ -35,7 +35,7 @@ export default function FeeHeadsPage() {
 
     const fetchHeads = async () => {
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-heads');
             setHeads(await r.json());
         } catch { setError('Failed to load fee heads'); }
         finally { setLoading(false); }
@@ -47,7 +47,7 @@ export default function FeeHeadsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setError('');
         try {
-            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-heads/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads';
+            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-heads/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-heads';
             const method = editMode ? 'PUT' : 'POST';
             const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(current) });
             const data = await res.json();
@@ -90,9 +90,9 @@ export default function FeeHeadsPage() {
                     <p className="text-muted small mb-0">Manage all charge types — Tuition, Transport, Exam Fee, etc.</p>
                 </div>
                 {hasPermission('fees', 'write') && (
-                <button className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2" onClick={openAdd}>
-                    <i className="bi bi-plus-lg"></i> Add Fee Head
-                </button>
+                    <button className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2" onClick={openAdd}>
+                        <i className="bi bi-plus-lg"></i> Add Fee Head
+                    </button>
                 )}
             </div>
 
@@ -135,39 +135,39 @@ export default function FeeHeadsPage() {
                         </div>
                         <div className="card-body p-0">
                             <div className="table-responsive">
-                            <table className="table table-hover align-middle mb-0">
-                                <thead className="bg-light">
-                                    <tr>
-                                        <th className="ps-4 py-3 text-secondary">Head Name</th>
-                                        <th className="py-3 text-secondary">Frequency</th>
-                                        <th className="py-3 text-secondary">Description</th>
-                                        <th className="py-3 text-secondary">Status</th>
-                                        <th className="pe-4 py-3 text-end text-secondary">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {loading ? (
-                                        <tr><td colSpan={5} className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary"></div></td></tr>
-                                    ) : list.length === 0 ? (
-                                        <tr><td colSpan={5} className="text-center py-4 text-muted">No heads found</td></tr>
-                                    ) : list.map(head => (
-                                        <tr key={head.head_id}>
-                                            <td className="ps-4 fw-bold text-dark">{head.head_name}</td>
-                                            <td>{freqBadge(head.frequency)}</td>
-                                            <td className="text-muted small">{head.description || '—'}</td>
-                                            <td>
-                                                <span className={`badge rounded-pill ${head.is_active ? 'bg-success' : 'bg-secondary'}`}>
-                                                    {head.is_active ? 'Active' : 'Inactive'}
-                                                </span>
-                                            </td>
-                                            <td className="pe-4 text-end">
-                                                {hasPermission('fees', 'write') && <button className="btn btn-sm btn-light text-warning me-1" onClick={() => openEdit(head)} title="Edit"><i className="bi bi-pencil"></i></button>}
-                                                {hasPermission('fees', 'delete') && <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(head.head_id)} title="Delete"><i className="bi bi-trash"></i></button>}
-                                            </td>
+                                <table className="table table-hover align-middle mb-0">
+                                    <thead className="bg-light">
+                                        <tr>
+                                            <th className="ps-4 py-3 text-secondary">Head Name</th>
+                                            <th className="py-3 text-secondary">Frequency</th>
+                                            <th className="py-3 text-secondary">Description</th>
+                                            <th className="py-3 text-secondary">Status</th>
+                                            <th className="pe-4 py-3 text-end text-secondary">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {loading ? (
+                                            <tr><td colSpan={5} className="text-center py-4"><div className="spinner-border spinner-border-sm text-primary"></div></td></tr>
+                                        ) : list.length === 0 ? (
+                                            <tr><td colSpan={5} className="text-center py-4 text-muted">No heads found</td></tr>
+                                        ) : list.map(head => (
+                                            <tr key={head.head_id}>
+                                                <td className="ps-4 fw-bold text-dark">{head.head_name}</td>
+                                                <td>{freqBadge(head.frequency)}</td>
+                                                <td className="text-muted small">{head.description || '—'}</td>
+                                                <td>
+                                                    <span className={`badge rounded-pill ${head.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                                                        {head.is_active ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td className="pe-4 text-end">
+                                                    {hasPermission('fees', 'write') && <button className="btn btn-sm btn-light text-warning me-1" onClick={() => openEdit(head)} title="Edit"><i className="bi bi-pencil"></i></button>}
+                                                    {hasPermission('fees', 'delete') && <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(head.head_id)} title="Delete"><i className="bi bi-trash"></i></button>}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -184,52 +184,52 @@ export default function FeeHeadsPage() {
                                 <span className="badge ms-2 rounded-pill bg-light text-dark border">{opb.length}</span>
                             </h6>
                             <span className="badge rounded-pill px-3 py-2" style={{ background: 'rgba(111,66,193,0.08)', color: '#6f42c1', border: '1px solid rgba(111,66,193,0.25)', fontSize: '0.75rem' }}>
-                                <i className="bi bi-shield-lock me-1"/>System Managed
+                                <i className="bi bi-shield-lock me-1" />System Managed
                             </span>
                         </div>
                     </div>
                     <div className="card-body p-0">
                         <div className="alert border-0 m-3 mb-0 rounded-3 py-2 px-3" style={{ background: 'rgba(111,66,193,0.06)', fontSize: '0.83rem' }}>
-                            <i className="bi bi-info-circle me-1" style={{ color: '#6f42c1' }}/>
+                            <i className="bi bi-info-circle me-1" style={{ color: '#6f42c1' }} />
                             This head shows as <strong>"Previous Balance"</strong> on vouchers. It combines:
                             (1) Opening Balance (OPB) set on the family, and
                             (2) All unpaid/partial previous months\u2019 fees — except admission fee.
                             Add it to any Fee Plan; the actual amount per family is calculated automatically at slip generation.
                         </div>
                         <div className="table-responsive">
-                        <table className="table table-hover align-middle mb-0">
-                            <thead className="bg-light">
-                                <tr>
-                                    <th className="ps-4 py-3 text-secondary">Head Name</th>
-                                    <th className="py-3 text-secondary">Type</th>
-                                    <th className="py-3 text-secondary">Frequency</th>
-                                    <th className="py-3 text-secondary">Description</th>
-                                    <th className="py-3 text-secondary">Status</th>
-                                    <th className="pe-4 py-3 text-end text-secondary">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {opb.map(head => (
-                                    <tr key={head.head_id} style={{ background: 'rgba(111,66,193,0.03)' }}>
-                                        <td className="ps-4">
-                                            <div className="fw-bold" style={{ color: '#6f42c1' }}>{head.head_name}</div>
-                                        </td>
-                                        <td>{typeBadge(head.head_type)}</td>
-                                        <td>{freqBadge(head.frequency)}</td>
-                                        <td className="text-muted small">{head.description || '—'}</td>
-                                        <td>
-                                            <span className={`badge rounded-pill ${head.is_active ? 'bg-success' : 'bg-secondary'}`}>
-                                                {head.is_active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-                                        <td className="pe-4 text-end">
-                                            {hasPermission('fees', 'write') && <button className="btn btn-sm btn-light text-warning me-1" onClick={() => openEdit(head)} title="Edit"><i className="bi bi-pencil"></i></button>}
-                                            {hasPermission('fees', 'delete') && <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(head.head_id)} title="Delete"><i className="bi bi-trash"></i></button>}
-                                        </td>
+                            <table className="table table-hover align-middle mb-0">
+                                <thead className="bg-light">
+                                    <tr>
+                                        <th className="ps-4 py-3 text-secondary">Head Name</th>
+                                        <th className="py-3 text-secondary">Type</th>
+                                        <th className="py-3 text-secondary">Frequency</th>
+                                        <th className="py-3 text-secondary">Description</th>
+                                        <th className="py-3 text-secondary">Status</th>
+                                        <th className="pe-4 py-3 text-end text-secondary">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {opb.map(head => (
+                                        <tr key={head.head_id} style={{ background: 'rgba(111,66,193,0.03)' }}>
+                                            <td className="ps-4">
+                                                <div className="fw-bold" style={{ color: '#6f42c1' }}>{head.head_name}</div>
+                                            </td>
+                                            <td>{typeBadge(head.head_type)}</td>
+                                            <td>{freqBadge(head.frequency)}</td>
+                                            <td className="text-muted small">{head.description || '—'}</td>
+                                            <td>
+                                                <span className={`badge rounded-pill ${head.is_active ? 'bg-success' : 'bg-secondary'}`}>
+                                                    {head.is_active ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </td>
+                                            <td className="pe-4 text-end">
+                                                {hasPermission('fees', 'write') && <button className="btn btn-sm btn-light text-warning me-1" onClick={() => openEdit(head)} title="Edit"><i className="bi bi-pencil"></i></button>}
+                                                {hasPermission('fees', 'delete') && <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(head.head_id)} title="Delete"><i className="bi bi-trash"></i></button>}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -264,7 +264,7 @@ export default function FeeHeadsPage() {
                                                 <option value="prev_balance">Previous Balance (System)</option>
                                             </select>
                                             {(current as any).head_type === 'prev_balance' && (
-                                                <small className="text-muted"><i className="bi bi-lock me-1"/>Type is locked for system heads</small>
+                                                <small className="text-muted"><i className="bi bi-lock me-1" />Type is locked for system heads</small>
                                             )}
                                         </div>
                                         <div className="col-6">

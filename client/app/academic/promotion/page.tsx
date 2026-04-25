@@ -49,7 +49,7 @@ export default function StudentPromotion() {
     const [classes, setClasses] = useState<Class[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
-    
+
     const [fromYearId, setFromYearId] = useState<number | null>(null);
     const [toYearId, setToYearId] = useState<number | null>(null);
     const [filterClassId, setFilterClassId] = useState<number | null>(null);
@@ -58,7 +58,7 @@ export default function StudentPromotion() {
     const [loading, setLoading] = useState(false);
     const [promoting, setPromoting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
+
     const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
     const [promotionMap, setPromotionMap] = useState<Map<number, PromotionData>>(new Map());
     const { hasPermission } = useAuth();
@@ -91,7 +91,7 @@ export default function StudentPromotion() {
 
     const fetchPromotionReadyYears = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/years/promotion-ready');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/years/promotion-ready');
             if (res.ok) {
                 const data = await res.json();
                 setYears(data);
@@ -103,7 +103,7 @@ export default function StudentPromotion() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/classes');
             if (res.ok) {
                 const data = await res.json();
                 console.log('Fetched classes:', data);
@@ -118,7 +118,7 @@ export default function StudentPromotion() {
 
     const fetchSections = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections');
             if (res.ok) {
                 const data = await res.json();
                 console.log('Fetched sections:', data);
@@ -140,7 +140,7 @@ export default function StudentPromotion() {
         setLoading(true);
         setError(null);
         setStudents([]);
-        
+
         try {
             const params = new URLSearchParams({ year_id: fromYearId.toString() });
             if (filterClassId) params.append('class_id', filterClassId.toString());
@@ -194,7 +194,7 @@ export default function StudentPromotion() {
 
         const currentNum = parseInt(match[0]);
         const nextClassName = currentClass.class_name.replace(/\d+/, String(currentNum + 1));
-        
+
         return classes.find(c => c.class_name === nextClassName) || null;
     };
 
@@ -248,8 +248,8 @@ export default function StudentPromotion() {
 
         try {
             const studentsToPromote = Array.from(selectedStudents).map(id => promotionMap.get(id)!);
-            
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/promotion/execute', {
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/promotion/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -268,7 +268,7 @@ export default function StudentPromotion() {
 
             const result = await res.json();
             alert(`Success! ${result.successCount} students promoted.${result.failedCount > 0 ? ` ${result.failedCount} failed.` : ''}`);
-            
+
             // Reload students
             setSelectedStudents(new Set());
             loadStudents();
@@ -312,11 +312,11 @@ export default function StudentPromotion() {
                     </h6>
                 </div>
                 <div className="card-body">
-                
+
                     <div className="row g-3 align-items-end">
                         <div className="col-md-3">
                             <label className="form-label fw-semibold">From Year</label>
-                            <select 
+                            <select
                                 className="form-select"
                                 value={fromYearId || ''}
                                 onChange={e => setFromYearId(parseInt(e.target.value))}
@@ -332,7 +332,7 @@ export default function StudentPromotion() {
 
                         <div className="col-md-3">
                             <label className="form-label fw-semibold">To Year</label>
-                            <select 
+                            <select
                                 className="form-select"
                                 value={toYearId || ''}
                                 onChange={e => setToYearId(parseInt(e.target.value))}
@@ -348,7 +348,7 @@ export default function StudentPromotion() {
 
                         <div className="col-md-2">
                             <label className="form-label fw-semibold">Class </label>
-                            <select 
+                            <select
                                 className="form-select"
                                 value={filterClassId || ''}
                                 onChange={e => setFilterClassId(e.target.value ? parseInt(e.target.value) : null)}
@@ -363,7 +363,7 @@ export default function StudentPromotion() {
 
                         <div className="col-md-2">
                             <label className="form-label fw-semibold">Section </label>
-                            <select 
+                            <select
                                 className="form-select"
                                 value={filterSectionId || ''}
                                 onChange={e => setFilterSectionId(e.target.value ? parseInt(e.target.value) : null)}
@@ -378,7 +378,7 @@ export default function StudentPromotion() {
                         </div>
 
                         <div className="col-md-2 d-flex align-items-end">
-                            <button 
+                            <button
                                 className="btn btn-primary-custom w-100 fw-bold"
                                 onClick={loadStudents}
                                 disabled={loading || !fromYearId}
@@ -412,7 +412,7 @@ export default function StudentPromotion() {
                             )}
                         </div>
                         <div className="d-flex gap-2">
-                            <button 
+                            <button
                                 className="btn btn-outline-secondary btn-sm"
                                 onClick={selectAll}
                             >
@@ -420,17 +420,17 @@ export default function StudentPromotion() {
                                 {selectedStudents.size === students.length ? 'Deselect All' : 'Select All'}
                             </button>
                             {hasPermission('academic', 'write') && (
-                            <button 
-                                className="btn btn-success fw-bold"
-                                onClick={executePromotion}
-                                disabled={promoting || selectedStudents.size === 0 || !toYearId}
-                            >
-                                {promoting ? (
-                                    <><span className="spinner-border spinner-border-sm me-2" />Promoting...</>
-                                ) : (
-                                    <><i className="bi bi-arrow-up-circle me-1"></i>Promote Selected ({selectedStudents.size})</>
-                                )}
-                            </button>
+                                <button
+                                    className="btn btn-success fw-bold"
+                                    onClick={executePromotion}
+                                    disabled={promoting || selectedStudents.size === 0 || !toYearId}
+                                >
+                                    {promoting ? (
+                                        <><span className="spinner-border spinner-border-sm me-2" />Promoting...</>
+                                    ) : (
+                                        <><i className="bi bi-arrow-up-circle me-1"></i>Promote Selected ({selectedStudents.size})</>
+                                    )}
+                                </button>
                             )}
                         </div>
                     </div>
@@ -441,32 +441,32 @@ export default function StudentPromotion() {
                             <table className="table table-bordered table-sm align-middle mb-0" style={{ fontSize: '0.85rem' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--primary-dark)', color: '#fff' }}>
-                                        <th style={{width: '50px', textAlign: 'center'}}>
-                                            <input 
+                                        <th style={{ width: '50px', textAlign: 'center' }}>
+                                            <input
                                                 type="checkbox"
                                                 className="form-check-input"
                                                 checked={selectedStudents.size === students.length && students.length > 0}
                                                 onChange={selectAll}
                                             />
                                         </th>
-                                        <th style={{width: '100px', textAlign: 'center'}}>Admission#</th>
-                                        <th style={{minWidth: '180px'}}>Student Name</th>
-                                        <th style={{minWidth: '120px'}}>Current Class</th>
+                                        <th style={{ width: '100px', textAlign: 'center' }}>Admission#</th>
+                                        <th style={{ minWidth: '180px' }}>Student Name</th>
+                                        <th style={{ minWidth: '120px' }}>Current Class</th>
                                         {/* <th style={{minWidth: '150px'}}>Performance</th> */}
-                                        <th style={{minWidth: '140px'}}>Promote To</th>
-                                        <th style={{minWidth: '120px'}}>Section</th>
-                                        <th style={{minWidth: '120px'}}>Status</th>
+                                        <th style={{ minWidth: '140px' }}>Promote To</th>
+                                        <th style={{ minWidth: '120px' }}>Section</th>
+                                        <th style={{ minWidth: '120px' }}>Status</th>
                                     </tr>
                                 </thead>
-                            <tbody>
+                                <tbody>
                                     {students.map(student => {
                                         const promotion = promotionMap.get(student.id);
                                         // const badge = getStatusBadge(student.percentage);
-                                        
+
                                         return (
-                                            <tr key={student.id} style={student.has_record ? {backgroundColor: '#fff3cd'} : {}}>
+                                            <tr key={student.id} style={student.has_record ? { backgroundColor: '#fff3cd' } : {}}>
                                                 <td className="text-center">
-                                                    <input 
+                                                    <input
                                                         type="checkbox"
                                                         className="form-check-input"
                                                         checked={selectedStudents.has(student.id)}
@@ -492,7 +492,7 @@ export default function StudentPromotion() {
                                                 </td>
                                                 */}
                                                 <td>
-                                                    <select 
+                                                    <select
                                                         className="form-select form-select-sm"
                                                         value={promotion?.target_class_id || ''}
                                                         onChange={e => updatePromotionData(student.id, 'target_class_id', parseInt(e.target.value))}
@@ -504,7 +504,7 @@ export default function StudentPromotion() {
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <select 
+                                                    <select
                                                         className="form-select form-select-sm"
                                                         value={promotion?.target_section_id || ''}
                                                         onChange={e => updatePromotionData(student.id, 'target_section_id', parseInt(e.target.value))}
@@ -516,7 +516,7 @@ export default function StudentPromotion() {
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <select 
+                                                    <select
                                                         className="form-select form-select-sm"
                                                         value={promotion?.status || 'promoted'}
                                                         onChange={e => updatePromotionData(student.id, 'status', e.target.value)}

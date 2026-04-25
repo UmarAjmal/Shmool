@@ -26,7 +26,7 @@ type StudentItem = {
     selected?: boolean;
 };
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
 
 export default function ExamCollectionPage() {
     const { user } = useAuth();
@@ -123,10 +123,10 @@ export default function ExamCollectionPage() {
 
             const rows: StudentItem[] = Array.isArray(data)
                 ? data.map((student: StudentItem) => ({
-                      ...student,
-                      remarks: student.paid_remarks || '',
-                      selected: false,
-                  }))
+                    ...student,
+                    remarks: student.paid_remarks || '',
+                    selected: false,
+                }))
                 : [];
 
             setStudents(rows);

@@ -40,15 +40,15 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
 
     useEffect(() => {
         const loadCategory = async () => {
-             await fetchCategories();
-             await fetchExpenseDetails();
+            await fetchCategories();
+            await fetchExpenseDetails();
         }
         loadCategory();
     }, [params.id]);
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expense-categories/active');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/expense-categories/active');
             const data = await response.json();
             setCategories(data);
         } catch (err) {
@@ -60,7 +60,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/expenses/${params.id}`);
             if (!response.ok) throw new Error('Failed to fetch expense details');
-            
+
             const data = await response.json();
             setFormData({
                 category_id: data.category_id.toString(),
@@ -126,7 +126,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
         <div className="container-fluid p-4 animate__animated animate__fadeIn">
             <div className="row justify-content-center">
                 <div className="col-lg-8">
-                    
+
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <h2 className="fw-bold" style={{ color: 'var(--primary-dark)' }}>
@@ -144,7 +144,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
                     <div className="card shadow-lg border-0 animate__animated animate__fadeInUp">
                         {/* Decorative Top Border */}
                         <div className="card-body p-5 position-relative" style={{ borderTop: '5px solid var(--primary-teal)' }}>
-                            
+
                             {error && (
                                 <div className="alert alert-danger d-flex align-items-center mb-4 animate__animated animate__headShake" role="alert">
                                     <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -222,7 +222,7 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <h5 className="text-muted border-bottom pb-2 mb-3 mt-4">
                                     <i className="bi bi-cash-stack me-2"></i>Payment Details
                                 </h5>
@@ -265,30 +265,30 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
                                 </div>
 
                                 <div className="col-12 mt-5 d-flex justify-content-end gap-3">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         className="btn btn-secondary-custom px-4"
                                         onClick={() => router.push('/expenses/list')}
                                     >
                                         Cancel
                                     </button>
                                     {hasPermission('expenses', 'write') && (
-                                    <button 
-                                        type="submit" 
-                                        className="btn btn-primary-custom px-5 shadow-sm"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Updating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="bi bi-check-lg me-2"></i> Update Expense
-                                            </>
-                                        )}
-                                    </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary-custom px-5 shadow-sm"
+                                            disabled={loading}
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Updating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-check-lg me-2"></i> Update Expense
+                                                </>
+                                            )}
+                                        </button>
                                     )}
                                 </div>
                             </form>

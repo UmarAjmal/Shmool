@@ -3,8 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { notify } from '@/app/utils/notify';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface SlipRow {
     category?: string;
@@ -90,24 +90,24 @@ export default function CollectFeePage() {
     const [refNo, setRefNo] = useState('');
     const [notes, setNotes] = useState('');
     const [paying, setPaying] = useState(false);
-        const [school, setSchool] = useState<SchoolInfo>({ school_name: '', school_address: '', phone_number: '', school_phone2: '', school_phone3: '', school_logo_url: '' });
+    const [school, setSchool] = useState<SchoolInfo>({ school_name: '', school_address: '', phone_number: '', school_phone2: '', school_phone3: '', school_logo_url: '' });
 
     useEffect(() => {
-        fetch(`${API}/academic`).then(r => r.json()).then(setClasses).catch(() => {});
+        fetch(`${API}/academic`).then(r => r.json()).then(setClasses).catch(() => { });
         // School info lives in school_settings table (via /settings), NOT system_settings
         fetch(`${API}/settings`).then(r => r.json()).then((data: any) => {
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 setSchool({
-                    school_name:    data.school_name    || '',
-                    school_address: data.address        || '',
-                    phone_number:   data.contact_number || '',
-                    school_phone2:  '',
-                    school_phone3:  '',
+                    school_name: data.school_name || '',
+                    school_address: data.address || '',
+                    phone_number: data.contact_number || '',
+                    school_phone2: '',
+                    school_phone3: '',
                     // logo_url is a relative path like /uploads/school_logo.png — prefix API host
                     school_logo_url: data.logo_url ? `${API}${data.logo_url}` : ''
                 });
             }
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     const loadSlips = async () => {
@@ -115,7 +115,7 @@ export default function CollectFeePage() {
             notify.error('Please enter a Year.');
             return;
         }
-        setLoading(true); ; setSlips([]); setStats(null); setLoaded(false);
+        setLoading(true);; setSlips([]); setStats(null); setLoaded(false);
         try {
             const params = new URLSearchParams({ year });
             if (selectedClass) params.append('class_id', selectedClass);
@@ -142,7 +142,7 @@ export default function CollectFeePage() {
                 setSlips((data.slips || []).map((s: any) => s.category && s.category.trim().toLowerCase() === 'trusted' ? { ...s, status: 'satteled' } : s));
                 setStats(data.stats || null);
             }
-        } catch {}
+        } catch { }
     };
 
     const openPayModal = async (slip: SlipRow) => {
@@ -264,9 +264,9 @@ export default function CollectFeePage() {
 </html>`;
 
         const w = window.open('', '_blank', 'width=420,height=680,toolbar=0,menubar=0,scrollbars=1');
-        if (w) { 
-            w.document.write(html); 
-            w.document.close(); 
+        if (w) {
+            w.document.write(html);
+            w.document.close();
             w.focus();
             setTimeout(() => w.print(), 250);
         }
@@ -293,14 +293,14 @@ export default function CollectFeePage() {
         finally { setDeletingPaymentId(null); }
     };
 
-    const handlePay = async (shouldPrint = false) => {        
+    const handlePay = async (shouldPrint = false) => {
         const receivingSnap = Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
         if (receivingSnap <= 0) { notify.error('Enter a valid amount.'); return; }
         // Snapshot before state changes (needed for receipt after async updates)
         const prevPaidSnap = parseFloat(activeSlip!.paid_amount as any);
         const slipSnap = { ...activeSlip! };
         const payDateSnap = payDate;
-        setPaying(true); 
+        setPaying(true);
         try {
             const r = await fetch(`${API}/fee-slips/${activeSlip!.slip_id}/pay`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -320,7 +320,7 @@ export default function CollectFeePage() {
                 paid_count: ['paid', 'satteled'].includes(d.slip.status) ? (prev.paid_count + 1) : prev.paid_count,
                 unpaid_count: d.slip.status !== 'unpaid' && activeSlip?.status === 'unpaid' ? prev.unpaid_count - 1 : prev.unpaid_count,
                 partial_count: d.slip.status === 'partial' ? (activeSlip?.status === 'unpaid' ? prev.partial_count + 1 : prev.partial_count) :
-                               ['paid', 'satteled'].includes(d.slip.status) && (activeSlip?.status === 'partial') ? prev.partial_count - 1 : prev.partial_count
+                    ['paid', 'satteled'].includes(d.slip.status) && (activeSlip?.status === 'partial') ? prev.partial_count - 1 : prev.partial_count
             } : null);
             setActiveSlip(prev => prev ? { ...prev, paid_amount: d.slip.paid_amount, status: d.slip.status } : null);
             setHeadPayVals({});
@@ -337,11 +337,11 @@ export default function CollectFeePage() {
         if (statusFilter !== 'all' && s.status !== statusFilter) return false;
         if (search.trim()) {
             const q = search.toLowerCase().trim();
-            const name    = `${s.first_name} ${s.last_name}`.toLowerCase();
-            const admno   = (s.admission_no || '').toLowerCase();
-            const famId   = (s.family_id || '').toLowerCase();
-            const fName   = (s.father_name || '').toLowerCase();
-            const fPhone  = (s.father_phone || '').toLowerCase();
+            const name = `${s.first_name} ${s.last_name}`.toLowerCase();
+            const admno = (s.admission_no || '').toLowerCase();
+            const famId = (s.family_id || '').toLowerCase();
+            const fName = (s.father_name || '').toLowerCase();
+            const fPhone = (s.father_phone || '').toLowerCase();
             const members = (s.family_members || []).map(m => `${m.first_name} ${m.last_name}`.toLowerCase()).join(' ');
             return name.includes(q) || admno.includes(q) || famId.includes(q) || fName.includes(q) || fPhone.includes(q) || members.includes(q);
         }
@@ -426,7 +426,7 @@ export default function CollectFeePage() {
                 </div>
             </div>
 
-            
+
 
             {/* ── Filter Card ── */}
             <div className="card border-0 shadow-sm mb-4">
@@ -613,10 +613,12 @@ export default function CollectFeePage() {
                                                     <td className="px-3 text-muted" style={{ fontSize: '0.78rem' }}>{idx + 1}</td>
                                                     <td className="px-2">
                                                         <div className="d-flex align-items-start gap-2">
-                                                            <div style={{ width: 34, height: 34, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                backgroundColor: isFam ? '#e8f5f5' : '#fff3ea' }}>
+                                                            <div style={{
+                                                                width: 34, height: 34, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                backgroundColor: isFam ? '#e8f5f5' : '#fff3ea'
+                                                            }}>
                                                                 <i className={`bi ${isFam ? 'bi-people-fill' : 'bi-person-fill'}`}
-                                                                   style={{ color: isFam ? 'var(--primary-teal)' : 'var(--accent-orange)', fontSize: 16 }}></i>
+                                                                    style={{ color: isFam ? 'var(--primary-teal)' : 'var(--accent-orange)', fontSize: 16 }}></i>
                                                             </div>
                                                             <div>
                                                                 <div className="fw-bold" style={{ color: 'var(--primary-dark)', lineHeight: 1.3 }}>
@@ -675,7 +677,7 @@ export default function CollectFeePage() {
                                                         <StatusBadge status={g.status} />
                                                     </td>
                                                     <td className="px-2 text-center">
-                        {['paid', 'satteled'].includes(g.status) ? (
+                                                        {['paid', 'satteled'].includes(g.status) ? (
                                                             <button className="btn btn-sm" style={{ fontSize: '0.72rem', backgroundColor: '#e8f5e9', color: '#198754', border: '1px solid #c3e6cb', borderRadius: 6 }}
                                                                 onClick={() => openPayModal(g.latest_paid || g.latest_slip)}>
                                                                 <i className="bi bi-eye me-1"></i>History
@@ -733,9 +735,11 @@ export default function CollectFeePage() {
                                             return (
                                                 <button key={slip.slip_id}
                                                     className="btn text-start d-flex align-items-center justify-content-between"
-                                                    style={{ border: '1.5px solid', borderColor: ['paid', 'satteled'].includes(slip.status) ? '#c3e6cb' : slip.status === 'partial' ? '#ffd27a' : '#f5c2c7',
+                                                    style={{
+                                                        border: '1.5px solid', borderColor: ['paid', 'satteled'].includes(slip.status) ? '#c3e6cb' : slip.status === 'partial' ? '#ffd27a' : '#f5c2c7',
                                                         borderRadius: 10, backgroundColor: ['paid', 'satteled'].includes(slip.status) ? '#f0fff4' : slip.status === 'partial' ? '#fffbf0' : '#fff5f5',
-                                                        padding: '10px 14px' }}
+                                                        padding: '10px 14px'
+                                                    }}
                                                     onClick={() => { setSlipPickerGroup(null); openPayModal(slip); }}>
                                                     <div>
                                                         <div className="fw-bold" style={{ color: 'var(--primary-dark)', fontSize: '0.9rem' }}>
@@ -858,7 +862,7 @@ export default function CollectFeePage() {
                                             <div className="rounded overflow-hidden" style={{ border: '1px solid #e9ecef' }}>
                                                 {slipPayments.map((p, i) => (
                                                     <div key={p.payment_id} className="d-flex justify-content-between align-items-center px-3 py-2"
-                                                        style={{ backgroundColor: i % 2 === 0 ? '#f0fff7' : '#f8f9fa', fontSize: '0.78rem', borderBottom: i < slipPayments.length-1 ? '1px solid #e9ecef' : 'none' }}>
+                                                        style={{ backgroundColor: i % 2 === 0 ? '#f0fff7' : '#f8f9fa', fontSize: '0.78rem', borderBottom: i < slipPayments.length - 1 ? '1px solid #e9ecef' : 'none' }}>
                                                         <div className="flex-grow-1">
                                                             <span className="fw-bold" style={{ color: '#198754' }}>{fmt(parseFloat(p.amount_paid as any))}</span>
                                                             <span className="text-muted ms-2">via {p.payment_method}</span>
@@ -877,9 +881,9 @@ export default function CollectFeePage() {
                                                                     openReceiptWindow(activeSlip!, parseFloat(p.amount_paid as any), p.payment_date, prevPaid);
                                                                     if (!p.is_printed) {
                                                                         fetch(`${API}/fee-slips/payments/${p.payment_id}/print`, { method: 'PUT' })
-                                                                           .then((res) => {
-                                                                               setSlipPayments(prev => prev.map(x => x.payment_id === p.payment_id ? { ...x, is_printed: true } : x));
-                                                                           });
+                                                                            .then((res) => {
+                                                                                setSlipPayments(prev => prev.map(x => x.payment_id === p.payment_id ? { ...x, is_printed: true } : x));
+                                                                            });
                                                                     }
                                                                 }}
                                                                 style={{ fontSize: '0.7rem', backgroundColor: '#e8f5e9', color: '#198754', border: '1px solid #c3e6cb', borderRadius: 6, padding: '2px 7px' }}>
@@ -930,16 +934,16 @@ export default function CollectFeePage() {
                                                                   <i className="bi bi-printer"></i>
                                                               </button> */}
                                                             {hasPermission('fees', 'delete') && (
-                                                            <button
-                                                                className="btn btn-sm"
-                                                                title="Reverse this payment"
-                                                                disabled={deletingPaymentId === p.payment_id}
-                                                                onClick={() => deletePayment(p.payment_id)}
-                                                                style={{ fontSize: '0.7rem', backgroundColor: '#fff0f0', color: '#dc3545', border: '1px solid #f5c2c7', borderRadius: 6, padding: '2px 7px' }}>
-                                                                {deletingPaymentId === p.payment_id
-                                                                    ? <span className="spinner-border spinner-border-sm" />
-                                                                    : <><i className="bi bi-arrow-counterclockwise me-1"></i>Reverse</>}
-                                                            </button>
+                                                                <button
+                                                                    className="btn btn-sm"
+                                                                    title="Reverse this payment"
+                                                                    disabled={deletingPaymentId === p.payment_id}
+                                                                    onClick={() => deletePayment(p.payment_id)}
+                                                                    style={{ fontSize: '0.7rem', backgroundColor: '#fff0f0', color: '#dc3545', border: '1px solid #f5c2c7', borderRadius: 6, padding: '2px 7px' }}>
+                                                                    {deletingPaymentId === p.payment_id
+                                                                        ? <span className="spinner-border spinner-border-sm" />
+                                                                        : <><i className="bi bi-arrow-counterclockwise me-1"></i>Reverse</>}
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -954,139 +958,139 @@ export default function CollectFeePage() {
                                             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-orange)', marginBottom: 10 }}>
                                                 <i className="bi bi-plus-circle me-1"></i>Record New Payment
                                             </div>
-                                            
-                                              <div className="row g-2 mt-2">
-                                                  <div className="col-12 w-100 mb-2">
-                                                      <label className="form-label small fw-bold text-muted mb-2">Amount Breakdown <span className="text-danger">*</span></label>
-                                                      <div className="d-flex flex-column gap-2 p-2 bg-light border rounded" style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                                                          {(!activeSlip.line_items || activeSlip.line_items.length === 0) ? (
-                                                              <div className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
-                                                                  <span className="small fw-bold text-dark">Total Balance</span>
-                                                                  <div className="input-group input-group-sm w-auto" style={{maxWidth: '120px'}}>
-                                                                      <span className="input-group-text bg-white small">PKR</span>
-                                                                      <input type="number" className="form-control form-control-sm text-end" placeholder="0"
-                                                                          value={headPayVals['fallback'] || ''} onChange={e => setHeadPayVals({...headPayVals, fallback: e.target.value})} min="0" />
-                                                                  </div>
-                                                              </div>
-                                                          ) : (
-                                                              (() => {
-        const isTuition = (name: string) => (name || '').toLowerCase().includes('tuition') || (name || '').toLowerCase().includes('family monthly fee');
-        const isPrevBal = (name: string) => !name || (name || '').toLowerCase().includes('previous balance') || (name || '').toLowerCase().includes('opening balance');
-        
-        let tItem: any = null, pbItem: any = null;
-        const others: any[] = [];
-        
-        activeSlip.line_items.forEach((item: any) => {
-            if (isTuition(item.head_name)) tItem = item;
-            else if (isPrevBal(item.head_name)) pbItem = item;
-            else others.push(item);
-        });
 
-        const elements: any[] = [];
-        let keyIdx = 0;
+                                            <div className="row g-2 mt-2">
+                                                <div className="col-12 w-100 mb-2">
+                                                    <label className="form-label small fw-bold text-muted mb-2">Amount Breakdown <span className="text-danger">*</span></label>
+                                                    <div className="d-flex flex-column gap-2 p-2 bg-light border rounded" style={{ maxHeight: '220px', overflowY: 'auto' }}>
+                                                        {(!activeSlip.line_items || activeSlip.line_items.length === 0) ? (
+                                                            <div className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
+                                                                <span className="small fw-bold text-dark">Total Balance</span>
+                                                                <div className="input-group input-group-sm w-auto" style={{ maxWidth: '120px' }}>
+                                                                    <span className="input-group-text bg-white small">PKR</span>
+                                                                    <input type="number" className="form-control form-control-sm text-end" placeholder="0"
+                                                                        value={headPayVals['fallback'] || ''} onChange={e => setHeadPayVals({ ...headPayVals, fallback: e.target.value })} min="0" />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            (() => {
+                                                                const isTuition = (name: string) => (name || '').toLowerCase().includes('tuition') || (name || '').toLowerCase().includes('family monthly fee');
+                                                                const isPrevBal = (name: string) => !name || (name || '').toLowerCase().includes('previous balance') || (name || '').toLowerCase().includes('opening balance');
 
-        if (tItem || pbItem) {
-            const tAmtB = parseFloat(tItem?.amount || 0);
-            const tPaid = parseFloat(tItem?.paid_amount || 0);
-            const tRem = +(tAmtB - tPaid).toFixed(2);
-            const tId = tItem ? (tItem.item_id ? tItem.item_id.toString() : tItem.head_name) : null;
+                                                                let tItem: any = null, pbItem: any = null;
+                                                                const others: any[] = [];
 
-            const pbAmtB = parseFloat(pbItem?.amount || 0);
-            const pbPaid = parseFloat(pbItem?.paid_amount || 0);
-            const pbRem = +(pbAmtB - pbPaid).toFixed(2);
-            const pbId = pbItem ? (pbItem.item_id ? pbItem.item_id.toString() : pbItem.head_name || 'Previous Balance') : null;
+                                                                activeSlip.line_items.forEach((item: any) => {
+                                                                    if (isTuition(item.head_name)) tItem = item;
+                                                                    else if (isPrevBal(item.head_name)) pbItem = item;
+                                                                    else others.push(item);
+                                                                });
 
-            const combAmtB = tAmtB + pbAmtB;
-            const combPaid = tPaid + pbPaid;
-            const combRem = (combAmtB - combPaid).toFixed(2);
+                                                                const elements: any[] = [];
+                                                                let keyIdx = 0;
 
-            const currentTVal = parseFloat(headPayVals[tId as string] || '0');
-            const currentPbVal = parseFloat(headPayVals[pbId as string] || '0');
-            const combInputVal = currentTVal + currentPbVal;
+                                                                if (tItem || pbItem) {
+                                                                    const tAmtB = parseFloat(tItem?.amount || 0);
+                                                                    const tPaid = parseFloat(tItem?.paid_amount || 0);
+                                                                    const tRem = +(tAmtB - tPaid).toFixed(2);
+                                                                    const tId = tItem ? (tItem.item_id ? tItem.item_id.toString() : tItem.head_name) : null;
 
-            const dsDis = parseFloat(combRem) <= 0 && combPaid > 0;
+                                                                    const pbAmtB = parseFloat(pbItem?.amount || 0);
+                                                                    const pbPaid = parseFloat(pbItem?.paid_amount || 0);
+                                                                    const pbRem = +(pbAmtB - pbPaid).toFixed(2);
+                                                                    const pbId = pbItem ? (pbItem.item_id ? pbItem.item_id.toString() : pbItem.head_name || 'Previous Balance') : null;
 
-            elements.push(
-                <div key={'comb-'+(keyIdx++)} className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
-                    <div className="d-flex flex-column" style={{width: '55%'}}>
-                        <span className="text-dark fw-bold" style={{ fontSize: '0.85rem' }}>
-                            {(tItem && pbItem) ? 'Tuition Fee + Prev. Balance' : (tItem ? (tItem.head_name || 'Tuition Fee') : (pbItem?.head_name || 'Previous Balance'))}
-                        </span>
-                        <span className="text-muted" style={{ fontSize: '0.7rem' }}>Billed: {combAmtB.toLocaleString('en-PK')} {combPaid > 0 ? ' • Paid: ' + combPaid.toLocaleString('en-PK') : ''}</span>
-                        {(tItem && pbItem) && (
-                            <span className="text-muted" style={{ fontSize: '0.65rem' }}>
-                                (Remaining — Tuition: {tRem.toLocaleString('en-PK')} | Prev: {pbRem.toLocaleString('en-PK')})
-                            </span>
-                        )}
-                    </div>
-                    <div className="d-flex align-items-center gap-2 justify-content-end" style={{width: '45%'}}>
-                        {combAmtB > 0 && <span className="text-danger fw-bold" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Bal: {combRem}</span>}
-                        <div className="input-group input-group-sm w-auto" style={{ maxWidth: '100px' }}> 
-                            <input type="number" className="form-control form-control-sm text-end" placeholder="0"
-                                value={combInputVal > 0 ? combInputVal : ''}
-                                onChange={(e) => {
-                                    const vStr = e.target.value;
-                                    if (vStr === '') {
-                                        setHeadPayVals({...headPayVals, ...(pbId ? {[pbId]: ''} : {}), ...(tId ? {[tId]: ''} : {})});
-                                        return;
-                                    }
-                                    const val = parseFloat(vStr) || 0;
-                                    let newPb = 0, newT = 0;
-                                    if (val <= pbRem) {
-                                        newPb = Math.max(0, val);
-                                    } else {
-                                        newPb = Math.max(0, pbRem);
-                                        newT = Math.max(0, val - pbRem);
-                                    }
-                                    if (pbRem <= 0) { newPb = 0; newT = Math.max(0, val); }
-                                    
-                                    setHeadPayVals({
-                                        ...headPayVals,
-                                        ...(pbId ? {[pbId]: newPb > 0 ? newPb.toString() : ''} : {}),
-                                        ...(tId ? {[tId]: newT > 0 ? newT.toString() : ''} : {})
-                                    });
-                                }}
-                                disabled={dsDis} min="0" />
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+                                                                    const combAmtB = tAmtB + pbAmtB;
+                                                                    const combPaid = tPaid + pbPaid;
+                                                                    const combRem = (combAmtB - combPaid).toFixed(2);
 
-        others.forEach((item: any) => {
-            const headId = item.item_id ? item.item_id.toString() : item.head_name;
-            const amtB = parseFloat(item.amount || 0);
-            const paid = parseFloat(item.paid_amount || 0);
-            const rem = (amtB - paid).toFixed(2);
-            elements.push(
-                <div key={'other-'+(keyIdx++)} className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
-                    <div className="d-flex flex-column" style={{width: '55%'}}>
-                        <span className="text-dark fw-bold" style={{ fontSize: '0.85rem' }}>{item.head_name || 'Previous Balance'}</span>
-                        <span className="text-muted" style={{ fontSize: '0.7rem' }}>Billed: {amtB.toLocaleString('en-PK')} {paid > 0 ? ' • Paid: ' + paid.toLocaleString('en-PK') : ''}</span>
-                    </div>
-                    <div className="d-flex align-items-center gap-2 justify-content-end" style={{width: '45%'}}>
-                        {amtB > 0 && <span className="text-danger fw-bold" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Bal: {rem}</span>}
-                        <div className="input-group input-group-sm w-auto" style={{ maxWidth: '100px' }}> 
-                            <input type="number" className="form-control form-control-sm text-end" placeholder="0"
-                                value={headPayVals[headId] || ''} onChange={e => setHeadPayVals({...headPayVals, [headId]: e.target.value})}
-                                disabled={parseFloat(rem) <= 0 && paid > 0} min="0" />
-                        </div>
-                    </div>
-                </div>
-            );
-        });
+                                                                    const currentTVal = parseFloat(headPayVals[tId as string] || '0');
+                                                                    const currentPbVal = parseFloat(headPayVals[pbId as string] || '0');
+                                                                    const combInputVal = currentTVal + currentPbVal;
 
-        return elements;
-    })()
-                                                          )}
-                                                      </div>
-                                                      <div className="d-flex justify-content-between fw-bold text-dark mt-2 mb-1 px-1 small">
-                                                          <span>Grand Total:</span>
-                                                          <span>PKR {Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v) || 0), 0).toLocaleString('en-PK')}</span>
-                                                      </div>
-                                                  </div>
-                                              </div>
-                                              <div className="row g-2 mt-0">
+                                                                    const dsDis = parseFloat(combRem) <= 0 && combPaid > 0;
+
+                                                                    elements.push(
+                                                                        <div key={'comb-' + (keyIdx++)} className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
+                                                                            <div className="d-flex flex-column" style={{ width: '55%' }}>
+                                                                                <span className="text-dark fw-bold" style={{ fontSize: '0.85rem' }}>
+                                                                                    {(tItem && pbItem) ? 'Tuition Fee + Prev. Balance' : (tItem ? (tItem.head_name || 'Tuition Fee') : (pbItem?.head_name || 'Previous Balance'))}
+                                                                                </span>
+                                                                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>Billed: {combAmtB.toLocaleString('en-PK')} {combPaid > 0 ? ' • Paid: ' + combPaid.toLocaleString('en-PK') : ''}</span>
+                                                                                {(tItem && pbItem) && (
+                                                                                    <span className="text-muted" style={{ fontSize: '0.65rem' }}>
+                                                                                        (Remaining — Tuition: {tRem.toLocaleString('en-PK')} | Prev: {pbRem.toLocaleString('en-PK')})
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="d-flex align-items-center gap-2 justify-content-end" style={{ width: '45%' }}>
+                                                                                {combAmtB > 0 && <span className="text-danger fw-bold" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Bal: {combRem}</span>}
+                                                                                <div className="input-group input-group-sm w-auto" style={{ maxWidth: '100px' }}>
+                                                                                    <input type="number" className="form-control form-control-sm text-end" placeholder="0"
+                                                                                        value={combInputVal > 0 ? combInputVal : ''}
+                                                                                        onChange={(e) => {
+                                                                                            const vStr = e.target.value;
+                                                                                            if (vStr === '') {
+                                                                                                setHeadPayVals({ ...headPayVals, ...(pbId ? { [pbId]: '' } : {}), ...(tId ? { [tId]: '' } : {}) });
+                                                                                                return;
+                                                                                            }
+                                                                                            const val = parseFloat(vStr) || 0;
+                                                                                            let newPb = 0, newT = 0;
+                                                                                            if (val <= pbRem) {
+                                                                                                newPb = Math.max(0, val);
+                                                                                            } else {
+                                                                                                newPb = Math.max(0, pbRem);
+                                                                                                newT = Math.max(0, val - pbRem);
+                                                                                            }
+                                                                                            if (pbRem <= 0) { newPb = 0; newT = Math.max(0, val); }
+
+                                                                                            setHeadPayVals({
+                                                                                                ...headPayVals,
+                                                                                                ...(pbId ? { [pbId]: newPb > 0 ? newPb.toString() : '' } : {}),
+                                                                                                ...(tId ? { [tId]: newT > 0 ? newT.toString() : '' } : {})
+                                                                                            });
+                                                                                        }}
+                                                                                        disabled={dsDis} min="0" />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                }
+
+                                                                others.forEach((item: any) => {
+                                                                    const headId = item.item_id ? item.item_id.toString() : item.head_name;
+                                                                    const amtB = parseFloat(item.amount || 0);
+                                                                    const paid = parseFloat(item.paid_amount || 0);
+                                                                    const rem = (amtB - paid).toFixed(2);
+                                                                    elements.push(
+                                                                        <div key={'other-' + (keyIdx++)} className="d-flex justify-content-between align-items-center bg-white p-2 rounded border shadow-sm">
+                                                                            <div className="d-flex flex-column" style={{ width: '55%' }}>
+                                                                                <span className="text-dark fw-bold" style={{ fontSize: '0.85rem' }}>{item.head_name || 'Previous Balance'}</span>
+                                                                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>Billed: {amtB.toLocaleString('en-PK')} {paid > 0 ? ' • Paid: ' + paid.toLocaleString('en-PK') : ''}</span>
+                                                                            </div>
+                                                                            <div className="d-flex align-items-center gap-2 justify-content-end" style={{ width: '45%' }}>
+                                                                                {amtB > 0 && <span className="text-danger fw-bold" style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Bal: {rem}</span>}
+                                                                                <div className="input-group input-group-sm w-auto" style={{ maxWidth: '100px' }}>
+                                                                                    <input type="number" className="form-control form-control-sm text-end" placeholder="0"
+                                                                                        value={headPayVals[headId] || ''} onChange={e => setHeadPayVals({ ...headPayVals, [headId]: e.target.value })}
+                                                                                        disabled={parseFloat(rem) <= 0 && paid > 0} min="0" />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                });
+
+                                                                return elements;
+                                                            })()
+                                                        )}
+                                                    </div>
+                                                    <div className="d-flex justify-content-between fw-bold text-dark mt-2 mb-1 px-1 small">
+                                                        <span>Grand Total:</span>
+                                                        <span>PKR {Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v) || 0), 0).toLocaleString('en-PK')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="row g-2 mt-0">
                                                 <div className="col-md-4">
                                                     <label className="form-label small fw-bold text-muted mb-1">Payment Method</label>
                                                     <select className="form-select form-select-sm" value={payMethod} onChange={e => setPayMethod(e.target.value)}>
@@ -1119,17 +1123,17 @@ export default function CollectFeePage() {
                                                 <div className="col-12 mt-1">
                                                     <div className="d-flex gap-2">
                                                         {hasPermission('fees', 'write') && (
-                                                        <>
-                                                            <button className="btn fw-bold" style={{ flex: 1, backgroundColor: '#e8f5f5', color: 'var(--primary-teal)', border: '1.5px solid var(--primary-teal)', borderRadius: 8 }}
-                                                                disabled={paying || Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v as string) || 0), 0) <= 0}
-                                                                onClick={() => handlePay(false)}>
-                                                                {paying ? <><span className="spinner-border spinner-border-sm me-1" />...</> : <><i className="bi bi-check-circle me-1"></i>Confirm</>}
-                                                            </button>
-                                                            <button className="btn fw-bold" onClick={() => handlePay(true)} disabled={paying || Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v as string) || 0), 0) <= 0}
-                                                                style={{ flex: 2, backgroundColor: 'var(--accent-orange)', color: '#fff', borderRadius: 8, border: 'none' }}>
-                                                                {paying ? <><span className="spinner-border spinner-border-sm me-2" />Processing...</> : <><i className="bi bi-check-lg me-1" />Confirm &amp; Print</>}
-                                                            </button>
-                                                        </>
+                                                            <>
+                                                                <button className="btn fw-bold" style={{ flex: 1, backgroundColor: '#e8f5f5', color: 'var(--primary-teal)', border: '1.5px solid var(--primary-teal)', borderRadius: 8 }}
+                                                                    disabled={paying || Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v as string) || 0), 0) <= 0}
+                                                                    onClick={() => handlePay(false)}>
+                                                                    {paying ? <><span className="spinner-border spinner-border-sm me-1" />...</> : <><i className="bi bi-check-circle me-1"></i>Confirm</>}
+                                                                </button>
+                                                                <button className="btn fw-bold" onClick={() => handlePay(true)} disabled={paying || Object.values(headPayVals).reduce((sum, v) => sum + (parseFloat(v as string) || 0), 0) <= 0}
+                                                                    style={{ flex: 2, backgroundColor: 'var(--accent-orange)', color: '#fff', borderRadius: 8, border: 'none' }}>
+                                                                    {paying ? <><span className="spinner-border spinner-border-sm me-2" />Processing...</> : <><i className="bi bi-check-lg me-1" />Confirm &amp; Print</>}
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>

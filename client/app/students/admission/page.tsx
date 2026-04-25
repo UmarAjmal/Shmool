@@ -37,7 +37,7 @@ export default function NewAdmission() {
         blood_group: '',
         has_disability: false,
         disability_details: '',
-        
+
         // Contact
         mobile_no: '',
         email: '',
@@ -90,11 +90,11 @@ export default function NewAdmission() {
     const handlePhoneChange = (field: string, value: string) => {
         let val = value;
         if (val.startsWith("92")) {
-           const digits = val.substring(2).replace(/\D/g, "");
-           if (digits.length <= 10) setForm(f => ({ ...f, [field]: "92" + digits }));
+            const digits = val.substring(2).replace(/\D/g, "");
+            if (digits.length <= 10) setForm(f => ({ ...f, [field]: "92" + digits }));
         } else {
-           const digits = val.replace(/\D/g, "");
-           if (digits.length <= 12) setForm(f => ({ ...f, [field]: digits }));
+            const digits = val.replace(/\D/g, "");
+            if (digits.length <= 12) setForm(f => ({ ...f, [field]: digits }));
         }
     };
 
@@ -142,19 +142,19 @@ export default function NewAdmission() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
-            if(res.ok) setClasses(await res.json());
-        } catch(e) { console.error(e); }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
+            if (res.ok) setClasses(await res.json());
+        } catch (e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
-            if(res.ok) {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections');
+            if (res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));
             }
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
     };
 
     // Search for siblings
@@ -259,8 +259,8 @@ export default function NewAdmission() {
 
     const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
-        setForm({...form, class_id: val, section_id: ''});
-        if(val) fetchSections(val);
+        setForm({ ...form, class_id: val, section_id: '' });
+        if (val) fetchSections(val);
         else setSections([]);
     };
 
@@ -271,7 +271,7 @@ export default function NewAdmission() {
 
         try {
             const formData = new FormData();
-            
+
             // Append Text Fields
             Object.keys(form).forEach(key => {
                 const value = (form as any)[key];
@@ -299,7 +299,7 @@ export default function NewAdmission() {
                 }
             }
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/students', {
                 method: 'POST',
                 // HEADERS MUST NOT BE SET MANUALLY FOR MULTIPART
                 body: formData
@@ -336,7 +336,7 @@ export default function NewAdmission() {
 
             <form onSubmit={handleSubmit} className="animate__animated animate__fadeInUp">
                 <div className="row g-4">
-                    
+
                     {/* 1. Academic & Uploads */}
                     <div className="col-12">
                         <div className="card shadow-sm border-0 rounded-4">
@@ -347,10 +347,10 @@ export default function NewAdmission() {
                                 <div className="row g-3">
                                     {/* Photo Upload Section */}
                                     <div className="col-md-2 text-center">
-                                        <div className="border border-2 border-dashed rounded-3 d-flex align-items-center justify-content-center bg-light position-relative" 
+                                        <div className="border border-2 border-dashed rounded-3 d-flex align-items-center justify-content-center bg-light position-relative"
                                             style={{ height: '140px', width: '130px', margin: '0 auto', overflow: 'hidden' }}>
                                             {imageFile ? (
-                                                <img src={URL.createObjectURL(imageFile)} alt="Preview" 
+                                                <img src={URL.createObjectURL(imageFile)} alt="Preview"
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
                                                 <div className="text-secondary small">
@@ -373,7 +373,7 @@ export default function NewAdmission() {
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Admission Date <span className="text-danger">*</span></label>
                                                 <input type="date" className="form-control" required
-                                                    value={form.admission_date} onChange={e=>setForm({...form, admission_date: e.target.value})} />
+                                                    value={form.admission_date} onChange={e => setForm({ ...form, admission_date: e.target.value })} />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Class <span className="text-danger">*</span></label>
@@ -384,19 +384,19 @@ export default function NewAdmission() {
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Section <span className="text-danger">*</span></label>
-                                                <select className="form-select" required value={form.section_id} onChange={e=>setForm({...form, section_id: e.target.value})}>
+                                                <select className="form-select" required value={form.section_id} onChange={e => setForm({ ...form, section_id: e.target.value })}>
                                                     <option value="">Select Section</option>
                                                     {sections.map((s: any) => <option key={s.section_id} value={s.section_id}>{s.section_name}</option>)}
                                                 </select>
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Roll No</label>
-                                                <input type="text" className="form-control" 
-                                                    value={form.roll_no} onChange={e=>handleNumberChange("roll_no", e.target.value)} />
+                                                <input type="text" className="form-control"
+                                                    value={form.roll_no} onChange={e => handleNumberChange("roll_no", e.target.value)} />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Category</label>
-                                                <select className="form-select" value={form.category} onChange={e=>setForm({...form, category: e.target.value})}>
+                                                <select className="form-select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                                                     <option value="Normal">Normal</option>
                                                     <option value="Trusted">Trusted</option>
                                                 </select>
@@ -425,21 +425,21 @@ export default function NewAdmission() {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">First Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
-                                            value={form.first_name} onChange={e=>handleTextChange("first_name", e.target.value)} />
+                                            value={form.first_name} onChange={e => handleTextChange("first_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Last Name</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.last_name} onChange={e=>handleTextChange("last_name", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.last_name} onChange={e => handleTextChange("last_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Date of Birth</label>
                                         <input type="date" className="form-control"
-                                            value={form.dob} onChange={e=>setForm({...form, dob: e.target.value})} />
+                                            value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Gender</label>
-                                        <select className="form-select" value={form.gender} onChange={e=>setForm({...form, gender: e.target.value})}>
+                                        <select className="form-select" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
                                             <option>Male</option>
                                             <option>Female</option>
                                             <option>Other</option>
@@ -448,11 +448,11 @@ export default function NewAdmission() {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">CNIC / B-Form</label>
                                         <input type="text" className="form-control" placeholder="xxxxx-xxxxxxx-x"
-                                            value={form.cnic_bform} onChange={e=>handleCNICChange("cnic_bform", e.target.value)} />
+                                            value={form.cnic_bform} onChange={e => handleCNICChange("cnic_bform", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Blood Group</label>
-                                        <select className="form-select" value={form.blood_group} onChange={e=>setForm({...form, blood_group: e.target.value})}>
+                                        <select className="form-select" value={form.blood_group} onChange={e => setForm({ ...form, blood_group: e.target.value })}>
                                             <option value="">Unknown</option>
                                             <option>A+</option><option>A-</option>
                                             <option>B+</option><option>B-</option>
@@ -463,7 +463,7 @@ export default function NewAdmission() {
                                     <div className="col-12 mt-3">
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" id="disabilityCheck"
-                                                checked={form.has_disability} onChange={e => setForm({...form, has_disability: e.target.checked})} />
+                                                checked={form.has_disability} onChange={e => setForm({ ...form, has_disability: e.target.checked })} />
                                             <label className="form-check-label fw-bold text-danger" htmlFor="disabilityCheck">
                                                 Student has Disability?
                                             </label>
@@ -473,7 +473,7 @@ export default function NewAdmission() {
                                         <div className="col-12 animate__animated animate__fadeIn">
                                             <label className="form-label fw-bold">Disability Details</label>
                                             <input type="text" className="form-control" placeholder="Please specify nature of disability..."
-                                                value={form.disability_details} onChange={e=>setForm({...form, disability_details: e.target.value})} />
+                                                value={form.disability_details} onChange={e => setForm({ ...form, disability_details: e.target.value })} />
                                         </div>
                                     )}
                                 </div>
@@ -490,11 +490,11 @@ export default function NewAdmission() {
                                         <i className="bi bi-people-fill me-2"></i>Family & Sibling Information
                                     </h5>
                                     <div className="form-check form-switch">
-                                        <input 
-                                            className="form-check-input" 
-                                            type="checkbox" 
+                                        <input
+                                            className="form-check-input"
+                                            type="checkbox"
                                             id="siblingCheck"
-                                            checked={hasSibling} 
+                                            checked={hasSibling}
                                             onChange={e => {
                                                 setHasSibling(e.target.checked);
                                                 if (!e.target.checked) {
@@ -502,7 +502,7 @@ export default function NewAdmission() {
                                                     setSearchResults([]);
                                                     setSiblingSearch('');
                                                 }
-                                            }} 
+                                            }}
                                         />
                                         <label className="form-check-label text-white fw-bold" htmlFor="siblingCheck">
                                             Has Sibling in School?
@@ -510,13 +510,13 @@ export default function NewAdmission() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {hasSibling && (
                                 <div className="card-body p-4 animate__animated animate__fadeIn">
                                     <div className="alert alert-info">
                                         <i className="bi bi-info-circle-fill me-2"></i>
-                                        <strong>Note:</strong> Search for the sibling already enrolled in the system. 
-                                        <strong className="text-primary"> Blood siblings</strong> will share the same family and parent details, 
+                                        <strong>Note:</strong> Search for the sibling already enrolled in the system.
+                                        <strong className="text-primary"> Blood siblings</strong> will share the same family and parent details,
                                         while <strong className="text-warning">cousins</strong> may have different parent/guardian information.
                                     </div>
 
@@ -528,8 +528,8 @@ export default function NewAdmission() {
                                                 Search for Sibling {selectedSiblings.length > 0 && `(${selectedSiblings.length} added)`}
                                             </label>
                                             <div className="position-relative">
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     className="form-control form-control-lg"
                                                     placeholder="Search by name, father name, class, section (e.g. Ali, Class 2, Red)..."
                                                     value={siblingSearch}
@@ -559,14 +559,14 @@ export default function NewAdmission() {
                                                         >
                                                             <div className="flex-shrink-0 me-3">
                                                                 {student.image_url ? (
-                                                                    <img 
-                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${student.image_url}`} 
+                                                                    <img
+                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${student.image_url}`}
                                                                         alt={student.first_name}
                                                                         className="rounded-circle"
                                                                         style={{ width: '45px', height: '45px', objectFit: 'cover' }}
                                                                     />
                                                                 ) : (
-                                                                    <div 
+                                                                    <div
                                                                         className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
                                                                         style={{ width: '45px', height: '45px' }}
                                                                     >
@@ -580,7 +580,7 @@ export default function NewAdmission() {
                                                                     <span className="badge bg-primary ms-2 small">{student.admission_no}</span>
                                                                 </h6>
                                                                 <small className="text-muted">
-                                                                    Father: {student.father_name || 'N/A'} 
+                                                                    Father: {student.father_name || 'N/A'}
                                                                     {student.class_name && ` | ${student.class_name}`}
                                                                 </small>
                                                             </div>
@@ -608,14 +608,14 @@ export default function NewAdmission() {
                                                 <i className="bi bi-check-circle-fill me-2"></i>
                                                 Selected Siblings ({selectedSiblings.length})
                                             </h6>
-                                            
+
                                             {selectedSiblings.map((sibling: any, index: number) => (
-                                                <div key={index} className="card mb-2 border-2" style={{ 
+                                                <div key={index} className="card mb-2 border-2" style={{
                                                     borderColor: sibling.relation_type === 'blood' ? '#0d6efd' : '#ffc107'
                                                 }}>
                                                     {/* Collapsed Header */}
                                                     <div className="card-header p-2 d-flex align-items-center justify-content-between"
-                                                        style={{ 
+                                                        style={{
                                                             cursor: 'pointer',
                                                             backgroundColor: sibling.relation_type === 'blood' ? '#e7f1ff' : '#fff3cd'
                                                         }}
@@ -624,14 +624,14 @@ export default function NewAdmission() {
                                                         <div className="d-flex align-items-center flex-grow-1">
                                                             <div className="me-2">
                                                                 {sibling.image_url ? (
-                                                                    <img 
-                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${sibling.image_url}`} 
+                                                                    <img
+                                                                        src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${sibling.image_url}`}
                                                                         alt={sibling.first_name}
                                                                         className="rounded-circle"
                                                                         style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                                                     />
                                                                 ) : (
-                                                                    <div 
+                                                                    <div
                                                                         className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
                                                                         style={{ width: '40px', height: '40px' }}
                                                                     >
@@ -693,14 +693,14 @@ export default function NewAdmission() {
                                                                 <label className="form-label fw-bold small">Relationship Type:</label>
                                                                 <div className="row g-2">
                                                                     <div className="col-md-6">
-                                                                        <div 
+                                                                        <div
                                                                             className={`card ${sibling.relation_type === 'blood' ? 'border-primary border-2 bg-primary bg-opacity-10' : ''}`}
                                                                             style={{ cursor: 'pointer' }}
                                                                             onClick={() => updateSiblingRelationType(index, 'blood')}
                                                                         >
                                                                             <div className="card-body p-2 text-center">
-                                                                                <input 
-                                                                                    type="radio" 
+                                                                                <input
+                                                                                    type="radio"
                                                                                     checked={sibling.relation_type === 'blood'}
                                                                                     onChange={() => updateSiblingRelationType(index, 'blood')}
                                                                                     className="form-check-input me-2"
@@ -711,14 +711,14 @@ export default function NewAdmission() {
                                                                         </div>
                                                                     </div>
                                                                     <div className="col-md-6">
-                                                                        <div 
+                                                                        <div
                                                                             className={`card ${sibling.relation_type === 'cousin' ? 'border-warning border-2 bg-warning bg-opacity-10' : ''}`}
                                                                             style={{ cursor: 'pointer' }}
                                                                             onClick={() => updateSiblingRelationType(index, 'cousin')}
                                                                         >
                                                                             <div className="card-body p-2 text-center">
-                                                                                <input 
-                                                                                    type="radio" 
+                                                                                <input
+                                                                                    type="radio"
                                                                                     checked={sibling.relation_type === 'cousin'}
                                                                                     onChange={() => updateSiblingRelationType(index, 'cousin')}
                                                                                     className="form-check-input me-2"
@@ -729,7 +729,7 @@ export default function NewAdmission() {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                
+
                                                                 {sibling.relation_type === 'blood' && (
                                                                     <div className="alert alert-info alert-sm mt-2 mb-0 py-1 px-2">
                                                                         <small>
@@ -761,8 +761,8 @@ export default function NewAdmission() {
                                             <input className="form-check-input" type="checkbox" id="orphanSwitch"
                                                 checked={form.is_orphan} onChange={e => {
                                                     const isOrphan = e.target.checked;
-                                                    setForm({...form, is_orphan: isOrphan});
-                                                    if(isOrphan) setGuardianType('Other');
+                                                    setForm({ ...form, is_orphan: isOrphan });
+                                                    if (isOrphan) setGuardianType('Other');
                                                     else setGuardianType('Father');
                                                 }} />
                                             <label className="form-check-label text-white fw-bold" htmlFor="orphanSwitch">Student is Orphan?</label>
@@ -781,44 +781,44 @@ export default function NewAdmission() {
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required={!form.is_orphan}
-                                            value={form.father_name} onChange={e=>handleTextChange("father_name", e.target.value)} />
+                                            value={form.father_name} onChange={e => handleTextChange("father_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Phone</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_phone} onChange={e=>handlePhoneChange("father_phone", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_phone} onChange={e => handlePhoneChange("father_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father CNIC</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_cnic} onChange={e=>handleCNICChange("father_cnic", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_cnic} onChange={e => handleCNICChange("father_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_occupation} onChange={e=>handleTextChange("father_occupation", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_occupation} onChange={e => handleTextChange("father_occupation", e.target.value)} />
                                     </div>
-                                    
+
                                     {/* MOTHER */}
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Name</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_name} onChange={e=>handleTextChange("mother_name", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_name} onChange={e => handleTextChange("mother_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Phone</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_phone} onChange={e=>handlePhoneChange("mother_phone", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_phone} onChange={e => handlePhoneChange("mother_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother CNIC</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_cnic} onChange={e=>handleCNICChange("mother_cnic", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_cnic} onChange={e => handleCNICChange("mother_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_occupation} onChange={e=>handleTextChange("mother_occupation", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_occupation} onChange={e => handleTextChange("mother_occupation", e.target.value)} />
                                     </div>
                                 </div>
 
@@ -829,12 +829,12 @@ export default function NewAdmission() {
                                         <div className="d-flex align-items-center gap-3">
                                             <span className="fw-bold small text-secondary">Who is Guardian?</span>
                                             <div className="btn-group btn-group-sm" role="group">
-                                                <button type="button" className={`btn ${guardianType === 'Father' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>setGuardianType('Father')} disabled={form.is_orphan}>Father</button>
-                                                <button type="button" className={`btn ${guardianType === 'Mother' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>setGuardianType('Mother')} disabled={form.is_orphan}>Mother</button>
-                                                <button type="button" className={`btn ${guardianType === 'Other' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>setGuardianType('Other')}>Other</button>
+                                                <button type="button" className={`btn ${guardianType === 'Father' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => setGuardianType('Father')} disabled={form.is_orphan}>Father</button>
+                                                <button type="button" className={`btn ${guardianType === 'Mother' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => setGuardianType('Mother')} disabled={form.is_orphan}>Mother</button>
+                                                <button type="button" className={`btn ${guardianType === 'Other' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => setGuardianType('Other')}>Other</button>
                                             </div>
                                         </div>
                                     </div>
@@ -843,31 +843,31 @@ export default function NewAdmission() {
                                         <label className="form-label fw-bold">Guardian Name <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_name} onChange={e=>handleTextChange("guardian_name", e.target.value)} />
+                                            value={form.guardian_name} onChange={e => handleTextChange("guardian_name", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Relation <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" placeholder="e.g. Uncle, Grandfather" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_relation} onChange={e=>handleTextChange("guardian_relation", e.target.value)} />
+                                            value={form.guardian_relation} onChange={e => handleTextChange("guardian_relation", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian Phone <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_phone} onChange={e=>handlePhoneChange("guardian_phone", e.target.value)} />
+                                            value={form.guardian_phone} onChange={e => handlePhoneChange("guardian_phone", e.target.value)} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian CNIC <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_cnic} onChange={e=>handleCNICChange("guardian_cnic", e.target.value)} />
+                                            value={form.guardian_cnic} onChange={e => handleCNICChange("guardian_cnic", e.target.value)} />
                                     </div>
                                     <div className="col-md-8">
                                         <label className="form-label fw-bold">Guardian Address <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_address} onChange={e=>setForm({...form, guardian_address: e.target.value})} />
+                                            value={form.guardian_address} onChange={e => setForm({ ...form, guardian_address: e.target.value })} />
                                     </div>
                                 </div>
                             </div>
@@ -884,28 +884,28 @@ export default function NewAdmission() {
                                 <div className="row g-3">
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Student Mobile</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mobile_no} onChange={e=>handlePhoneChange("mobile_no", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.mobile_no} onChange={e => handlePhoneChange("mobile_no", e.target.value)} />
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Email</label>
-                                        <input type="email" className="form-control" 
-                                            value={form.email} onChange={e=>setForm({...form, email: e.target.value})} />
+                                        <input type="email" className="form-control"
+                                            value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">City</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.city} onChange={e=>handleTextChange("city", e.target.value)} />
+                                        <input type="text" className="form-control"
+                                            value={form.city} onChange={e => handleTextChange("city", e.target.value)} />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">Current Address</label>
-                                        <textarea className="form-control" rows={2} 
-                                            value={form.current_address} onChange={e=>setForm({...form, current_address: e.target.value})}></textarea>
+                                        <textarea className="form-control" rows={2}
+                                            value={form.current_address} onChange={e => setForm({ ...form, current_address: e.target.value })}></textarea>
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">Permanent Address</label>
-                                        <textarea className="form-control" rows={2} 
-                                            value={form.permanent_address} onChange={e=>setForm({...form, permanent_address: e.target.value})}></textarea>
+                                        <textarea className="form-control" rows={2}
+                                            value={form.permanent_address} onChange={e => setForm({ ...form, permanent_address: e.target.value })}></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -968,7 +968,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.admission_fee} onChange={e=>handleNumberChange("admission_fee", e.target.value)} />
+                                                        value={form.admission_fee} onChange={e => handleNumberChange("admission_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -976,7 +976,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.other_charges} onChange={e=>handleNumberChange("other_charges", e.target.value)} />
+                                                        value={form.other_charges} onChange={e => handleNumberChange("other_charges", e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -993,7 +993,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control form-control-lg" placeholder="0.00" required
-                                                        value={form.monthly_fee} onChange={e=>handleNumberChange("monthly_fee", e.target.value)} />
+                                                        value={form.monthly_fee} onChange={e => handleNumberChange("monthly_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -1001,7 +1001,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.admission_fee} onChange={e=>handleNumberChange("admission_fee", e.target.value)} />
+                                                        value={form.admission_fee} onChange={e => handleNumberChange("admission_fee", e.target.value)} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -1009,7 +1009,7 @@ export default function NewAdmission() {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.other_charges} onChange={e=>handleNumberChange("other_charges", e.target.value)} />
+                                                        value={form.other_charges} onChange={e => handleNumberChange("other_charges", e.target.value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -1017,19 +1017,19 @@ export default function NewAdmission() {
                                 )}
 
                                 {/* ── OPENING BALANCE (always shown, any mode) ── */}
-                                <div className="mt-3 p-3 rounded-3" style={{background:'rgba(254,127,45,0.07)',border:'1.5px solid rgba(254,127,45,0.25)'}}>
+                                <div className="mt-3 p-3 rounded-3" style={{ background: 'rgba(254,127,45,0.07)', border: '1.5px solid rgba(254,127,45,0.25)' }}>
                                     <div className="d-flex align-items-center gap-2 mb-2">
-                                        <i className="bi bi-clock-history" style={{color:'var(--accent-orange)',fontSize:'1.1rem'}}/>
-                                        <strong style={{color:'var(--primary-dark)',fontSize:'0.95rem'}}>Opening Balance (Purana Baqi)</strong>
-                                        <span className="badge rounded-pill ms-1" style={{background:'rgba(254,127,45,0.15)',color:'var(--accent-orange)',fontSize:'0.72rem'}}>Optional</span>
+                                        <i className="bi bi-clock-history" style={{ color: 'var(--accent-orange)', fontSize: '1.1rem' }} />
+                                        <strong style={{ color: 'var(--primary-dark)', fontSize: '0.95rem' }}>Opening Balance (Purana Baqi)</strong>
+                                        <span className="badge rounded-pill ms-1" style={{ background: 'rgba(254,127,45,0.15)', color: 'var(--accent-orange)', fontSize: '0.72rem' }}>Optional</span>
                                     </div>
                                     <small className="text-muted d-block mb-2">Agar is family ka koi purana baqi ho (software install se pehle ka) tou yahan enter karo. Yeh family account mein track hoga aur gradually collect kiya jay ga.</small>
                                     <div className="input-group">
-                                        <span className="input-group-text bg-white"><i className="bi bi-wallet2" style={{color:'var(--accent-orange)'}}/></span>
+                                        <span className="input-group-text bg-white"><i className="bi bi-wallet2" style={{ color: 'var(--accent-orange)' }} /></span>
                                         <span className="input-group-text bg-white fw-semibold">Rs.</span>
                                         <input type="number" className="form-control" placeholder="0.00 (agar koi purana baqi ho)"
                                             min="0" step="1"
-                                            value={form.opening_balance} onChange={e=>handleNumberChange("opening_balance", e.target.value)} />
+                                            value={form.opening_balance} onChange={e => handleNumberChange("opening_balance", e.target.value)} />
                                     </div>
                                 </div>
                             </div>
@@ -1039,11 +1039,11 @@ export default function NewAdmission() {
                     {/* Submit Button */}
                     <div className="col-12 text-end mb-5">
                         {hasPermission('students', 'write') && (
-                        <button type="submit" className="btn btn-lg text-white px-5 py-3 shadow-lg rounded-pill" disabled={loading}
-                            style={{ backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
-                            {loading ? <i className="bi bi-hourglass-split me-2"></i> : <i className="bi bi-check-circle-fill me-2"></i>}
-                            Confirm Admission
-                        </button>
+                            <button type="submit" className="btn btn-lg text-white px-5 py-3 shadow-lg rounded-pill" disabled={loading}
+                                style={{ backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
+                                {loading ? <i className="bi bi-hourglass-split me-2"></i> : <i className="bi bi-check-circle-fill me-2"></i>}
+                                Confirm Admission
+                            </button>
                         )}
                     </div>
                 </div>

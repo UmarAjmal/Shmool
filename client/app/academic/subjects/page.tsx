@@ -60,28 +60,28 @@ export default function SubjectSettings() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
             if (res.ok) setClasses(await res.json());
         } catch (e) { console.error(e); }
     };
 
     const fetchSections = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections');
             if (res.ok) setSections(await res.json());
         } catch (e) { console.error(e); }
     };
 
     const fetchSubjects = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/subjects');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/subjects');
             if (res.ok) setSubjects(await res.json());
         } catch (e) { console.error(e); }
     };
 
     // Derived Data for UI
-    const filteredSections = form.class_id 
-        ? sections.filter(s => s.class_id === Number(form.class_id)) 
+    const filteredSections = form.class_id
+        ? sections.filter(s => s.class_id === Number(form.class_id))
         : [];
 
     const handleCheckboxChange = (secId: number) => {
@@ -95,8 +95,8 @@ export default function SubjectSettings() {
                 // But for now let's behave as standard multi-select.
                 // Note: The PUT API only takes one section_id.
                 if (editMode) {
-                     // For edit mode, we essentially switch selection
-                     return { ...prev, section_ids: [secId] };
+                    // For edit mode, we essentially switch selection
+                    return { ...prev, section_ids: [secId] };
                 }
                 return { ...prev, section_ids: [...prev.section_ids, secId] };
             }
@@ -129,7 +129,7 @@ export default function SubjectSettings() {
 
     const handleDelete = async (id: number) => {
         if (!confirm("Are you sure you want to delete this subject?")) return;
-        
+
         const toastId = toast.loading("Deleting...");
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/subjects/${id}`, { method: 'DELETE' });
@@ -146,16 +146,16 @@ export default function SubjectSettings() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (form.section_ids.length === 0) {
             notify.error("Please select at least one section");
             return;
         }
 
-        const url = editMode 
-            ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/subjects/${selectedId}` 
-            : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/subjects';
-        
+        const url = editMode
+            ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/subjects/${selectedId}`
+            : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/subjects';
+
         const method = editMode ? 'PUT' : 'POST';
         const toastId = toast.loading("Processing...");
 
@@ -186,27 +186,27 @@ export default function SubjectSettings() {
             if (res.ok) {
                 fetchSubjects();
                 resetForm();
-                toast.update(toastId, { 
-                    render: editMode ? "Subject updated!" : "Subjects created!", 
-                    type: "success", 
-                    isLoading: false, 
-                    autoClose: 3000 
+                toast.update(toastId, {
+                    render: editMode ? "Subject updated!" : "Subjects created!",
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 3000
                 });
             } else {
                 const err = await res.json();
-                toast.update(toastId, { 
-                    render: err.error || "Operation failed", 
-                    type: "error", 
-                    isLoading: false, 
-                    autoClose: 4000 
+                toast.update(toastId, {
+                    render: err.error || "Operation failed",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 4000
                 });
             }
         } catch (err) {
-            toast.update(toastId, { 
-                render: "Server connection error", 
-                type: "error", 
-                isLoading: false, 
-                autoClose: 4000 
+            toast.update(toastId, {
+                render: "Server connection error",
+                type: "error",
+                isLoading: false,
+                autoClose: 4000
             });
         }
     };
@@ -215,10 +215,10 @@ export default function SubjectSettings() {
     const groupedData = subjects.reduce((acc, subject) => {
         const className = subject.class_name;
         const sectionName = subject.section_name;
-        
+
         if (!acc[className]) acc[className] = {};
         if (!acc[className][sectionName]) acc[className][sectionName] = [];
-        
+
         acc[className][sectionName].push(subject);
         return acc;
     }, {} as Record<string, Record<string, SubjectItem[]>>);
@@ -251,10 +251,10 @@ export default function SubjectSettings() {
                                 {/* Class Selection */}
                                 <div className="mb-3">
                                     <label className="form-label fw-bold" style={{ color: 'var(--primary-dark)' }}>Select Class (Filter)</label>
-                                    <select 
+                                    <select
                                         className="form-select"
                                         value={form.class_id}
-                                        onChange={e => setForm({...form, class_id: e.target.value, section_ids: []})}
+                                        onChange={e => setForm({ ...form, class_id: e.target.value, section_ids: [] })}
                                         required
                                     >
                                         <option value="">-- Choose Class --</option>
@@ -269,12 +269,12 @@ export default function SubjectSettings() {
                                 {/* Subject Name */}
                                 <div className="mb-3">
                                     <label className="form-label fw-bold" style={{ color: 'var(--primary-dark)' }}>Subject Name</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         className="form-control"
                                         placeholder="e.g. Mathematics"
                                         value={form.subject_name}
-                                        onChange={e => setForm({...form, subject_name: e.target.value})}
+                                        onChange={e => setForm({ ...form, subject_name: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -282,12 +282,12 @@ export default function SubjectSettings() {
                                 {/* Subject Code */}
                                 <div className="mb-3">
                                     <label className="form-label fw-bold" style={{ color: 'var(--primary-dark)' }}>Subject Code</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         className="form-control"
                                         placeholder="e.g. MTH-101"
                                         value={form.subject_code}
-                                        onChange={e => setForm({...form, subject_code: e.target.value})}
+                                        onChange={e => setForm({ ...form, subject_code: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -297,14 +297,14 @@ export default function SubjectSettings() {
                                     <label className="form-label fw-bold d-block" style={{ color: 'var(--primary-dark)' }}>
                                         Select Sections <small className="text-muted fw-normal">(Multiple Supported)</small>
                                     </label>
-                                    
+
                                     <div className="card p-2 bg-light border-0" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                         {filteredSections.length > 0 ? (
                                             filteredSections.map(s => (
                                                 <div key={s.section_id} className="form-check mb-2">
-                                                    <input 
-                                                        className="form-check-input" 
-                                                        type="checkbox" 
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="checkbox"
                                                         id={`section-${s.section_id}`}
                                                         checked={form.section_ids.includes(s.section_id)}
                                                         onChange={() => handleCheckboxChange(s.section_id)}
@@ -323,24 +323,24 @@ export default function SubjectSettings() {
                                 </div>
 
                                 {hasPermission('academic', 'write') && (
-                                <div className="d-grid gap-2 mt-4">
-                                    <button 
-                                        type="submit" 
-                                        className="btn btn-lg shadow-sm text-white"
-                                        style={{ backgroundColor: editMode ? 'var(--accent-orange)' : 'var(--primary-teal)' }}
-                                    >
-                                        {editMode ? 'Update Subject' : 'Add Subject(s)'}
-                                    </button>
-                                    {editMode && (
-                                        <button 
-                                            type="button" 
-                                            className="btn btn-light border" 
-                                            onClick={resetForm}
+                                    <div className="d-grid gap-2 mt-4">
+                                        <button
+                                            type="submit"
+                                            className="btn btn-lg shadow-sm text-white"
+                                            style={{ backgroundColor: editMode ? 'var(--accent-orange)' : 'var(--primary-teal)' }}
                                         >
-                                            Cancel
+                                            {editMode ? 'Update Subject' : 'Add Subject(s)'}
                                         </button>
-                                    )}
-                                </div>
+                                        {editMode && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-light border"
+                                                onClick={resetForm}
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </form>
                         </div>
@@ -367,10 +367,10 @@ export default function SubjectSettings() {
                                     Object.entries(groupedData).map(([className, sectionMap], classIdx) => (
                                         <div className="accordion-item border-0 mb-2" key={className}>
                                             <h2 className="accordion-header">
-                                                <button 
+                                                <button
                                                     className={`accordion-button rounded-3 fw-bold ${classIdx !== 0 ? 'collapsed' : ''}`}
-                                                    type="button" 
-                                                    data-bs-toggle="collapse" 
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
                                                     data-bs-target={`#collapseClass-${classIdx}`}
                                                     style={{ backgroundColor: 'var(--bg-main)', color: 'var(--primary-dark)' }}
                                                 >
@@ -378,8 +378,8 @@ export default function SubjectSettings() {
                                                     {className}
                                                 </button>
                                             </h2>
-                                            <div 
-                                                id={`collapseClass-${classIdx}`} 
+                                            <div
+                                                id={`collapseClass-${classIdx}`}
                                                 className={`accordion-collapse collapse ${classIdx === 0 ? 'show' : ''}`}
                                             >
                                                 <div className="accordion-body p-0">
@@ -389,7 +389,7 @@ export default function SubjectSettings() {
                                                                 <i className="bi bi-puzzle me-2"></i>
                                                                 Section: {sectionName}
                                                             </h6>
-                                                            
+
                                                             <div className="table-responsive">
                                                                 <table className="table table-hover align-middle table-sm border-start border-3" style={{ borderColor: 'var(--primary-teal)' }}>
                                                                     <thead className="table-light">
@@ -407,22 +407,22 @@ export default function SubjectSettings() {
                                                                                 {/* Marks Removed */}
                                                                                 <td className="text-end pe-3">
                                                                                     {hasPermission('academic', 'write') && (
-                                                                                    <button 
-                                                                                        className="btn btn-sm btn-outline-warning me-2"
-                                                                                        onClick={() => handleEdit(sub)}
-                                                                                        title="Edit"
-                                                                                    >
-                                                                                        <i className="bi bi-pencil-fill"></i>
-                                                                                    </button>
+                                                                                        <button
+                                                                                            className="btn btn-sm btn-outline-warning me-2"
+                                                                                            onClick={() => handleEdit(sub)}
+                                                                                            title="Edit"
+                                                                                        >
+                                                                                            <i className="bi bi-pencil-fill"></i>
+                                                                                        </button>
                                                                                     )}
                                                                                     {hasPermission('academic', 'delete') && (
-                                                                                    <button 
-                                                                                        className="btn btn-sm btn-outline-danger"
-                                                                                        onClick={() => handleDelete(sub.subject_id)}
-                                                                                        title="Delete"
-                                                                                    >
-                                                                                        <i className="bi bi-trash-fill"></i>
-                                                                                    </button>
+                                                                                        <button
+                                                                                            className="btn btn-sm btn-outline-danger"
+                                                                                            onClick={() => handleDelete(sub.subject_id)}
+                                                                                            title="Delete"
+                                                                                        >
+                                                                                            <i className="bi bi-trash-fill"></i>
+                                                                                        </button>
                                                                                     )}
                                                                                 </td>
                                                                             </tr>

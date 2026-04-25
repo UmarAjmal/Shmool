@@ -39,13 +39,13 @@ export default function EmployeesPage() {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit' | 'details'>('create');
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [mounted, setMounted] = useState(false);
-    
+
     // Form State
     const [isSysUser, setIsSysUser] = useState(false);
     const { hasPermission } = useAuth();
@@ -65,15 +65,15 @@ export default function EmployeesPage() {
     const fetchData = async () => {
         try {
             const [empRes, deptRes, roleRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees'),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments'),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/roles') // Assuming this exists from previous modules
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/hrm/employees'),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/hrm/departments'),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/roles') // Assuming this exists from previous modules
             ]);
-            
+
             if (empRes.ok) setEmployees(await empRes.json());
             if (deptRes.ok) setDepartments(await deptRes.json());
             if (roleRes.ok) setRoles(await roleRes.json());
-        } catch (err) { console.error(err); } 
+        } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
 
@@ -102,23 +102,23 @@ export default function EmployeesPage() {
         setSelectedId(emp.employee_id);
         // setIsSysUser stays false — show toggle only if employee has no user
         setFormData({
-            first_name: emp.first_name || '', 
-            last_name: emp.last_name || '', 
-            email: emp.email || '', 
-            phone: emp.phone || '', 
-            cnic: emp.cnic || '', 
+            first_name: emp.first_name || '',
+            last_name: emp.last_name || '',
+            email: emp.email || '',
+            phone: emp.phone || '',
+            cnic: emp.cnic || '',
             designation: emp.designation || '',
-            department_id: emp.department_id || '', 
-            joining_date: emp.joining_date ? emp.joining_date.substring(0, 10) : '', 
-            salary: emp.salary || '', 
+            department_id: emp.department_id || '',
+            joining_date: emp.joining_date ? emp.joining_date.substring(0, 10) : '',
+            salary: emp.salary || '',
             address: emp.address || '',
-            gender: emp.gender || '', 
-            dob: emp.dob ? emp.dob.substring(0, 10) : '', 
-            marital_status: emp.marital_status || '', 
+            gender: emp.gender || '',
+            dob: emp.dob ? emp.dob.substring(0, 10) : '',
+            marital_status: emp.marital_status || '',
             father_name: emp.father_name || '',
-            emergency_contact: emp.emergency_contact || '', 
-            qualification: emp.qualification || '', 
-            experience: emp.experience || '', 
+            emergency_contact: emp.emergency_contact || '',
+            qualification: emp.qualification || '',
+            experience: emp.experience || '',
             blood_group: emp.blood_group || '',
             // Store whether employee already has a user via a hidden marker
             username: '', password: '', role_id: '',
@@ -135,12 +135,12 @@ export default function EmployeesPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         const payload = { ...formData, create_system_user: isSysUser };
-        const url = modalMode === 'create' 
-            ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/employees' 
+        const url = modalMode === 'create'
+            ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/hrm/employees'
             : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/hrm/employees/${selectedId}`;
-        
+
         const method = modalMode === 'create' ? 'POST' : 'PUT';
 
         try {
@@ -175,9 +175,9 @@ export default function EmployeesPage() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="h3 mb-0 text-primary-dark">Employees</h2>
                 {hasPermission('hrm', 'write') && (
-                <button className="btn btn-primary-custom" onClick={handleOpenCreate}>
-                    + New Employee
-                </button>
+                    <button className="btn btn-primary-custom" onClick={handleOpenCreate}>
+                        + New Employee
+                    </button>
                 )}
             </div>
 
@@ -227,25 +227,25 @@ export default function EmployeesPage() {
                                                 <Link href={`/hrm/employees/${emp.employee_id}`}>
                                                     <button title="View Details" className="btn btn-sm btn-outline-primary me-1">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
                                                         </svg>
                                                     </button>
                                                 </Link>
                                                 {hasPermission('hrm', 'write') && (
-                                                <button title="Edit" className="btn btn-sm btn-outline-secondary me-1" onClick={() => handleOpenEdit(emp)}>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
-                                                    </svg>
-                                                </button>
+                                                    <button title="Edit" className="btn btn-sm btn-outline-secondary me-1" onClick={() => handleOpenEdit(emp)}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
+                                                        </svg>
+                                                    </button>
                                                 )}
                                                 {hasPermission('hrm', 'delete') && (
-                                                <button title="Delete" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(emp.employee_id)}>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                                        <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                                    </svg>
-                                                </button>
+                                                    <button title="Delete" className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(emp.employee_id)}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                                                            <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+                                                        </svg>
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -261,7 +261,7 @@ export default function EmployeesPage() {
             {showModal && mounted && createPortal(
                 <div className="modal-backdrop-custom">
                     <div className="modal-content-custom animate__animated animate__zoomIn">
-                         <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
                             <h4 className="mb-0">
                                 {modalMode === 'create' && 'Add New Employee'}
                                 {modalMode === 'edit' && 'Edit Employee'}
@@ -269,175 +269,175 @@ export default function EmployeesPage() {
                             </h4>
                             <button onClick={() => setShowModal(false)} className="btn-close"></button>
                         </div>
-                        
-                        <div className="p-3" style={{overflowY: 'auto', flex: 1}}>
+
+                        <div className="p-3" style={{ overflowY: 'auto', flex: 1 }}>
                             <form id="createEmpForm" onSubmit={handleSubmit}>
                                 <fieldset disabled={modalMode === 'details'}>
-                                <div className="row g-0">
-                                    {/* Left Col: Personal */}
-                                    <div className="col-12 col-lg-6 pe-lg-4">
-                                        <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-person me-2"></i>Personal Information</h6>
-                                        
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">First Name</label>
-                                                <input required type="text" className="form-control" value={formData.first_name} onChange={e=>setFormData({...formData, first_name: e.target.value})} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Last Name</label>
-                                                <input required type="text" className="form-control" value={formData.last_name} onChange={e=>setFormData({...formData, last_name: e.target.value})} />
-                                            </div>
-                                        </div>
+                                    <div className="row g-0">
+                                        {/* Left Col: Personal */}
+                                        <div className="col-12 col-lg-6 pe-lg-4">
+                                            <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-person me-2"></i>Personal Information</h6>
 
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold">Father/Husband Name</label>
-                                            <input type="text" className="form-control" value={formData.father_name} onChange={e=>setFormData({...formData, father_name: e.target.value})} />
-                                        </div>
-
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Gender</label>
-                                                <select className="form-select" value={formData.gender} onChange={e=>setFormData({...formData, gender: e.target.value})}>
-                                                    <option value="">Select...</option>
-                                                    <option value="Male">Male</option>
-                                                    <option value="Female">Female</option>
-                                                </select>
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Date of Birth</label>
-                                                <input type="date" className="form-control" value={formData.dob} onChange={e=>setFormData({...formData, dob: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Marital Status</label>
-                                                <select className="form-select" value={formData.marital_status} onChange={e=>setFormData({...formData, marital_status: e.target.value})}>
-                                                    <option value="">Select...</option>
-                                                    <option value="Single">Single</option>
-                                                    <option value="Married">Married</option>
-                                                </select>
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">CNIC</label>
-                                                <input type="text" className="form-control" value={formData.cnic} onChange={e=>setFormData({...formData, cnic: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <h6 className="text-primary mb-3 bg-light p-2 rounded mt-4"><i className="bi bi-geo-alt me-2"></i>Contact Details</h6>
-
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Email</label>
-                                                <input type="email" className="form-control" value={formData.email} onChange={e=>setFormData({...formData, email: e.target.value})} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Phone</label>
-                                                <input type="text" className="form-control" value={formData.phone} onChange={e=>setFormData({...formData, phone: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold">Emergency Contact (Name & No)</label>
-                                            <input type="text" className="form-control" value={formData.emergency_contact} onChange={e=>setFormData({...formData, emergency_contact: e.target.value})} />
-                                        </div>
-
-                                        <div className="mb-3">
-                                            <label className="form-label small fw-bold">Direct Address</label>
-                                            <textarea className="form-control" rows={2} value={formData.address} onChange={e=>setFormData({...formData, address: e.target.value})}></textarea>
-                                        </div>
-                                    </div>
-
-                                    {/* Right Col: Job & System */}
-                                    <div className="col-12 col-lg-6 ps-lg-4 border-start-lg">
-                                        <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-briefcase me-2"></i>Job Details</h6>
-                                        
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Designation</label>
-                                                <input required type="text" className="form-control" placeholder="e.g. Teacher" value={formData.designation} onChange={e=>setFormData({...formData, designation: e.target.value})} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Department</label>
-                                                <select className="form-select" value={formData.department_id} onChange={e=>setFormData({...formData, department_id: e.target.value})}>
-                                                    <option value="">Select Dept</option>
-                                                    {departments.map(d => <option key={d.department_id} value={d.department_id}>{d.department_name}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Qualification</label>
-                                                <input type="text" className="form-control" placeholder="e.g. Master in CS" value={formData.qualification} onChange={e=>setFormData({...formData, qualification: e.target.value})} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Total Experience</label>
-                                                <input type="text" className="form-control" placeholder="e.g. 5 Years" value={formData.experience} onChange={e=>setFormData({...formData, experience: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <div className="row g-3 mb-3">
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Joining Date</label>
-                                                <input type="date" className="form-control" value={formData.joining_date} onChange={e=>setFormData({...formData, joining_date: e.target.value})} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label small fw-bold">Blood Group</label>
-                                                <input type="text" className="form-control" placeholder="e.g. O+" value={formData.blood_group} onChange={e=>setFormData({...formData, blood_group: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <div className="mb-4">
-                                            <label className="form-label small fw-bold">Salary (PKR)</label>
-                                            <div className="input-group">
-                                                <span className="input-group-text">$</span>
-                                                <input type="number" className="form-control" value={formData.salary} onChange={e=>setFormData({...formData, salary: e.target.value})} />
-                                            </div>
-                                        </div>
-
-                                        <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-shield-lock me-2"></i>System Access</h6>
-                                        <div className="bg-light p-3 rounded border">
-                                            {/* If editing and employee already has a user account → show info only */}
-                                            {modalMode === 'edit' && (formData as any)._has_user ? (
-                                                <div className="d-flex align-items-center gap-2 text-success">
-                                                    <i className="bi bi-shield-check fs-5"></i>
-                                                    <div>
-                                                        <div className="fw-bold small">System account already linked</div>
-                                                        <div className="text-muted" style={{fontSize:'0.78rem'}}>To reset password, open the employee's profile page.</div>
-                                                    </div>
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">First Name</label>
+                                                    <input required type="text" className="form-control" value={formData.first_name} onChange={e => setFormData({ ...formData, first_name: e.target.value })} />
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <div className="form-check form-switch mb-2">
-                                                        <input className="form-check-input" type="checkbox" checked={isSysUser} onChange={e => setIsSysUser(e.target.checked)} />
-                                                        <label className="form-check-label fw-bold">Create System User Login</label>
-                                                    </div>
-                                                    
-                                                    {isSysUser && (
-                                                        <div className="animate__animated animate__fadeIn">
-                                                            <div className="mb-2">
-                                                                <label className="form-label small fw-bold">Username</label>
-                                                                <input required={isSysUser} type="text" className="form-control form-control-sm" value={formData.username} onChange={e=>setFormData({...formData, username: e.target.value})} />
-                                                            </div>
-                                                            <div className="mb-2">
-                                                                <label className="form-label small fw-bold">Password</label>
-                                                                <input required={isSysUser} type="password" className="form-control form-control-sm" value={formData.password} onChange={e=>setFormData({...formData, password: e.target.value})} />
-                                                            </div>
-                                                            <div>
-                                                                <label className="form-label small fw-bold">Role</label>
-                                                                <select required={isSysUser} className="form-select form-select-sm" value={formData.role_id} onChange={e=>setFormData({...formData, role_id: e.target.value})}>
-                                                                    <option value="">Select Role</option>
-                                                                    {roles.map(r => <option key={r.id} value={r.id}>{r.role_name}</option>)}
-                                                                </select>
-                                                            </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Last Name</label>
+                                                    <input required type="text" className="form-control" value={formData.last_name} onChange={e => setFormData({ ...formData, last_name: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-3">
+                                                <label className="form-label small fw-bold">Father/Husband Name</label>
+                                                <input type="text" className="form-control" value={formData.father_name} onChange={e => setFormData({ ...formData, father_name: e.target.value })} />
+                                            </div>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Gender</label>
+                                                    <select className="form-select" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })}>
+                                                        <option value="">Select...</option>
+                                                        <option value="Male">Male</option>
+                                                        <option value="Female">Female</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Date of Birth</label>
+                                                    <input type="date" className="form-control" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Marital Status</label>
+                                                    <select className="form-select" value={formData.marital_status} onChange={e => setFormData({ ...formData, marital_status: e.target.value })}>
+                                                        <option value="">Select...</option>
+                                                        <option value="Single">Single</option>
+                                                        <option value="Married">Married</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">CNIC</label>
+                                                    <input type="text" className="form-control" value={formData.cnic} onChange={e => setFormData({ ...formData, cnic: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <h6 className="text-primary mb-3 bg-light p-2 rounded mt-4"><i className="bi bi-geo-alt me-2"></i>Contact Details</h6>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Email</label>
+                                                    <input type="email" className="form-control" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Phone</label>
+                                                    <input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-3">
+                                                <label className="form-label small fw-bold">Emergency Contact (Name & No)</label>
+                                                <input type="text" className="form-control" value={formData.emergency_contact} onChange={e => setFormData({ ...formData, emergency_contact: e.target.value })} />
+                                            </div>
+
+                                            <div className="mb-3">
+                                                <label className="form-label small fw-bold">Direct Address</label>
+                                                <textarea className="form-control" rows={2} value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })}></textarea>
+                                            </div>
+                                        </div>
+
+                                        {/* Right Col: Job & System */}
+                                        <div className="col-12 col-lg-6 ps-lg-4 border-start-lg">
+                                            <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-briefcase me-2"></i>Job Details</h6>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Designation</label>
+                                                    <input required type="text" className="form-control" placeholder="e.g. Teacher" value={formData.designation} onChange={e => setFormData({ ...formData, designation: e.target.value })} />
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Department</label>
+                                                    <select className="form-select" value={formData.department_id} onChange={e => setFormData({ ...formData, department_id: e.target.value })}>
+                                                        <option value="">Select Dept</option>
+                                                        {departments.map(d => <option key={d.department_id} value={d.department_id}>{d.department_name}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Qualification</label>
+                                                    <input type="text" className="form-control" placeholder="e.g. Master in CS" value={formData.qualification} onChange={e => setFormData({ ...formData, qualification: e.target.value })} />
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Total Experience</label>
+                                                    <input type="text" className="form-control" placeholder="e.g. 5 Years" value={formData.experience} onChange={e => setFormData({ ...formData, experience: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <div className="row g-3 mb-3">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Joining Date</label>
+                                                    <input type="date" className="form-control" value={formData.joining_date} onChange={e => setFormData({ ...formData, joining_date: e.target.value })} />
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold">Blood Group</label>
+                                                    <input type="text" className="form-control" placeholder="e.g. O+" value={formData.blood_group} onChange={e => setFormData({ ...formData, blood_group: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <label className="form-label small fw-bold">Salary (PKR)</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text">$</span>
+                                                    <input type="number" className="form-control" value={formData.salary} onChange={e => setFormData({ ...formData, salary: e.target.value })} />
+                                                </div>
+                                            </div>
+
+                                            <h6 className="text-primary mb-3 bg-light p-2 rounded"><i className="bi bi-shield-lock me-2"></i>System Access</h6>
+                                            <div className="bg-light p-3 rounded border">
+                                                {/* If editing and employee already has a user account → show info only */}
+                                                {modalMode === 'edit' && (formData as any)._has_user ? (
+                                                    <div className="d-flex align-items-center gap-2 text-success">
+                                                        <i className="bi bi-shield-check fs-5"></i>
+                                                        <div>
+                                                            <div className="fw-bold small">System account already linked</div>
+                                                            <div className="text-muted" style={{ fontSize: '0.78rem' }}>To reset password, open the employee's profile page.</div>
                                                         </div>
-                                                    )}
-                                                </>
-                                            )}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="form-check form-switch mb-2">
+                                                            <input className="form-check-input" type="checkbox" checked={isSysUser} onChange={e => setIsSysUser(e.target.checked)} />
+                                                            <label className="form-check-label fw-bold">Create System User Login</label>
+                                                        </div>
+
+                                                        {isSysUser && (
+                                                            <div className="animate__animated animate__fadeIn">
+                                                                <div className="mb-2">
+                                                                    <label className="form-label small fw-bold">Username</label>
+                                                                    <input required={isSysUser} type="text" className="form-control form-control-sm" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} />
+                                                                </div>
+                                                                <div className="mb-2">
+                                                                    <label className="form-label small fw-bold">Password</label>
+                                                                    <input required={isSysUser} type="password" className="form-control form-control-sm" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="form-label small fw-bold">Role</label>
+                                                                    <select required={isSysUser} className="form-select form-select-sm" value={formData.role_id} onChange={e => setFormData({ ...formData, role_id: e.target.value })}>
+                                                                        <option value="">Select Role</option>
+                                                                        {roles.map(r => <option key={r.id} value={r.id}>{r.role_name}</option>)}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                                 </fieldset>
                             </form>
                         </div>
@@ -452,7 +452,7 @@ export default function EmployeesPage() {
                         </div>
                     </div>
                 </div>
-            , document.body)}
+                , document.body)}
 
             <style jsx>{`
                 .modal-backdrop-custom {

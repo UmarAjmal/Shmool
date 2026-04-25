@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showToast } from '@/utils/toastHelper';
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
 
 export default function GeneralSettings() {
     const [settings, setSettings] = useState({
@@ -260,9 +260,9 @@ export default function GeneralSettings() {
                 {/* Action Bar */}
                 <div className="action-bar">
                     {hasPermission('settings', 'write') && (
-                    <button type="submit" className={`btn-modern primary ${saving ? 'loading' : ''}`} disabled={saving}>
-                        {saving ? 'Saving Changes...' : 'Save Configuration'}
-                    </button>
+                        <button type="submit" className={`btn-modern primary ${saving ? 'loading' : ''}`} disabled={saving}>
+                            {saving ? 'Saving Changes...' : 'Save Configuration'}
+                        </button>
                     )}
                 </div>
             </form>

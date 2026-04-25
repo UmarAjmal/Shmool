@@ -1,56 +1,56 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
-type Class       = { class_id: number; class_name: string };
-type Section     = { section_id: number; section_name: string; class_id: number };
-type FeeHead     = { head_id: number; head_name: string };
-type LineItem    = { slip_id: number; head_id: number; head_name: string; amount: number };
-type FeeSlip     = {
+type Class = { class_id: number; class_name: string };
+type Section = { section_id: number; section_name: string; class_id: number };
+type FeeHead = { head_id: number; head_name: string };
+type LineItem = { slip_id: number; head_id: number; head_name: string; amount: number };
+type FeeSlip = {
     slip_id: number; student_id: number; family_id: number;
-    month: number;   year: number;
+    month: number; year: number;
     total_amount: number; paid_amount: number;
-    status: string;  due_date: string;
+    status: string; due_date: string;
     student_name: string; admission_no: string;
-    family_name: string;  class_name: string; section_name: string;
+    family_name: string; class_name: string; section_name: string;
     line_items: LineItem[];
 };
 type HeadSummary = { head_name: string; total: number };
-type Collective  = { total_billed: number; total_collected: number; total_pending: number };
+type Collective = { total_billed: number; total_collected: number; total_pending: number };
 
 const MONTHS = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
 export default function FamilyFeeReportPage() {
     const now = new Date();
-    const [classes,          setClasses]          = useState<Class[]>([]);
-    const [sections,         setSections]         = useState<Section[]>([]);
+    const [classes, setClasses] = useState<Class[]>([]);
+    const [sections, setSections] = useState<Section[]>([]);
     const [filteredSections, setFilteredSections] = useState<Section[]>([]);
-    const [feeHeads,         setFeeHeads]         = useState<FeeHead[]>([]);
+    const [feeHeads, setFeeHeads] = useState<FeeHead[]>([]);
 
     // Filters
-    const [month,        setMonth]        = useState(String(now.getMonth() + 1));
-    const [year,         setYear]         = useState(String(now.getFullYear()));
-    const [classId,      setClassId]      = useState('');
-    const [sectionId,    setSectionId]    = useState('');
+    const [month, setMonth] = useState(String(now.getMonth() + 1));
+    const [year, setYear] = useState(String(now.getFullYear()));
+    const [classId, setClassId] = useState('');
+    const [sectionId, setSectionId] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    const [headId,       setHeadId]       = useState('');
+    const [headId, setHeadId] = useState('');
 
     // Report data
-    const [slips,       setSlips]       = useState<FeeSlip[]>([]);
+    const [slips, setSlips] = useState<FeeSlip[]>([]);
     const [headSummary, setHeadSummary] = useState<HeadSummary[]>([]);
-    const [collective,  setCollective]  = useState<Collective | null>(null);
+    const [collective, setCollective] = useState<Collective | null>(null);
     const [uniqueHeads, setUniqueHeads] = useState<string[]>([]);
-    const [loading,     setLoading]     = useState(false);
-    const [error,       setError]       = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const printRef = useRef<HTMLDivElement>(null);
 
     // Load dropdowns on mount
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/reports/fee-heads').then(r => r.json()).then(setFeeHeads).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/classes').then(r => r.json()).then(setClasses).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections').then(r => r.json()).then(setSections).catch(console.error);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/reports/fee-heads').then(r => r.json()).then(setFeeHeads).catch(console.error);
     }, []);
 
     useEffect(() => {
@@ -62,10 +62,10 @@ export default function FamilyFeeReportPage() {
         setLoading(true); setError('');
         try {
             const params = new URLSearchParams({ month, year });
-            if (classId)      params.append('class_id',   classId);
-            if (sectionId)    params.append('section_id', sectionId);
-            if (statusFilter) params.append('status',     statusFilter);
-            if (headId)       params.append('head_id',    headId);
+            if (classId) params.append('class_id', classId);
+            if (sectionId) params.append('section_id', sectionId);
+            if (statusFilter) params.append('status', statusFilter);
+            if (headId) params.append('head_id', headId);
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/reports/family-fee?${params}`);
             if (!res.ok) throw new Error((await res.json()).error || 'Failed to load report');
@@ -74,8 +74,8 @@ export default function FamilyFeeReportPage() {
             const parsedSlips: FeeSlip[] = data.slips.map((s: FeeSlip) => ({
                 ...s,
                 total_amount: Number(s.total_amount),
-                paid_amount:  Number(s.paid_amount),
-                line_items:   (s.line_items || []).map((li: LineItem) => ({ ...li, amount: Number(li.amount) })),
+                paid_amount: Number(s.paid_amount),
+                line_items: (s.line_items || []).map((li: LineItem) => ({ ...li, amount: Number(li.amount) })),
             }));
 
             // Derive unique head names from actual line items in results
@@ -86,24 +86,24 @@ export default function FamilyFeeReportPage() {
             setSlips(parsedSlips);
             setHeadSummary(data.headSummary.map((h: HeadSummary) => ({ ...h, total: Number(h.total) })));
             setCollective({
-                total_billed:    Number(data.collective.total_billed),
+                total_billed: Number(data.collective.total_billed),
                 total_collected: Number(data.collective.total_collected),
-                total_pending:   Number(data.collective.total_pending),
+                total_pending: Number(data.collective.total_pending),
             });
         } catch (e: any) { setError(e.message); }
         finally { setLoading(false); }
     };
 
-const paidCount    = slips.filter(s => s.status === 'paid').length;
+    const paidCount = slips.filter(s => s.status === 'paid').length;
     const partialCount = slips.filter(s => s.status === 'partial').length;
-    const unpaidCount  = slips.filter(s => s.status === 'unpaid').length;
+    const unpaidCount = slips.filter(s => s.status === 'unpaid').length;
 
     const monthLabel = MONTHS[Number(month) - 1];
-    const classLabel = classId   ? classes.find(c => String(c.class_id)   === classId)?.class_name   || '' : '';
-    const secLabel   = sectionId ? filteredSections.find(s => String(s.section_id) === sectionId)?.section_name || '' : '';
+    const classLabel = classId ? classes.find(c => String(c.class_id) === classId)?.class_name || '' : '';
+    const secLabel = sectionId ? filteredSections.find(s => String(s.section_id) === sectionId)?.section_name || '' : '';
 
     const statusBadge = (s: string) => {
-        if (s === 'paid')    return { bg: '#198754', label: 'Paid' };
+        if (s === 'paid') return { bg: '#198754', label: 'Paid' };
         if (s === 'partial') return { bg: '#fd7e14', label: 'Partial' };
         return { bg: '#dc3545', label: 'Unpaid' };
     };
@@ -360,13 +360,13 @@ const paidCount    = slips.filter(s => s.status === 'paid').length;
                     {/* ── 7 Summary Cards ── */}
                     <div className="row g-2 g-md-3 mb-4">
                         {[
-                            { label: 'Total Billed',   val: `Rs. ${collective.total_billed.toLocaleString()}`,    color: '#233D4D', bg: '#eaf0f6', icon: 'bi-receipt' },
-                            { label: 'Collected',      val: `Rs. ${collective.total_collected.toLocaleString()}`, color: '#198754', bg: '#e8f5ee', icon: 'bi-check-circle-fill' },
-                            { label: 'Pending',        val: `Rs. ${collective.total_pending.toLocaleString()}`,   color: '#dc3545', bg: '#fdecea', icon: 'bi-exclamation-circle-fill' },
-                            { label: 'Total Students', val: slips.length,   color: '#0d6efd', bg: '#e8eefb', icon: 'bi-people-fill' },
-                            { label: 'Paid',           val: paidCount,      color: '#198754', bg: '#e8f5ee', icon: 'bi-check2-all' },
-                            { label: 'Partial',        val: partialCount,   color: '#fd7e14', bg: '#fff3e0', icon: 'bi-clock-history' },
-                            { label: 'Unpaid',         val: unpaidCount,    color: '#dc3545', bg: '#fdecea', icon: 'bi-x-circle-fill' },
+                            { label: 'Total Billed', val: `Rs. ${collective.total_billed.toLocaleString()}`, color: '#233D4D', bg: '#eaf0f6', icon: 'bi-receipt' },
+                            { label: 'Collected', val: `Rs. ${collective.total_collected.toLocaleString()}`, color: '#198754', bg: '#e8f5ee', icon: 'bi-check-circle-fill' },
+                            { label: 'Pending', val: `Rs. ${collective.total_pending.toLocaleString()}`, color: '#dc3545', bg: '#fdecea', icon: 'bi-exclamation-circle-fill' },
+                            { label: 'Total Students', val: slips.length, color: '#0d6efd', bg: '#e8eefb', icon: 'bi-people-fill' },
+                            { label: 'Paid', val: paidCount, color: '#198754', bg: '#e8f5ee', icon: 'bi-check2-all' },
+                            { label: 'Partial', val: partialCount, color: '#fd7e14', bg: '#fff3e0', icon: 'bi-clock-history' },
+                            { label: 'Unpaid', val: unpaidCount, color: '#dc3545', bg: '#fdecea', icon: 'bi-x-circle-fill' },
                         ].map(item => (
                             <div key={item.label} className="col-6 col-sm-4 col-md">
                                 <div className="card border-0 shadow-sm text-center py-3 px-2 h-100"
@@ -469,7 +469,7 @@ const paidCount    = slips.filter(s => s.status === 'paid').length;
                                     <tbody>
                                         {slips.map((s, i) => {
                                             const balance = s.total_amount - s.paid_amount;
-                                            const badge   = statusBadge(s.status);
+                                            const badge = statusBadge(s.status);
                                             return (
                                                 <tr key={s.slip_id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc' }}>
                                                     <td style={{ padding: '9px 10px', color: '#bbb', fontSize: 12 }}>{i + 1}</td>

@@ -31,7 +31,7 @@ export default function SystemConfigPage() {
     const [formData, setFormData] = useState<any>({});
     const [saving, setSaving] = useState(false);
     const { hasPermission } = useAuth();
-    
+
     // Backup State
     const [backups, setBackups] = useState<BackupFile[]>([]);
     const [creatingBackup, setCreatingBackup] = useState(false);
@@ -46,10 +46,10 @@ export default function SystemConfigPage() {
 
     const fetchSettings = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system');
             const data = await res.json();
             setSettings(data);
-            
+
             // Map to key-value for form
             const initialForm: any = {};
             data.forEach((s: SystemSetting) => {
@@ -65,14 +65,14 @@ export default function SystemConfigPage() {
 
     const fetchStats = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system/db-stats');
-            if(res.ok) setStats(await res.json());
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system/db-stats');
+            if (res.ok) setStats(await res.json());
         } catch (err) { console.error(err); }
     };
 
     const fetchBackups = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system/backups');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system/backups');
             if (res.ok) {
                 const data = await res.json();
                 setBackups(data);
@@ -84,12 +84,12 @@ export default function SystemConfigPage() {
         e.preventDefault();
         setSaving(true);
         try {
-             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            if(res.ok) {
+            if (res.ok) {
                 showToast.success('System configuration updated successfully.');
                 fetchSettings(); // refresh
             }
@@ -108,7 +108,7 @@ export default function SystemConfigPage() {
     const handleCreateBackup = async () => {
         setCreatingBackup(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system/backups/create', { method: 'POST' });
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system/backups/create', { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
                 showToast.success(data.message);
@@ -122,27 +122,27 @@ export default function SystemConfigPage() {
             setCreatingBackup(false);
         }
     };
-    
+
     const handleDeleteBackup = async (filename: string) => {
-        if(!confirm(`Are you sure you want to delete ${filename}?`)) return;
+        if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/system/backups/${filename}`, { method: 'DELETE' });
             if (res.ok) {
                 showToast.success('Backup deleted successfully');
                 fetchBackups();
             }
-        } catch(err) { showToast.error('Failed to delete backup'); }
+        } catch (err) { showToast.error('Failed to delete backup'); }
     };
-    
+
     const handleDownloadBackup = (filename: string) => {
         window.location.href = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/system/backups/download/${filename}`;
     };
 
     const handleRestoreBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-        
+
         const file = e.target.files[0];
-        if(!confirm(`WARNING: Restore will overwrite your current database with '${file.name}'. This cannot be undone. Are you sure?`)) {
+        if (!confirm(`WARNING: Restore will overwrite your current database with '${file.name}'. This cannot be undone. Are you sure?`)) {
             e.target.value = ''; // Reset input
             return;
         }
@@ -152,12 +152,12 @@ export default function SystemConfigPage() {
         formData.append('backup_file', file);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/system/backups/restore', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/system/backups/restore', {
                 method: 'POST',
                 body: formData
             });
             const data = await res.json();
-            
+
             if (res.ok) {
                 showToast.success(data.message);
                 window.location.reload();
@@ -182,9 +182,9 @@ export default function SystemConfigPage() {
         setResetting(true);
         // Using alert since react-toastify doesn't natively have a blocking modal
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/settings/reset-database', { method: 'POST' });
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/settings/reset-database', { method: 'POST' });
             const data = await res.json();
-            
+
             if (res.ok) {
                 // Clear token/session since admin password might have reset to default
                 localStorage.removeItem('token');
@@ -204,10 +204,10 @@ export default function SystemConfigPage() {
     const renderSettingInput = (setting: SystemSetting) => {
         const key = setting.setting_key;
         const val = formData[key] || '';
-        
+
         if (key === 'maintenance_mode' || key === 'auto_backup_enabled') {
             return (
-                <select 
+                <select
                     className="form-select"
                     value={val}
                     onChange={e => handleChange(key, e.target.value)}
@@ -220,7 +220,7 @@ export default function SystemConfigPage() {
 
         if (key === 'backup_frequency') {
             return (
-                <select 
+                <select
                     className="form-select"
                     value={val}
                     onChange={e => handleChange(key, e.target.value)}
@@ -234,9 +234,9 @@ export default function SystemConfigPage() {
 
         if (key === 'backup_time') {
             return (
-                <input 
-                    type="time" 
-                    className="form-control" 
+                <input
+                    type="time"
+                    className="form-control"
                     value={val}
                     onChange={e => handleChange(key, e.target.value)}
                 />
@@ -247,9 +247,9 @@ export default function SystemConfigPage() {
             return (
                 <div className="input-group">
                     <span className="input-group-text bg-light text-muted"><i className="bi bi-folder2-open"></i></span>
-                    <input 
-                        type="text" 
-                        className="form-control font-monospace" 
+                    <input
+                        type="text"
+                        className="form-control font-monospace"
                         placeholder="e.g. C:\Backups\SchoolSettings"
                         value={val}
                         onChange={e => handleChange(key, e.target.value)}
@@ -259,9 +259,9 @@ export default function SystemConfigPage() {
         }
 
         return (
-            <input 
-                type="text" 
-                className="form-control" 
+            <input
+                type="text"
+                className="form-control"
                 value={val}
                 onChange={e => handleChange(key, e.target.value)}
             />
@@ -277,25 +277,25 @@ export default function SystemConfigPage() {
 
     return (
         <div className="container-fluid animate__animated animate__fadeIn">
-             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
                     <h2 className="h3 mb-0 text-primary-dark">System Configuration</h2>
                     <p className="text-muted">Manage security policies, sessions, and database maintenance.</p>
                 </div>
                 {/* Save Button for Global Config */}
-                 {hasPermission('settings', 'write') && (
-                 <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                    {saving ? <div className="spinner-border spinner-border-sm me-2"></div> : <i className="bi bi-save me-2"></i>}
-                    Save Configuration
-                </button>
-                 )}
+                {hasPermission('settings', 'write') && (
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                        {saving ? <div className="spinner-border spinner-border-sm me-2"></div> : <i className="bi bi-save me-2"></i>}
+                        Save Configuration
+                    </button>
+                )}
             </div>
 
             <div className="card card-custom">
                 <div className="card-header bg-white border-bottom-0 pb-0 overflow-auto">
                     <ul className="nav nav-tabs card-header-tabs flex-nowrap">
                         <li className="nav-item">
-                            <button 
+                            <button
                                 className={`nav-link ${activeTab === 'security' ? 'active fw-bold text-primary-dark' : 'text-muted'}`}
                                 onClick={() => setActiveTab('security')}
                             >
@@ -303,7 +303,7 @@ export default function SystemConfigPage() {
                             </button>
                         </li>
                         <li className="nav-item">
-                            <button 
+                            <button
                                 className={`nav-link ${activeTab === 'maintenance' ? 'active fw-bold text-primary-dark' : 'text-muted'}`}
                                 onClick={() => setActiveTab('maintenance')}
                             >
@@ -314,7 +314,7 @@ export default function SystemConfigPage() {
                 </div>
 
                 <div className="card-body p-4">
-                        
+
                     {/* Security Tab */}
                     {activeTab === 'security' && (
                         <div className="animate__animated animate__fadeIn">
@@ -359,58 +359,58 @@ export default function SystemConfigPage() {
                                     </div>
                                 </div>
                                 <div className="col-12 col-md-7">
-                                     <div className="card border-0 shadow-sm h-100">
+                                    <div className="card border-0 shadow-sm h-100">
                                         <div className="card-body">
-                                           <div className="d-flex justify-content-between align-items-center mb-3">
+                                            <div className="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 className="card-subtitle text-muted mb-0">Manual Backup</h6>
-                                {hasPermission('settings', 'write') && (
-                                <button
-                                                    className="btn btn-sm btn-success" 
-                                                    onClick={handleCreateBackup}
-                                                    disabled={creatingBackup}
-                                                >
-                                                    {creatingBackup ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-plus-circle me-1"></i>}
-                                                    Create New Backup
-                                                </button>
-                                )}
-                                           </div>
-                                           <div className="d-flex justify-content-between align-items-center mb-3 pt-3 border-top">
+                                                {hasPermission('settings', 'write') && (
+                                                    <button
+                                                        className="btn btn-sm btn-success"
+                                                        onClick={handleCreateBackup}
+                                                        disabled={creatingBackup}
+                                                    >
+                                                        {creatingBackup ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-plus-circle me-1"></i>}
+                                                        Create New Backup
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center mb-3 pt-3 border-top">
                                                 <div>
                                                     <h6 className="card-subtitle text-muted mb-0">Restore Database</h6>
                                                     <small className="text-danger d-block">Overwrites existing data!</small>
                                                 </div>
-                                {hasPermission('settings', 'write') && (
-                                <label className={`btn btn-sm btn-outline-danger ${restoring ? 'disabled' : ''}`}>
-                                    {restoring ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-upload me-1"></i>}
-                                    Upload & Restore
-                                              <input type="file" hidden accept=".sql" onChange={handleRestoreBackup} disabled={restoring} />
-                                          </label>
-                                      )}
-                                      </div>
+                                                {hasPermission('settings', 'write') && (
+                                                    <label className={`btn btn-sm btn-outline-danger ${restoring ? 'disabled' : ''}`}>
+                                                        {restoring ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-upload me-1"></i>}
+                                                        Upload & Restore
+                                                        <input type="file" hidden accept=".sql" onChange={handleRestoreBackup} disabled={restoring} />
+                                                    </label>
+                                                )}
+                                            </div>
 
-                                      {/* DANGER ZONE */}
-                                      <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                                          <div>
-                                              <h6 className="card-subtitle text-danger fw-bold mb-0">Factory Reset Database</h6>
-                                              <small className="text-secondary d-block">Wipes all tables & auto-seeds initial data. Cannot be undone!</small>
-                                          </div>
-                                          {hasPermission('settings', 'delete') && (
-                                              <button 
-                                                  className={`btn btn-sm btn-danger ${resetting ? 'disabled' : ''}`}
-                                                  onClick={handleResetDatabase}
-                                              >
-                                                  {resetting ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-exclamation-triangle-fill me-1"></i>}
-                                                  Reset Database
-                                              </button>
-                                          )}
-                                      </div>
-                                      {/* END DANGER ZONE */}
-                                  </div>
-                               </div>
+                                            {/* DANGER ZONE */}
+                                            <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                                <div>
+                                                    <h6 className="card-subtitle text-danger fw-bold mb-0">Factory Reset Database</h6>
+                                                    <small className="text-secondary d-block">Wipes all tables & auto-seeds initial data. Cannot be undone!</small>
+                                                </div>
+                                                {hasPermission('settings', 'delete') && (
+                                                    <button
+                                                        className={`btn btn-sm btn-danger ${resetting ? 'disabled' : ''}`}
+                                                        onClick={handleResetDatabase}
+                                                    >
+                                                        {resetting ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-exclamation-triangle-fill me-1"></i>}
+                                                        Reset Database
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {/* END DANGER ZONE */}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Backups List */}
+                            {/* Backups List */}
                             <h5 className="mb-3 text-primary-teal">Available Backups</h5>
                             <div className="table-responsive mb-5 border rounded">
                                 <table className="table table-hover mb-0">
@@ -418,8 +418,8 @@ export default function SystemConfigPage() {
                                         <tr>
                                             <th>Filename</th>
                                             <th>Size</th>
-                                            <th style={{width: '200px'}}>Created At</th>
-                                            <th className="text-end" style={{width: '150px'}}>Actions</th>
+                                            <th style={{ width: '200px' }}>Created At</th>
+                                            <th className="text-end" style={{ width: '150px' }}>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -440,21 +440,21 @@ export default function SystemConfigPage() {
                                                     </td>
                                                     <td className="text-end">
                                                         <div className="btn-group btn-group-sm">
-                                                            <button 
-                                                                className="btn btn-outline-primary" 
+                                                            <button
+                                                                className="btn btn-outline-primary"
                                                                 title="Download"
                                                                 onClick={() => handleDownloadBackup(file.name)}
                                                             >
                                                                 <i className="bi bi-download"></i>
                                                             </button>
                                                             {hasPermission('settings', 'delete') && (
-                                                            <button 
-                                                                className="btn btn-outline-danger" 
-                                                                title="Delete"
-                                                                onClick={() => handleDeleteBackup(file.name)}
-                                                            >
-                                                                <i className="bi bi-trash"></i>
-                                                            </button>
+                                                                <button
+                                                                    className="btn btn-outline-danger"
+                                                                    title="Delete"
+                                                                    onClick={() => handleDeleteBackup(file.name)}
+                                                                >
+                                                                    <i className="bi bi-trash"></i>
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </td>

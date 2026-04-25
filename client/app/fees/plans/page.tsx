@@ -63,7 +63,7 @@ export default function FeePlansPage() {
 
     const fetchPlans = async () => {
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-plans');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-plans');
             const data = await r.json();
             setPlans(Array.isArray(data) ? data : []);
         } catch { } finally { setLoading(false); }
@@ -71,14 +71,14 @@ export default function FeePlansPage() {
 
     const fetchHeads = async () => {
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads/active');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-heads/active');
             setAllHeads(await r.json());
         } catch { }
     };
 
     const fetchClasses = async () => {
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
             setClasses(await r.json());
         } catch { }
     };
@@ -137,7 +137,7 @@ export default function FeePlansPage() {
             return;
         }
         try {
-            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-plans/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-plans';
+            const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/fee-plans/${editId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-plans';
             const method = editMode ? 'PUT' : 'POST';
             const res = await fetch(url, {
                 method, headers: { 'Content-Type': 'application/json' },
@@ -170,9 +170,9 @@ export default function FeePlansPage() {
                     <p className="text-muted small mb-0">Assign fee heads with amounts per class. Used for monthly slip generation.</p>
                 </div>
                 {hasPermission('fees', 'write') && (
-                <button className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2" onClick={openAdd}>
-                    <i className="bi bi-plus-lg"></i> New Fee Plan
-                </button>
+                    <button className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2" onClick={openAdd}>
+                        <i className="bi bi-plus-lg"></i> New Fee Plan
+                    </button>
                 )}
             </div>
 
@@ -220,28 +220,28 @@ export default function FeePlansPage() {
                                     <div className="card-body p-3">
                                         {plan.heads && plan.heads.length > 0 ? (
                                             <div className="table-responsive">
-                                            <table className="table table-sm mb-0">
-                                                <tbody>
-                                                    {plan.heads.map(h => (
-                                                        <tr key={h.head_id}>
-                                                            <td className="text-muted small">{h.head_name}</td>
-                                                            <td className="text-end small">
-                                                                {h.head_name.toLowerCase().includes('tuition') ? (
-                                                                    <span className="badge bg-success rounded-pill">Per Student</span>
-                                                                ) : h.head_type === 'prev_balance' ? (
-                                                                    <span className="badge rounded-pill" style={{ background: '#6f42c1' }}>Per Family</span>
-                                                                ) : (
-                                                                    <span className="fw-bold">{formatAmt(parseFloat(h.amount?.toString() || '0'))}</span>
-                                                                )}
-                                                            </td>
+                                                <table className="table table-sm mb-0">
+                                                    <tbody>
+                                                        {plan.heads.map(h => (
+                                                            <tr key={h.head_id}>
+                                                                <td className="text-muted small">{h.head_name}</td>
+                                                                <td className="text-end small">
+                                                                    {h.head_name.toLowerCase().includes('tuition') ? (
+                                                                        <span className="badge bg-success rounded-pill">Per Student</span>
+                                                                    ) : h.head_type === 'prev_balance' ? (
+                                                                        <span className="badge rounded-pill" style={{ background: '#6f42c1' }}>Per Family</span>
+                                                                    ) : (
+                                                                        <span className="fw-bold">{formatAmt(parseFloat(h.amount?.toString() || '0'))}</span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        <tr className="border-top">
+                                                            <td className="fw-bold">Other Fees Total</td>
+                                                            <td className="text-end fw-bold" style={{ color: 'var(--primary-teal)' }}>{formatAmt(plan.heads.filter(h => !h.head_name.toLowerCase().includes('tuition') && h.head_type !== 'prev_balance').reduce((s, h) => s + parseFloat(h.amount?.toString() || '0'), 0))}</td>
                                                         </tr>
-                                                    ))}
-                                                    <tr className="border-top">
-                                                        <td className="fw-bold">Other Fees Total</td>
-                                                        <td className="text-end fw-bold" style={{ color: 'var(--primary-teal)' }}>{formatAmt(plan.heads.filter(h => !h.head_name.toLowerCase().includes('tuition') && h.head_type !== 'prev_balance').reduce((s, h) => s + parseFloat(h.amount?.toString() || '0'), 0))}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         ) : (
                                             <p className="text-muted small text-center py-2">No fee heads assigned</p>
@@ -249,17 +249,17 @@ export default function FeePlansPage() {
                                     </div>
                                     <div className="card-footer bg-white border-top d-flex gap-2">
                                         {hasPermission('fees', 'write') && (
-                                        <button className="btn btn-sm btn-secondary-custom flex-fill" onClick={() => openEdit(plan)}>
-                                            <i className="bi bi-pencil me-1"></i>Edit
-                                        </button>
+                                            <button className="btn btn-sm btn-secondary-custom flex-fill" onClick={() => openEdit(plan)}>
+                                                <i className="bi bi-pencil me-1"></i>Edit
+                                            </button>
                                         )}
                                         <button className="btn btn-sm btn-primary-custom flex-fill" onClick={() => router.push('/fees/generate')}>
                                             <i className="bi bi-lightning me-1"></i>Generate
                                         </button>
                                         {hasPermission('fees', 'delete') && (
-                                        <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(plan.plan_id)}>
-                                            <i className="bi bi-trash"></i>
-                                        </button>
+                                            <button className="btn btn-sm btn-light text-danger" onClick={() => handleDelete(plan.plan_id)}>
+                                                <i className="bi bi-trash"></i>
+                                            </button>
                                         )}
                                     </div>
                                 </div>
@@ -384,10 +384,9 @@ export default function FeePlansPage() {
                                                                     <div className="d-flex align-items-center gap-2 mb-2" onClick={() => toggleHead(head)}>
                                                                         <input type="checkbox" className="form-check-input mt-0" readOnly checked={!!sel} />
                                                                         <span className="fw-bold small">{head.head_name}</span>
-                                                                        <span className={`badge rounded-pill ms-auto ${
-                                                                            head.head_type === 'regular' ? 'bg-info text-dark' :
-                                                                            head.head_type === 'prev_balance' ? 'text-white' :
-                                                                            'bg-warning text-dark'}`}
+                                                                        <span className={`badge rounded-pill ms-auto ${head.head_type === 'regular' ? 'bg-info text-dark' :
+                                                                                head.head_type === 'prev_balance' ? 'text-white' :
+                                                                                    'bg-warning text-dark'}`}
                                                                             style={head.head_type === 'prev_balance' ? { background: '#6f42c1' } : {}}>
                                                                             {head.head_type === 'prev_balance' ? 'Prev. Balance' : head.head_type}
                                                                         </span>

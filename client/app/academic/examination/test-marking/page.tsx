@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-type ClassItem   = { class_id: number; class_name: string };
+type ClassItem = { class_id: number; class_name: string };
 type SectionItem = { section_id: number; section_name: string; class_id: number };
 type SubjectItem = {
     subject_id: number; subject_name: string; subject_code?: string | null;
@@ -28,42 +28,42 @@ type SheetData = {
     students: StudentMarkRow[];
 };
 
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
 
 export default function TestMarkingPage() {
     const { user } = useAuth();
 
     // ── context state ────────────────────────────────────────────────────────
     const [loadingCtx, setLoadingCtx] = useState(true);
-    const [isAdmin, setIsAdmin]       = useState(false);
-    const [classes, setClasses]       = useState<ClassItem[]>([]);
-    const [sections, setSections]     = useState<SectionItem[]>([]);
-    const [subjects, setSubjects]     = useState<SubjectItem[]>([]);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [classes, setClasses] = useState<ClassItem[]>([]);
+    const [sections, setSections] = useState<SectionItem[]>([]);
+    const [subjects, setSubjects] = useState<SubjectItem[]>([]);
 
     // ── filter selectors ─────────────────────────────────────────────────────
-    const [selClass,   setSelClass]   = useState('');
+    const [selClass, setSelClass] = useState('');
     const [selSection, setSelSection] = useState('');
     const [selSubject, setSelSubject] = useState('');
 
     // ── tests list ───────────────────────────────────────────────────────────
     const [loadingTests, setLoadingTests] = useState(false);
-    const [tests, setTests]               = useState<TestPaper[]>([]);
+    const [tests, setTests] = useState<TestPaper[]>([]);
 
     // ── create-test form ─────────────────────────────────────────────────────
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [formName,  setFormName]   = useState('');
-    const [formDesc,  setFormDesc]   = useState('');
-    const [formTotal, setFormTotal]  = useState('');
-    const [creating,  setCreating]   = useState(false);
+    const [formName, setFormName] = useState('');
+    const [formDesc, setFormDesc] = useState('');
+    const [formTotal, setFormTotal] = useState('');
+    const [creating, setCreating] = useState(false);
 
     // ── marking sheet ────────────────────────────────────────────────────────
-    const [selectedTest,  setSelectedTest]  = useState<number | null>(null);
-    const [loadingSheet,  setLoadingSheet]  = useState(false);
-    const [sheet,         setSheet]         = useState<SheetData | null>(null);
-    const [obtainedMap,   setObtainedMap]   = useState<Record<number, string>>({});
-    const [remarksMap,    setRemarksMap]    = useState<Record<number, string>>({});
-    const [saving,        setSaving]        = useState(false);
-    const [deleting,      setDeleting]      = useState(false);
+    const [selectedTest, setSelectedTest] = useState<number | null>(null);
+    const [loadingSheet, setLoadingSheet] = useState(false);
+    const [sheet, setSheet] = useState<SheetData | null>(null);
+    const [obtainedMap, setObtainedMap] = useState<Record<number, string>>({});
+    const [remarksMap, setRemarksMap] = useState<Record<number, string>>({});
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     // ── messages ─────────────────────────────────────────────────────────────
     const [msg, setMsg] = useState<{ type: 'success' | 'danger' | 'warning'; text: string } | null>(null);
@@ -93,7 +93,7 @@ export default function TestMarkingPage() {
             const d = await r.json();
             if (!r.ok) throw new Error(d.error || 'Failed to load context');
             setIsAdmin(!!d.is_admin);
-            setClasses(d.classes  || []);
+            setClasses(d.classes || []);
             setSections(d.sections || []);
             setSubjects(d.subjects || []);
         } catch (e: any) {
@@ -209,7 +209,7 @@ export default function TestMarkingPage() {
 
     useEffect(() => {
         if (selectedTest !== null) loadSheet(selectedTest);
-        else                       setSheet(null);
+        else setSheet(null);
     }, [selectedTest]);
 
     // ── save marks ─────────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ export default function TestMarkingPage() {
                     </h4>
                     <div className="text-muted small">Create tests and enter student marks</div>
                 </div>
-                {isAdmin && <span className="badge rounded-pill bg-warning text-dark border"><i className="bi bi-shield-fill me-1"/>Admin Mode</span>}
+                {isAdmin && <span className="badge rounded-pill bg-warning text-dark border"><i className="bi bi-shield-fill me-1" />Admin Mode</span>}
             </div>
 
             {/* ── Alert ──────────────────────────────────────────────────── */}
@@ -316,7 +316,7 @@ export default function TestMarkingPage() {
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-header bg-white border-bottom py-3" style={{ borderLeft: '4px solid var(--primary-teal)' }}>
                     <h6 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
-                        <i className="bi bi-funnel-fill me-2" style={{ color: 'var(--primary-teal)' }}/>
+                        <i className="bi bi-funnel-fill me-2" style={{ color: 'var(--primary-teal)' }} />
                         Select Class / Section / Subject
                     </h6>
                 </div>
@@ -364,7 +364,7 @@ export default function TestMarkingPage() {
                             className="btn btn-sm btn-primary-custom fw-semibold"
                             onClick={() => { setShowCreateForm(v => !v); setMsg(null); }}
                         >
-                            <i className={`bi ${showCreateForm ? 'bi-x-lg' : 'bi-plus-lg'} me-1`}/>
+                            <i className={`bi ${showCreateForm ? 'bi-x-lg' : 'bi-plus-lg'} me-1`} />
                             {showCreateForm ? 'Cancel' : 'New Test'}
                         </button>
                     </div>
@@ -405,7 +405,7 @@ export default function TestMarkingPage() {
                                         onClick={handleCreate}
                                         disabled={creating}
                                     >
-                                        {creating ? <><span className="spinner-border spinner-border-sm me-1"/>Creating…</> : <><i className="bi bi-check2 me-1"/>Create</>}
+                                        {creating ? <><span className="spinner-border spinner-border-sm me-1" />Creating…</> : <><i className="bi bi-check2 me-1" />Create</>}
                                     </button>
                                 </div>
                             </div>
@@ -415,11 +415,11 @@ export default function TestMarkingPage() {
                     <div className="card-body p-0">
                         {loadingTests ? (
                             <div className="text-center py-5 text-muted">
-                                <span className="spinner-border spinner-border-sm me-2"/>Loading tests…
+                                <span className="spinner-border spinner-border-sm me-2" />Loading tests…
                             </div>
                         ) : tests.length === 0 ? (
                             <div className="text-center py-5 text-muted">
-                                <i className="bi bi-inbox fs-2 d-block mb-2"/>
+                                <i className="bi bi-inbox fs-2 d-block mb-2" />
                                 No tests found. Click <strong>New Test</strong> to create one.
                             </div>
                         ) : (
@@ -447,7 +447,7 @@ export default function TestMarkingPage() {
                                                 <td className="text-muted">{idx + 1}</td>
                                                 <td className="fw-semibold" style={{ color: 'var(--primary-teal)' }}>
                                                     {t.test_name}
-                                                    {selectedTest === t.test_id && <i className="bi bi-caret-right-fill ms-2 text-warning"/>}
+                                                    {selectedTest === t.test_id && <i className="bi bi-caret-right-fill ms-2 text-warning" />}
                                                 </td>
                                                 <td className="text-muted small">{t.description || '—'}</td>
                                                 <td className="text-center">
@@ -466,7 +466,7 @@ export default function TestMarkingPage() {
                                                         title="Open marks sheet"
                                                         onClick={() => setSelectedTest(selectedTest === t.test_id ? null : t.test_id)}
                                                     >
-                                                        <i className="bi bi-pencil-fill"/>
+                                                        <i className="bi bi-pencil-fill" />
                                                     </button>
                                                     {isAdmin && (
                                                         <button
@@ -475,7 +475,7 @@ export default function TestMarkingPage() {
                                                             onClick={() => handleDeleteTest(t.test_id)}
                                                             disabled={deleting}
                                                         >
-                                                            <i className="bi bi-trash-fill"/>
+                                                            <i className="bi bi-trash-fill" />
                                                         </button>
                                                     )}
                                                 </td>
@@ -496,7 +496,7 @@ export default function TestMarkingPage() {
                         style={{ borderLeft: '4px solid var(--primary-teal)' }}>
                         <div>
                             <h6 className="mb-0 fw-bold" style={{ color: 'var(--primary-dark)' }}>
-                                <i className="bi bi-journal-check me-2" style={{ color: 'var(--primary-teal)' }}/>
+                                <i className="bi bi-journal-check me-2" style={{ color: 'var(--primary-teal)' }} />
                                 Marks Sheet
                                 {sheet && <span className="ms-2 text-muted fw-normal small">— {sheet.test.test_name}</span>}
                             </h6>
@@ -510,20 +510,20 @@ export default function TestMarkingPage() {
                             )}
                         </div>
                         <button className="btn btn-sm btn-outline-secondary" onClick={() => { setSelectedTest(null); setSheet(null); }}>
-                            <i className="bi bi-x-lg me-1"/>Close
+                            <i className="bi bi-x-lg me-1" />Close
                         </button>
                     </div>
 
                     <div className="card-body p-0">
                         {loadingSheet ? (
                             <div className="text-center py-5 text-muted">
-                                <span className="spinner-border spinner-border-sm me-2"/>Loading students…
+                                <span className="spinner-border spinner-border-sm me-2" />Loading students…
                             </div>
                         ) : !sheet ? (
                             <div className="text-center py-4 text-muted">Failed to load sheet.</div>
                         ) : sheet.students.length === 0 ? (
                             <div className="text-center py-5 text-muted">
-                                <i className="bi bi-people fs-2 d-block mb-2"/>
+                                <i className="bi bi-people fs-2 d-block mb-2" />
                                 No active students found in this class/section.
                             </div>
                         ) : (
@@ -547,10 +547,10 @@ export default function TestMarkingPage() {
                                             {sheet.students.map((s, idx) => {
                                                 const isReadonly = sheet.readonly;
                                                 const obtained = obtainedMap[s.student_id] ?? '';
-                                                const remarks  = remarksMap[s.student_id]  ?? '';
-                                                const numVal   = Number(obtained);
-                                                const isOver   = obtained !== '' && Number.isFinite(numVal) && numVal > Number(sheet.test.total_marks);
-                                                const isNeg    = obtained !== '' && Number.isFinite(numVal) && numVal < 0;
+                                                const remarks = remarksMap[s.student_id] ?? '';
+                                                const numVal = Number(obtained);
+                                                const isOver = obtained !== '' && Number.isFinite(numVal) && numVal > Number(sheet.test.total_marks);
+                                                const isNeg = obtained !== '' && Number.isFinite(numVal) && numVal < 0;
                                                 const isInvalid = isOver || isNeg;
 
                                                 return (
@@ -626,7 +626,7 @@ export default function TestMarkingPage() {
 
                                     {sheet.readonly ? (
                                         <span className="badge bg-danger py-2 px-3">
-                                            <i className="bi bi-lock-fill me-1"/>Locked — View Only
+                                            <i className="bi bi-lock-fill me-1" />Locked — View Only
                                         </span>
                                     ) : (
                                         <button
@@ -635,8 +635,8 @@ export default function TestMarkingPage() {
                                             disabled={saving}
                                         >
                                             {saving
-                                                ? <><span className="spinner-border spinner-border-sm me-2"/>Saving…</>
-                                                : <><i className="bi bi-check2-circle me-2"/>
+                                                ? <><span className="spinner-border spinner-border-sm me-2" />Saving…</>
+                                                : <><i className="bi bi-check2-circle me-2" />
                                                     {isAdmin ? 'Save Marks' : 'Submit & Lock'}
                                                 </>
                                             }

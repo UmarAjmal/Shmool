@@ -13,10 +13,10 @@ export default function EditStudent({ params }: { params: { id: string } }) {
     const { hasPermission } = useAuth();
 
     // Initial State
-    const [guardianType, setGuardianType] = useState('Father'); 
+    const [guardianType, setGuardianType] = useState('Father');
     const [existingImage, setExistingImage] = useState<string | null>(null);
     const [existingDocs, setExistingDocs] = useState<string[]>([]);
-    
+
     const [form, setForm] = useState({
         // Academic
         roll_no: '',
@@ -35,7 +35,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
         blood_group: '',
         has_disability: false,
         disability_details: '',
-        
+
         // Contact
         mobile_no: '',
         email: '',
@@ -88,13 +88,13 @@ export default function EditStudent({ params }: { params: { id: string } }) {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/students/${params.id}`);
             if (res.ok) {
                 const data = await res.json();
-                
+
                 // Populate Form
                 setForm({
                     ...data,
                     // Fix Column Mapping
                     mobile_no: data.student_mobile || data.mobile_no || '',
-                    
+
                     admission_date: data.admission_date ? new Date(data.admission_date).toISOString().split('T')[0] : '',
                     dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
                     has_disability: data.has_disability === true,
@@ -104,8 +104,8 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                     section_id: data.section_id || '',
                 });
 
-                if(data.class_id) fetchSections(data.class_id);
-                if(data.image_url) setExistingImage(data.image_url);
+                if (data.class_id) fetchSections(data.class_id);
+                if (data.image_url) setExistingImage(data.image_url);
 
                 // Fetch family info if student has a family
                 if (data.family_id) {
@@ -126,8 +126,8 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                     } catch (fe) { console.error('Family info fetch error:', fe); }
                 }
 
-                if(data.documents) {
-                    try { setExistingDocs(JSON.parse(data.documents)); } catch(e) {}
+                if (data.documents) {
+                    try { setExistingDocs(JSON.parse(data.documents)); } catch (e) { }
                 }
 
                 // Determine Guardian Type Logic
@@ -149,25 +149,25 @@ export default function EditStudent({ params }: { params: { id: string } }) {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
-            if(res.ok) setClasses(await res.json());
-        } catch(e) { console.error(e); }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
+            if (res.ok) setClasses(await res.json());
+        } catch (e) { console.error(e); }
     };
 
     const fetchSections = async (classId: string) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic/sections');
-            if(res.ok) {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic/sections');
+            if (res.ok) {
                 const allSections = await res.json();
                 setSections(allSections.filter((s: any) => s.class_id === Number(classId)));
             }
-        } catch(e) { console.error(e); }
+        } catch (e) { console.error(e); }
     };
 
     const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
-        setForm({...form, class_id: val, section_id: ''});
-        if(val) fetchSections(val);
+        setForm({ ...form, class_id: val, section_id: '' });
+        if (val) fetchSections(val);
         else setSections([]);
     };
 
@@ -178,19 +178,19 @@ export default function EditStudent({ params }: { params: { id: string } }) {
 
         try {
             const formData = new FormData();
-            
+
             // Append Text Fields
             Object.keys(form).forEach(key => {
                 const value = (form as any)[key];
                 // Exclude system fields or nulls if needed, but backend update handles it
-                if(value !== null && value !== undefined) {
+                if (value !== null && value !== undefined) {
                     formData.append(key, value);
                 }
             });
 
             // Handle Existing Files
-            if(existingImage) formData.append('existing_image_url', existingImage);
-            if(existingDocs.length > 0) formData.append('existing_documents', JSON.stringify(existingDocs));
+            if (existingImage) formData.append('existing_image_url', existingImage);
+            if (existingDocs.length > 0) formData.append('existing_documents', JSON.stringify(existingDocs));
 
             // Append New Files
             if (imageFile) {
@@ -223,12 +223,12 @@ export default function EditStudent({ params }: { params: { id: string } }) {
         }
     };
 
-    if(loading) return <div className="p-5 text-center">Loading Student Data...</div>;
+    if (loading) return <div className="p-5 text-center">Loading Student Data...</div>;
 
     return (
         <div className="container-fluid p-4">
             <div className="d-flex align-items-center mb-4">
-                <button className="btn btn-outline-secondary me-3 rounded-circle" onClick={()=>router.back()}>
+                <button className="btn btn-outline-secondary me-3 rounded-circle" onClick={() => router.back()}>
                     <i className="bi bi-arrow-left"></i>
                 </button>
                 <h2 className="mb-0 fw-bold animate__animated animate__fadeInDown" style={{ color: 'var(--primary-dark)' }}>
@@ -238,7 +238,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
 
             <form onSubmit={handleSubmit} className="animate__animated animate__fadeInUp">
                 <div className="row g-4">
-                    
+
                     {/* 1. Academic & Uploads */}
                     <div className="col-12">
                         <div className="card shadow-sm border-0 rounded-4">
@@ -249,13 +249,13 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                 <div className="row g-3">
                                     {/* Photo Upload Section */}
                                     <div className="col-md-2 text-center">
-                                        <div className="border border-2 border-dashed rounded-3 d-flex align-items-center justify-content-center bg-light position-relative" 
+                                        <div className="border border-2 border-dashed rounded-3 d-flex align-items-center justify-content-center bg-light position-relative"
                                             style={{ height: '140px', width: '130px', margin: '0 auto', overflow: 'hidden' }}>
                                             {imageFile ? (
-                                                <img src={URL.createObjectURL(imageFile)} alt="Preview" 
+                                                <img src={URL.createObjectURL(imageFile)} alt="Preview"
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : existingImage ? (
-                                                <img src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${existingImage}`} alt="Current" 
+                                                <img src={`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/${existingImage}`} alt="Current"
                                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             ) : (
                                                 <div className="text-secondary small">
@@ -279,7 +279,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Admission Date</label>
                                                 <input type="date" className="form-control" required
-                                                    value={form.admission_date} onChange={e=>setForm({...form, admission_date: e.target.value})} />
+                                                    value={form.admission_date} onChange={e => setForm({ ...form, admission_date: e.target.value })} />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Class</label>
@@ -290,19 +290,19 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Section</label>
-                                                <select className="form-select" required value={form.section_id} onChange={e=>setForm({...form, section_id: e.target.value})}>
+                                                <select className="form-select" required value={form.section_id} onChange={e => setForm({ ...form, section_id: e.target.value })}>
                                                     <option value="">Select Section</option>
                                                     {sections.map((s: any) => <option key={s.section_id} value={s.section_id}>{s.section_name}</option>)}
                                                 </select>
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Roll No</label>
-                                                <input type="text" className="form-control" 
-                                                    value={form.roll_no} onChange={e=>setForm({...form, roll_no: e.target.value})} />
+                                                <input type="text" className="form-control"
+                                                    value={form.roll_no} onChange={e => setForm({ ...form, roll_no: e.target.value })} />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label fw-bold">Category</label>
-                                                <select className="form-select" value={form.category} onChange={e=>setForm({...form, category: e.target.value})}>
+                                                <select className="form-select" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                                                     <option value="Normal">Normal</option>
                                                     <option value="Trusted">Trusted</option>
                                                 </select>
@@ -330,21 +330,21 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">First Name</label>
                                         <input type="text" className="form-control" required
-                                            value={form.first_name} onChange={e=>setForm({...form, first_name: e.target.value})} />
+                                            value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Last Name</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.last_name} onChange={e=>setForm({...form, last_name: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Date of Birth</label>
                                         <input type="date" className="form-control"
-                                            value={form.dob} onChange={e=>setForm({...form, dob: e.target.value})} />
+                                            value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Gender</label>
-                                        <select className="form-select" value={form.gender} onChange={e=>setForm({...form, gender: e.target.value})}>
+                                        <select className="form-select" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
                                             <option>Male</option>
                                             <option>Female</option>
                                             <option>Other</option>
@@ -353,11 +353,11 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">CNIC / B-Form</label>
                                         <input type="text" className="form-control" placeholder="xxxxx-xxxxxxx-x"
-                                            value={form.cnic_bform} onChange={e=>setForm({...form, cnic_bform: e.target.value})} />
+                                            value={form.cnic_bform} onChange={e => setForm({ ...form, cnic_bform: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Blood Group</label>
-                                         <select className="form-select" value={form.blood_group} onChange={e=>setForm({...form, blood_group: e.target.value})}>
+                                        <select className="form-select" value={form.blood_group} onChange={e => setForm({ ...form, blood_group: e.target.value })}>
                                             <option value="">Unknown</option>
                                             <option>A+</option><option>A-</option>
                                             <option>B+</option><option>B-</option>
@@ -368,7 +368,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                     <div className="col-12 mt-3">
                                         <div className="form-check">
                                             <input className="form-check-input" type="checkbox" id="disabilityCheck"
-                                                checked={form.has_disability} onChange={e => setForm({...form, has_disability: e.target.checked})} />
+                                                checked={form.has_disability} onChange={e => setForm({ ...form, has_disability: e.target.checked })} />
                                             <label className="form-check-label fw-bold text-danger" htmlFor="disabilityCheck">
                                                 Student has Disability?
                                             </label>
@@ -378,7 +378,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                         <div className="col-12 animate__animated animate__fadeIn">
                                             <label className="form-label fw-bold">Disability Details</label>
                                             <input type="text" className="form-control" placeholder="Please specify nature of disability..."
-                                                value={form.disability_details} onChange={e=>setForm({...form, disability_details: e.target.value})} />
+                                                value={form.disability_details} onChange={e => setForm({ ...form, disability_details: e.target.value })} />
                                         </div>
                                     )}
                                 </div>
@@ -397,8 +397,8 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             <input className="form-check-input" type="checkbox" id="orphanSwitch"
                                                 checked={form.is_orphan} onChange={e => {
                                                     const isOrphan = e.target.checked;
-                                                    setForm({...form, is_orphan: isOrphan});
-                                                    if(isOrphan) setGuardianType('Other');
+                                                    setForm({ ...form, is_orphan: isOrphan });
+                                                    if (isOrphan) setGuardianType('Other');
                                                     else setGuardianType('Father');
                                                 }} />
                                             <label className="form-check-label text-white fw-bold" htmlFor="orphanSwitch">Student is Orphan?</label>
@@ -413,44 +413,44 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Name</label>
                                         <input type="text" className="form-control" required={!form.is_orphan}
-                                            value={form.father_name} onChange={e=>setForm({...form, father_name: e.target.value})} />
+                                            value={form.father_name} onChange={e => setForm({ ...form, father_name: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father Phone</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_phone} onChange={e=>setForm({...form, father_phone: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_phone} onChange={e => setForm({ ...form, father_phone: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Father CNIC</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_cnic} onChange={e=>setForm({...form, father_cnic: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_cnic} onChange={e => setForm({ ...form, father_cnic: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.father_occupation} onChange={e=>setForm({...form, father_occupation: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.father_occupation} onChange={e => setForm({ ...form, father_occupation: e.target.value })} />
                                     </div>
-                                    
+
                                     {/* MOTHER */}
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Name</label>
                                         <input type="text" className="form-control" required={!form.is_orphan}
-                                            value={form.mother_name} onChange={e=>setForm({...form, mother_name: e.target.value})} />
+                                            value={form.mother_name} onChange={e => setForm({ ...form, mother_name: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother Phone</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_phone} onChange={e=>setForm({...form, mother_phone: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_phone} onChange={e => setForm({ ...form, mother_phone: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Mother CNIC</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_cnic} onChange={e=>setForm({...form, mother_cnic: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_cnic} onChange={e => setForm({ ...form, mother_cnic: e.target.value })} />
                                     </div>
                                     <div className="col-md-3">
                                         <label className="form-label fw-bold">Occupation</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mother_occupation} onChange={e=>setForm({...form, mother_occupation: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.mother_occupation} onChange={e => setForm({ ...form, mother_occupation: e.target.value })} />
                                     </div>
                                 </div>
 
@@ -461,12 +461,12 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                         <div className="d-flex align-items-center gap-3">
                                             <span className="fw-bold small text-secondary">Is Guardian:</span>
                                             <div className="btn-group btn-group-sm" role="group">
-                                                <button type="button" className={`btn ${guardianType === 'Father' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>{setGuardianType('Father'); setForm(f=>({...f, guardian_name: f.father_name, guardian_phone: f.father_phone, guardian_cnic: f.father_cnic, guardian_relation: 'Father', guardian_address: f.current_address}))}} disabled={form.is_orphan}>Father</button>
-                                                <button type="button" className={`btn ${guardianType === 'Mother' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>{setGuardianType('Mother'); setForm(f=>({...f, guardian_name: f.mother_name, guardian_phone: f.mother_phone, guardian_cnic: f.mother_cnic, guardian_relation: 'Mother', guardian_address: f.current_address}))}} disabled={form.is_orphan}>Mother</button>
-                                                <button type="button" className={`btn ${guardianType === 'Other' ? 'btn-primary' : 'btn-outline-primary'}`} 
-                                                    onClick={()=>{setGuardianType('Other');}}>Other</button>
+                                                <button type="button" className={`btn ${guardianType === 'Father' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => { setGuardianType('Father'); setForm(f => ({ ...f, guardian_name: f.father_name, guardian_phone: f.father_phone, guardian_cnic: f.father_cnic, guardian_relation: 'Father', guardian_address: f.current_address })) }} disabled={form.is_orphan}>Father</button>
+                                                <button type="button" className={`btn ${guardianType === 'Mother' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => { setGuardianType('Mother'); setForm(f => ({ ...f, guardian_name: f.mother_name, guardian_phone: f.mother_phone, guardian_cnic: f.mother_cnic, guardian_relation: 'Mother', guardian_address: f.current_address })) }} disabled={form.is_orphan}>Mother</button>
+                                                <button type="button" className={`btn ${guardianType === 'Other' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                    onClick={() => { setGuardianType('Other'); }}>Other</button>
                                             </div>
                                         </div>
                                     </div>
@@ -475,31 +475,31 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                         <label className="form-label fw-bold">Guardian Name</label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_name} onChange={e=>setForm({...form, guardian_name: e.target.value})} />
+                                            value={form.guardian_name} onChange={e => setForm({ ...form, guardian_name: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Relation</label>
                                         <input type="text" className="form-control" placeholder="e.g. Uncle" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_relation} onChange={e=>setForm({...form, guardian_relation: e.target.value})} />
+                                            value={form.guardian_relation} onChange={e => setForm({ ...form, guardian_relation: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian Phone</label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_phone} onChange={e=>setForm({...form, guardian_phone: e.target.value})} />
+                                            value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })} />
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label fw-bold">Guardian CNIC</label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_cnic} onChange={e=>setForm({...form, guardian_cnic: e.target.value})} />
+                                            value={form.guardian_cnic} onChange={e => setForm({ ...form, guardian_cnic: e.target.value })} />
                                     </div>
                                     <div className="col-md-8">
                                         <label className="form-label fw-bold">Guardian Address</label>
                                         <input type="text" className="form-control" required
                                             readOnly={guardianType !== 'Other'}
-                                            value={form.guardian_address} onChange={e=>setForm({...form, guardian_address: e.target.value})} />
+                                            value={form.guardian_address} onChange={e => setForm({ ...form, guardian_address: e.target.value })} />
                                     </div>
                                 </div>
                             </div>
@@ -516,28 +516,28 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                 <div className="row g-3">
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Student Mobile</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.mobile_no} onChange={e=>setForm({...form, mobile_no: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.mobile_no} onChange={e => setForm({ ...form, mobile_no: e.target.value })} />
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label fw-bold">Email</label>
-                                        <input type="email" className="form-control" 
-                                            value={form.email} onChange={e=>setForm({...form, email: e.target.value})} />
+                                        <input type="email" className="form-control"
+                                            value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">City</label>
-                                        <input type="text" className="form-control" 
-                                            value={form.city} onChange={e=>setForm({...form, city: e.target.value})} />
+                                        <input type="text" className="form-control"
+                                            value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">Current Address</label>
-                                        <textarea className="form-control" rows={2} 
-                                            value={form.current_address} onChange={e=>setForm({...form, current_address: e.target.value})}></textarea>
+                                        <textarea className="form-control" rows={2}
+                                            value={form.current_address} onChange={e => setForm({ ...form, current_address: e.target.value })}></textarea>
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label fw-bold">Permanent Address</label>
-                                        <textarea className="form-control" rows={2} 
-                                            value={form.permanent_address} onChange={e=>setForm({...form, permanent_address: e.target.value})}></textarea>
+                                        <textarea className="form-control" rows={2}
+                                            value={form.permanent_address} onChange={e => setForm({ ...form, permanent_address: e.target.value })}></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -589,7 +589,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.admission_fee} onChange={e=>setForm({...form, admission_fee: e.target.value})} />
+                                                        value={form.admission_fee} onChange={e => setForm({ ...form, admission_fee: e.target.value })} />
                                                 </div>
                                             </div>
                                             <div className="col-md-6">
@@ -597,7 +597,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                                 <div className="input-group">
                                                     <span className="input-group-text">Rs.</span>
                                                     <input type="number" className="form-control" placeholder="0.00"
-                                                        value={form.other_charges} onChange={e=>setForm({...form, other_charges: e.target.value})} />
+                                                        value={form.other_charges} onChange={e => setForm({ ...form, other_charges: e.target.value })} />
                                                 </div>
                                             </div>
                                         </div>
@@ -610,7 +610,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             <div className="input-group">
                                                 <span className="input-group-text">Rs.</span>
                                                 <input type="number" className="form-control form-control-lg" placeholder="0.00" required
-                                                    value={form.monthly_fee} onChange={e=>setForm({...form, monthly_fee: e.target.value})} />
+                                                    value={form.monthly_fee} onChange={e => setForm({ ...form, monthly_fee: e.target.value })} />
                                             </div>
                                         </div>
                                         <div className="col-md-6">
@@ -618,7 +618,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             <div className="input-group">
                                                 <span className="input-group-text">Rs.</span>
                                                 <input type="number" className="form-control" placeholder="0.00"
-                                                    value={form.admission_fee} onChange={e=>setForm({...form, admission_fee: e.target.value})} />
+                                                    value={form.admission_fee} onChange={e => setForm({ ...form, admission_fee: e.target.value })} />
                                             </div>
                                         </div>
                                         <div className="col-md-6">
@@ -626,7 +626,7 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                                             <div className="input-group">
                                                 <span className="input-group-text">Rs.</span>
                                                 <input type="number" className="form-control" placeholder="0.00"
-                                                    value={form.other_charges} onChange={e=>setForm({...form, other_charges: e.target.value})} />
+                                                    value={form.other_charges} onChange={e => setForm({ ...form, other_charges: e.target.value })} />
                                             </div>
                                         </div>
                                     </div>
@@ -638,11 +638,11 @@ export default function EditStudent({ params }: { params: { id: string } }) {
                     {/* Submit Button */}
                     <div className="col-12 text-end mb-5">
                         {hasPermission('students', 'write') && (
-                        <button type="submit" className="btn btn-lg text-white px-5 py-3 shadow-lg rounded-pill" disabled={submitting}
-                            style={{ backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
-                            {submitting ? <i className="bi bi-hourglass-split me-2"></i> : <i className="bi bi-chheck-lg me-2"></i>}
-                            Save Changes
-                        </button>
+                            <button type="submit" className="btn btn-lg text-white px-5 py-3 shadow-lg rounded-pill" disabled={submitting}
+                                style={{ backgroundColor: 'var(--primary-teal)', fontSize: '1.2rem' }}>
+                                {submitting ? <i className="bi bi-hourglass-split me-2"></i> : <i className="bi bi-chheck-lg me-2"></i>}
+                                Save Changes
+                            </button>
                         )}
                     </div>
                 </div>

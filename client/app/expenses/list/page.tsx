@@ -68,7 +68,7 @@ export default function ExpenseListPage() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/expense-categories/active');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/expense-categories/active');
             const data = await response.json();
             setCategories(data);
         } catch (err) {
@@ -90,7 +90,7 @@ export default function ExpenseListPage() {
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/expenses?${params}`);
             const data = await response.json();
-            
+
             setExpenses(data.expenses);
             setPagination(prev => ({
                 ...prev,
@@ -103,11 +103,11 @@ export default function ExpenseListPage() {
             setLoading(false);
         }
     };
-    
+
     const fetchSummary = async () => {
         try {
             const params = new URLSearchParams();
-             Object.keys(filters).forEach(key => {
+            Object.keys(filters).forEach(key => {
                 const value = filters[key as keyof Filters];
                 if (value) params.append(key, value);
             });
@@ -163,12 +163,12 @@ export default function ExpenseListPage() {
                     <i className="bi bi-wallet2 me-2"></i> Expense Management
                 </h2>
                 {hasPermission('expenses', 'write') && (
-                <button 
-                    className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2"
-                    onClick={() => router.push('/expenses/add')}
-                >
-                    <i className="bi bi-plus-lg"></i> Add New Expense
-                </button>
+                    <button
+                        className="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2"
+                        onClick={() => router.push('/expenses/add')}
+                    >
+                        <i className="bi bi-plus-lg"></i> Add New Expense
+                    </button>
                 )}
             </div>
 
@@ -222,14 +222,14 @@ export default function ExpenseListPage() {
                                 ))}
                             </select>
                         </div>
-                         <div className="col-md-2">
-                             <input type="date" className="form-control" value={filters.from_date} onChange={e => handleFilterChange('from_date', e.target.value)} />
-                         </div>
-                         <div className="col-md-2">
-                             <input type="date" className="form-control" value={filters.to_date} onChange={e => handleFilterChange('to_date', e.target.value)} />
+                        <div className="col-md-2">
+                            <input type="date" className="form-control" value={filters.from_date} onChange={e => handleFilterChange('from_date', e.target.value)} />
+                        </div>
+                        <div className="col-md-2">
+                            <input type="date" className="form-control" value={filters.to_date} onChange={e => handleFilterChange('to_date', e.target.value)} />
                         </div>
                         <div className="col-md-1 d-grid">
-                             <button className="btn btn-secondary-custom" onClick={() => setFilters({category_id: '', from_date: '', to_date: '', search: ''})}>
+                            <button className="btn btn-secondary-custom" onClick={() => setFilters({ category_id: '', from_date: '', to_date: '', search: '' })}>
                                 <i className="bi bi-arrow-counterclockwise"></i>
                             </button>
                         </div>
@@ -291,30 +291,30 @@ export default function ExpenseListPage() {
                                             </td>
                                             <td className="pe-4 text-end">
                                                 <div className="btn-group">
-                                                    <button 
-                                                        className="btn btn-sm btn-light text-primary" 
+                                                    <button
+                                                        className="btn btn-sm btn-light text-primary"
                                                         title="View"
                                                         onClick={() => handleView(expense)}
                                                     >
                                                         <i className="bi bi-eye"></i>
                                                     </button>
                                                     {hasPermission('expenses', 'write') && (
-                                                    <button 
-                                                        className="btn btn-sm btn-light text-warning" 
-                                                        title="Edit"
-                                                        onClick={() => router.push(`/expenses/edit/${expense.expense_id}`)}
-                                                    >
-                                                        <i className="bi bi-pencil"></i>
-                                                    </button>
+                                                        <button
+                                                            className="btn btn-sm btn-light text-warning"
+                                                            title="Edit"
+                                                            onClick={() => router.push(`/expenses/edit/${expense.expense_id}`)}
+                                                        >
+                                                            <i className="bi bi-pencil"></i>
+                                                        </button>
                                                     )}
                                                     {hasPermission('expenses', 'delete') && (
-                                                    <button 
-                                                        className="btn btn-sm btn-light text-danger" 
-                                                        title="Delete"
-                                                        onClick={() => handleDelete(expense.expense_id)}
-                                                    >
-                                                        <i className="bi bi-trash"></i>
-                                                    </button>
+                                                        <button
+                                                            className="btn btn-sm btn-light text-danger"
+                                                            title="Delete"
+                                                            onClick={() => handleDelete(expense.expense_id)}
+                                                        >
+                                                            <i className="bi bi-trash"></i>
+                                                        </button>
                                                     )}
                                                 </div>
                                             </td>
@@ -325,7 +325,7 @@ export default function ExpenseListPage() {
                         </table>
                     </div>
                 </div>
-                
+
                 {/* Pagination */}
                 <div className="card-footer bg-white py-3 border-top-0 d-flex justify-content-between align-items-center">
                     <span className="text-muted small">

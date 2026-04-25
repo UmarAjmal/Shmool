@@ -28,7 +28,7 @@ export default function DepartmentsPage() {
 
     const fetchDepartments = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/hrm/departments');
             if (res.ok) setDepartments(await res.json());
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -37,7 +37,7 @@ export default function DepartmentsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/hrm/departments', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/hrm/departments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -63,9 +63,9 @@ export default function DepartmentsPage() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="h3 mb-0 text-primary-dark">Departments</h2>
                 {hasPermission('hrm', 'write') && (
-                <button className="btn btn-primary-custom" onClick={() => setShowModal(true)}>
-                    + Add Department
-                </button>
+                    <button className="btn btn-primary-custom" onClick={() => setShowModal(true)}>
+                        + Add Department
+                    </button>
                 )}
             </div>
 
@@ -100,9 +100,9 @@ export default function DepartmentsPage() {
                                             <td className="text-muted small">{dept.description}</td>
                                             <td className="text-end pe-4">
                                                 {hasPermission('hrm', 'delete') && (
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(dept.department_id)}>
-                                                    <i className="bi bi-trash"></i>
-                                                </button>
+                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(dept.department_id)}>
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -125,31 +125,31 @@ export default function DepartmentsPage() {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label className="form-label">Department Name</label>
-                                <input 
+                                <input
                                     required
-                                    type="text" 
+                                    type="text"
                                     className="form-control"
                                     value={formData.department_name}
-                                    onChange={e => setFormData({...formData, department_name: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, department_name: e.target.value })}
                                 />
                             </div>
                             <div className="mb-3">
                                 <label className="form-label">Head of Department</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     className="form-control"
                                     value={formData.head_of_department}
-                                    onChange={e => setFormData({...formData, head_of_department: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, head_of_department: e.target.value })}
                                     placeholder="e.g. Dr. John Doe"
                                 />
                             </div>
                             <div className="mb-3">
                                 <label className="form-label">Description</label>
-                                <textarea 
+                                <textarea
                                     className="form-control"
                                     rows={3}
                                     value={formData.description}
-                                    onChange={e => setFormData({...formData, description: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
                             </div>
                             <div className="d-grid">

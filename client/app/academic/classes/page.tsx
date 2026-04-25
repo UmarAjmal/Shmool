@@ -22,19 +22,19 @@ export default function ClassSettings() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic');
             if (res.ok) {
                 const data = await res.json();
                 setClasses(data);
             }
-        } catch (err) { console.error("Fetch error:", err); } 
+        } catch (err) { console.error("Fetch error:", err); }
         finally { setLoading(false); }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/${selectedId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic';
+
+        const url = editMode ? `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}/academic/${selectedId}` : `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic';
         const method = editMode ? 'PUT' : 'POST';
 
         const toastId = toast.loading(editMode ? "Updating class..." : "Creating class...");
@@ -54,7 +54,7 @@ export default function ClassSettings() {
                 const errData = await res.json();
                 toast.update(toastId, { render: errData.error || "Operation failed. Please try again.", type: "error", isLoading: false, autoClose: 4000 });
             }
-        } catch (err) { 
+        } catch (err) {
             console.error("Submit error:", err);
             toast.update(toastId, { render: "Network error. Is server running?", type: "error", isLoading: false, autoClose: 4000 });
         }
@@ -69,7 +69,7 @@ export default function ClassSettings() {
 
     const handleDelete = async (id: number) => {
         if (!confirm("Delete this class? Sections associated with it will be deleted.")) return;
-        
+
         const toastId = toast.loading("Deleting class...");
 
         try {
@@ -80,8 +80,8 @@ export default function ClassSettings() {
             } else {
                 toast.update(toastId, { render: "Failed to delete class", type: "error", isLoading: false, autoClose: 3000 });
             }
-        } catch (err) { 
-             toast.update(toastId, { render: "Error deleting class", type: "error", isLoading: false, autoClose: 3000 });
+        } catch (err) {
+            toast.update(toastId, { render: "Error deleting class", type: "error", isLoading: false, autoClose: 3000 });
         }
     };
 
@@ -113,7 +113,7 @@ export default function ClassSettings() {
                     <p className="text-muted mb-0 small">Manage academic classes and descriptions</p>
                 </div>
             </div>
-            
+
             <div className="row g-4">
                 {/* Left: Form */}
                 <div className="col-lg-4 col-md-5">
@@ -137,38 +137,38 @@ export default function ClassSettings() {
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-4">
                                     <label className="form-label text-muted small fw-bold text-uppercase">Class Name</label>
-                                    <input 
-                                        required 
-                                        type="text" 
-                                        className="form-control form-control-lg border-2" 
+                                    <input
+                                        required
+                                        type="text"
+                                        className="form-control form-control-lg border-2"
                                         placeholder="e.g. Grade 1"
                                         style={{ fontSize: '1rem' }}
-                                        value={form.class_name} 
-                                        onChange={e=>setForm({...form, class_name: e.target.value})} 
+                                        value={form.class_name}
+                                        onChange={e => setForm({ ...form, class_name: e.target.value })}
                                     />
                                 </div>
                                 <div className="mb-4">
                                     <label className="form-label text-muted small fw-bold text-uppercase">Description</label>
-                                    <textarea 
-                                        className="form-control border-2" 
-                                        rows={4} 
+                                    <textarea
+                                        className="form-control border-2"
+                                        rows={4}
                                         placeholder="Optional class details..."
-                                        value={form.description} 
-                                        onChange={e=>setForm({...form, description: e.target.value})}
+                                        value={form.description}
+                                        onChange={e => setForm({ ...form, description: e.target.value })}
                                     ></textarea>
                                 </div>
 
                                 {hasPermission('academic', 'write') && (
-                                <div className="d-grid gap-2">
-                                    <button type="submit" className={`btn ${editMode ? 'btn-warning text-white' : 'btn-primary-custom'} py-2 shadow-sm`}>
-                                        {editMode ? 'Update Class' : 'Create Class'}
-                                    </button>
-                                    {editMode && (
-                                        <button type="button" onClick={resetForm} className="btn btn-light py-2">
-                                            Cancel Editing
+                                    <div className="d-grid gap-2">
+                                        <button type="submit" className={`btn ${editMode ? 'btn-warning text-white' : 'btn-primary-custom'} py-2 shadow-sm`}>
+                                            {editMode ? 'Update Class' : 'Create Class'}
                                         </button>
-                                    )}
-                                </div>
+                                        {editMode && (
+                                            <button type="button" onClick={resetForm} className="btn btn-light py-2">
+                                                Cancel Editing
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </form>
                         </div>
@@ -196,7 +196,7 @@ export default function ClassSettings() {
                             ) : (
                                 <div className="list-group list-group-flush">
                                     {classes.map((c, index) => (
-                                        <div key={c.class_id} 
+                                        <div key={c.class_id}
                                             className="list-group-item p-3 d-flex justify-content-between align-items-center animate__animated animate__fadeIn"
                                             style={{ animationDelay: `${index * 0.05}s` }}
                                         >
@@ -204,23 +204,23 @@ export default function ClassSettings() {
                                                 <div className="d-flex align-items-center">
                                                     <h6 className="mb-0 fw-bold text-primary-dark fs-5">{c.class_name}</h6>
                                                     {editMode && selectedId === c.class_id && (
-                                                        <span className="badge bg-warning text-dark ms-2 text-uppercase" style={{fontSize: '0.65rem'}}>Editing</span>
+                                                        <span className="badge bg-warning text-dark ms-2 text-uppercase" style={{ fontSize: '0.65rem' }}>Editing</span>
                                                     )}
                                                 </div>
                                                 {c.description && <p className="text-muted mb-0 small mt-1">{c.description}</p>}
                                             </div>
-                                            
+
                                             <div className="d-flex gap-2">
                                                 {hasPermission('academic', 'write') && (
-                                                <button onClick={() => handleEdit(c)} className="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center">
-                                                    <svg className="me-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                                                    Edit
-                                                </button>
+                                                    <button onClick={() => handleEdit(c)} className="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center">
+                                                        <svg className="me-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                                        Edit
+                                                    </button>
                                                 )}
                                                 {hasPermission('academic', 'delete') && (
-                                                <button onClick={() => handleDelete(c.class_id)} className="btn btn-outline-danger btn-sm rounded-circle p-2" title="Delete">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                                </button>
+                                                    <button onClick={() => handleDelete(c.class_id)} className="btn btn-outline-danger btn-sm rounded-circle p-2" title="Delete">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>

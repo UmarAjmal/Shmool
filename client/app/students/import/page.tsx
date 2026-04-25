@@ -9,18 +9,18 @@ export default function ImportStudents() {
     const router = useRouter();
     const { hasPermission } = useAuth();
     const [activeTab, setActiveTab] = useState('import');
-    
+
     // Phase 1: Import
     const [excelData, setExcelData] = useState<any[]>([]);
     const [headers, setHeaders] = useState<string[]>([]);
     const [fileName, setFileName] = useState('');
     const [loading, setLoading] = useState(false);
     const [importResults, setImportResults] = useState<any>(null);
-    
+
     // Phase 2: Review Duplicates
     const [duplicates, setDuplicates] = useState<any[]>([]);
     const [loadingDuplicates, setLoadingDuplicates] = useState(false);
-    
+
     // Phase 3: Manual Link
     const [student1, setStudent1] = useState<any>(null);
     const [student2, setStudent2] = useState<any>(null);
@@ -40,17 +40,17 @@ export default function ImportStudents() {
 
     const downloadTemplate = () => {
         const ws = XLSX.utils.json_to_sheet([
-            { 
+            {
                 admission_no: 'AUTO',
                 admission_date: '2026-02-17',
-                first_name: 'Ahmed', 
-                last_name: 'Khan', 
-                gender: 'Male', 
+                first_name: 'Ahmed',
+                last_name: 'Khan',
+                gender: 'Male',
                 dob: '2015-05-20',
                 cnic_bform: '12345-1234567-1',
                 class_name: 'Class 1',
                 section_name: 'A',
-                roll_no: '101', 
+                roll_no: '101',
                 category: 'Normal',
                 student_mobile: '03001234567',
                 email: 'ahmed@example.com',
@@ -109,11 +109,11 @@ export default function ImportStudents() {
             notify.error("No data to import");
             return;
         }
-        if(!confirm(`Import ${excelData.length} students? Family relationships will be auto-detected using Father CNIC.`)) return;
+        if (!confirm(`Import ${excelData.length} students? Family relationships will be auto-detected using Father CNIC.`)) return;
         setLoading(true);
         const toastId = toast.loading("Importing students...");
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students/bulk', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/students/bulk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ students: excelData })
@@ -121,11 +121,11 @@ export default function ImportStudents() {
             const result = await res.json();
             if (res.ok) {
                 setImportResults(result.results);
-                toast.update(toastId, { 
-                    render: `✅ Import Complete! Success: ${result.results.success}, Failed: ${result.results.failed}`, 
-                    type: "success", 
-                    isLoading: false, 
-                    autoClose: 5000 
+                toast.update(toastId, {
+                    render: `✅ Import Complete! Success: ${result.results.success}, Failed: ${result.results.failed}`,
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 5000
                 });
                 const stats = result.results.familyStats;
                 if (stats) {
@@ -136,7 +136,7 @@ export default function ImportStudents() {
                         );
                     }, 1000);
                 }
-                if(result.results.failed > 0) {
+                if (result.results.failed > 0) {
                     console.error("Failed records:", result.results.errors);
                 }
             } else {
@@ -152,7 +152,7 @@ export default function ImportStudents() {
     const fetchDuplicates = async () => {
         setLoadingDuplicates(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students/families/potential-duplicates');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/students/families/potential-duplicates');
             if (res.ok) {
                 const data = await res.json();
                 setDuplicates(data);
@@ -169,7 +169,7 @@ export default function ImportStudents() {
         if (!confirm(`Merge ${family2} into ${family1} as ${relationType}?`)) return;
         const toastId = toast.loading('Merging families...');
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students/families/merge', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/students/families/merge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -220,7 +220,7 @@ export default function ImportStudents() {
         }
         const toastId = toast.loading('Linking students...');
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/students/families/manual-link', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/students/families/manual-link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -255,7 +255,7 @@ export default function ImportStudents() {
             {/* TABS */}
             <ul className="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-sm">
                 <li className="nav-item">
-                    <button 
+                    <button
                         className={`nav-link ${activeTab === 'import' ? 'active' : ''}`}
                         onClick={() => setActiveTab('import')}
                         style={{ backgroundColor: activeTab === 'import' ? 'var(--primary-teal)' : 'transparent' }}
@@ -264,7 +264,7 @@ export default function ImportStudents() {
                     </button>
                 </li>
                 <li className="nav-item">
-                    <button 
+                    <button
                         className={`nav-link ${activeTab === 'review' ? 'active' : ''}`}
                         onClick={() => setActiveTab('review')}
                         style={{ backgroundColor: activeTab === 'review' ? 'var(--primary-teal)' : 'transparent' }}
@@ -274,7 +274,7 @@ export default function ImportStudents() {
                     </button>
                 </li>
                 <li className="nav-item">
-                    <button 
+                    <button
                         className={`nav-link ${activeTab === 'manual' ? 'active' : ''}`}
                         onClick={() => setActiveTab('manual')}
                         style={{ backgroundColor: activeTab === 'manual' ? 'var(--primary-teal)' : 'transparent' }}
@@ -320,11 +320,11 @@ export default function ImportStudents() {
                                     <i className="bi bi-download me-2"></i>Download Template
                                 </button>
                                 <div className="flex-grow-1">
-                                    <input 
-                                        type="file" 
-                                        className="form-control" 
-                                        accept=".xlsx, .xls" 
-                                        onChange={handleFileUpload} 
+                                    <input
+                                        type="file"
+                                        className="form-control"
+                                        accept=".xlsx, .xls"
+                                        onChange={handleFileUpload}
                                     />
                                 </div>
                             </div>
@@ -405,14 +405,14 @@ export default function ImportStudents() {
                                     Data Preview ({excelData.length} Records)
                                 </h5>
                                 {hasPermission('students', 'write') && (
-                                <button 
-                                    className="btn btn-lg text-white shadow-sm"
-                                    onClick={handleImport}
-                                    disabled={loading}
-                                    style={{ backgroundColor: 'var(--primary-dark)' }}
-                                >
-                                    {loading ? 'Importing...' : 'Start Import'} <i className="bi bi-arrow-right-circle ms-2"></i>
-                                </button>
+                                    <button
+                                        className="btn btn-lg text-white shadow-sm"
+                                        onClick={handleImport}
+                                        disabled={loading}
+                                        style={{ backgroundColor: 'var(--primary-dark)' }}
+                                    >
+                                        {loading ? 'Importing...' : 'Start Import'} <i className="bi bi-arrow-right-circle ms-2"></i>
+                                    </button>
                                 )}
                             </div>
                             <div className="card-body p-0">
@@ -476,17 +476,17 @@ export default function ImportStudents() {
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <small><strong>Father:</strong> {dup.father1_name}</small><br/>
+                                                    <small><strong>Father:</strong> {dup.father1_name}</small><br />
                                                     <small><strong>Phone:</strong> {dup.father1_phone}</small>
                                                 </div>
-                                                
+
                                                 <div className="col-md-2 text-center">
                                                     <div className="badge bg-warning text-dark fs-5 mb-2">
                                                         {dup.match_score}%
                                                     </div>
                                                     <div><i className="bi bi-arrow-left-right fs-3"></i></div>
                                                 </div>
-                                                
+
                                                 <div className="col-md-5">
                                                     <h6 className="text-info fw-bold">{dup.family2_id}</h6>
                                                     <ul className="list-unstyled mb-2">
@@ -498,27 +498,27 @@ export default function ImportStudents() {
                                                             </li>
                                                         ))}
                                                     </ul>
-                                                    <small><strong>Father:</strong> {dup.father2_name}</small><br/>
+                                                    <small><strong>Father:</strong> {dup.father2_name}</small><br />
                                                     <small><strong>Phone:</strong> {dup.father2_phone}</small>
                                                 </div>
                                             </div>
 
                                             <div className="mt-3 d-flex gap-2">
                                                 {hasPermission('students', 'write') && (
-                                                <button 
-                                                    className="btn btn-primary"
-                                                    onClick={() => handleMerge(dup.family1_id, dup.family2_id, 'blood')}
-                                                >
-                                                    <i className="bi bi-people-fill me-2"></i>Merge as Blood Siblings
-                                                </button>
+                                                    <button
+                                                        className="btn btn-primary"
+                                                        onClick={() => handleMerge(dup.family1_id, dup.family2_id, 'blood')}
+                                                    >
+                                                        <i className="bi bi-people-fill me-2"></i>Merge as Blood Siblings
+                                                    </button>
                                                 )}
                                                 {hasPermission('students', 'write') && (
-                                                <button 
-                                                    className="btn btn-warning"
-                                                    onClick={() => handleMerge(dup.family1_id, dup.family2_id, 'cousin')}
-                                                >
-                                                    <i className="bi bi-diagram-3-fill me-2"></i>Merge as Cousins
-                                                </button>
+                                                    <button
+                                                        className="btn btn-warning"
+                                                        onClick={() => handleMerge(dup.family1_id, dup.family2_id, 'cousin')}
+                                                    >
+                                                        <i className="bi bi-diagram-3-fill me-2"></i>Merge as Cousins
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
@@ -547,7 +547,7 @@ export default function ImportStudents() {
                                     <label className="form-label fw-bold">Student 1:</label>
                                     {!student1 ? (
                                         <>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="form-control form-control-lg"
                                                 placeholder="Search by name or admission no..."
@@ -569,7 +569,7 @@ export default function ImportStudents() {
                                                                 setResults1([]);
                                                             }}
                                                         >
-                                                            <strong>{s.first_name} {s.last_name}</strong> ({s.admission_no})<br/>
+                                                            <strong>{s.first_name} {s.last_name}</strong> ({s.admission_no})<br />
                                                             <small className="text-muted">Family: {s.family_id} | Class: {s.class_name}</small>
                                                         </button>
                                                     ))}
@@ -578,7 +578,7 @@ export default function ImportStudents() {
                                         </>
                                     ) : (
                                         <div className="alert alert-success">
-                                            <strong>{student1.first_name} {student1.last_name}</strong><br/>
+                                            <strong>{student1.first_name} {student1.last_name}</strong><br />
                                             <small>Family: {student1.family_id} | Class: {student1.class_name}</small>
                                             <button className="btn btn-sm btn-outline-danger float-end" onClick={() => setStudent1(null)}>
                                                 <i className="bi bi-x"></i>
@@ -592,7 +592,7 @@ export default function ImportStudents() {
                                     <label className="form-label fw-bold">Student 2:</label>
                                     {!student2 ? (
                                         <>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="form-control form-control-lg"
                                                 placeholder="Search by name or admission no..."
@@ -614,7 +614,7 @@ export default function ImportStudents() {
                                                                 setResults2([]);
                                                             }}
                                                         >
-                                                            <strong>{s.first_name} {s.last_name}</strong> ({s.admission_no})<br/>
+                                                            <strong>{s.first_name} {s.last_name}</strong> ({s.admission_no})<br />
                                                             <small className="text-muted">Family: {s.family_id} | Class: {s.class_name}</small>
                                                         </button>
                                                     ))}
@@ -623,7 +623,7 @@ export default function ImportStudents() {
                                         </>
                                     ) : (
                                         <div className="alert alert-info">
-                                            <strong>{student2.first_name} {student2.last_name}</strong><br/>
+                                            <strong>{student2.first_name} {student2.last_name}</strong><br />
                                             <small>Family: {student2.family_id} | Class: {student2.class_name}</small>
                                             <button className="btn btn-sm btn-outline-danger float-end" onClick={() => setStudent2(null)}>
                                                 <i className="bi bi-x"></i>
@@ -639,7 +639,7 @@ export default function ImportStudents() {
                                             <label className="form-label fw-bold">Relationship Type:</label>
                                             <div className="row g-3">
                                                 <div className="col-md-6">
-                                                    <div 
+                                                    <div
                                                         className={`card ${relationType === 'blood' ? 'border-primary border-3' : ''}`}
                                                         style={{ cursor: 'pointer' }}
                                                         onClick={() => setRelationType('blood')}
@@ -652,7 +652,7 @@ export default function ImportStudents() {
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <div 
+                                                    <div
                                                         className={`card ${relationType === 'cousin' ? 'border-warning border-3' : ''}`}
                                                         style={{ cursor: 'pointer' }}
                                                         onClick={() => setRelationType('cousin')}
@@ -673,10 +673,10 @@ export default function ImportStudents() {
                                                 <strong>Warning:</strong> {student2.first_name} will be moved to {student1.first_name}'s family ({student1.family_id})
                                             </div>
                                             {hasPermission('students', 'write') && (
-                                            <button className="btn btn-lg btn-primary w-100" onClick={handleManualLink}>
-                                                <i className="bi bi-link-45deg me-2"></i>
-                                                Link as {relationType === 'blood' ? 'Blood Siblings' : 'Cousins'}
-                                            </button>
+                                                <button className="btn btn-lg btn-primary w-100" onClick={handleManualLink}>
+                                                    <i className="bi bi-link-45deg me-2"></i>
+                                                    Link as {relationType === 'blood' ? 'Blood Siblings' : 'Cousins'}
+                                                </button>
                                             )}
                                         </div>
                                     </>

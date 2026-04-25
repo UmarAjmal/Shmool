@@ -31,8 +31,8 @@ interface Slip {
 }
 interface Stats { total_students: number; total_amount: number; paid_amount: number; paid_count: number; unpaid_count: number; partial_count: number; }
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}`;
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const API = `${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}`;
 
 export default function FeeGeneratePage() {
     const router = useRouter();
@@ -64,7 +64,7 @@ export default function FeeGeneratePage() {
     // Undo generation state
     const [showUndoModal, setShowUndoModal] = useState(false);
     const [undoLoading, setUndoLoading] = useState(false);
-    
+
     // Tracks months that already have generated slips for this class+year
     const [generatedMonths, setGeneratedMonths] = useState<string[]>([]);
     const [generatedGroups, setGeneratedGroups] = useState<{ value: string, label: string, months: number[] }[]>([]);
@@ -72,20 +72,20 @@ export default function FeeGeneratePage() {
     useEffect(() => { fetchClasses(); fetchHeads(); }, []);
 
     const fetchClasses = async () => {
-        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/academic'); setClasses(await r.json()); } catch { }
+        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/academic'); setClasses(await r.json()); } catch { }
     };
 
     const fetchHeads = async () => {
-        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-heads/active'); setAllHeads(await r.json()); } catch { }
+        try { const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-heads/active'); setAllHeads(await r.json()); } catch { }
     };
 
     const fetchPlanForClass = async (class_id: string) => {
         if (!class_id) { setMatchingPlans([]); setPlanInfo(null); setSelectedPlanId(''); return; }
         setLoadingPlan(true);
         try {
-            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-plans');
+            const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-plans');
             const plans: any[] = await r.json();
-            const activePlans = plans.filter(p => p.is_active && (p.applies_to_all || (p.classes && p.classes.some((c:any) => c.class_id.toString() === class_id))));
+            const activePlans = plans.filter(p => p.is_active && (p.applies_to_all || (p.classes && p.classes.some((c: any) => c.class_id.toString() === class_id))));
             setMatchingPlans(activePlans);
             if (activePlans.length > 0) {
                 setSelectedPlanId(activePlans[0].plan_id.toString());
@@ -131,11 +131,11 @@ export default function FeeGeneratePage() {
 
     const fetchSlips = async () => {
         if (!selectedClass || selectedMonths.length === 0 || !selectedYear) { setSlips([]); setStats(null); return; }
-        
+
         // Find if the currently selected months EXACTLY match a generated group
         let fetchMonthValue = sortedSelectedMonths[0] ?? null;
-        const matchingGroup = generatedGroups.find(g => 
-            g.months.length === sortedSelectedMonths.length && 
+        const matchingGroup = generatedGroups.find(g =>
+            g.months.length === sortedSelectedMonths.length &&
             g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
         );
         if (matchingGroup) {
@@ -190,7 +190,7 @@ export default function FeeGeneratePage() {
         const sortedMonths = [...selectedMonths].sort((a, b) => parseInt(a) - parseInt(b));
         try {
             // Send ONE request with all selected months — server creates a single combined slip
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}'}` + '/fee-slips/generate', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://shmool.onrender.com"}` + '/fee-slips/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -236,7 +236,7 @@ export default function FeeGeneratePage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
-            setShowEdit(false); 
+            setShowEdit(false);
             fetchSlips();
             notify.success("Fee slip updated successfully");
         } catch (err: any) { setEditError(err.message); }
@@ -245,10 +245,10 @@ export default function FeeGeneratePage() {
 
     const deleteSlip = async (slipId: number) => {
         if (!confirm('Delete this slip? This cannot be undone.')) return;
-        
+
         let fetchMonthValue = sortedSelectedMonths[0] ?? null;
-        const matchingGroup = generatedGroups.find(g => 
-            g.months.length === sortedSelectedMonths.length && 
+        const matchingGroup = generatedGroups.find(g =>
+            g.months.length === sortedSelectedMonths.length &&
             g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
         );
         if (matchingGroup) fetchMonthValue = matchingGroup.value;
@@ -262,8 +262,8 @@ export default function FeeGeneratePage() {
         setUndoLoading(true);
         try {
             let fetchMonthValue = sortedSelectedMonths[0] ?? null;
-            const matchingGroup = generatedGroups.find(g => 
-                g.months.length === sortedSelectedMonths.length && 
+            const matchingGroup = generatedGroups.find(g =>
+                g.months.length === sortedSelectedMonths.length &&
                 g.months.every((m: number) => sortedSelectedMonths.includes(m.toString()))
             );
             if (matchingGroup) fetchMonthValue = matchingGroup.value;
@@ -302,11 +302,11 @@ export default function FeeGeneratePage() {
 
     // Check if the current selection is a PARTIAL selection of a combined group
     let partialGroupLabel = '';
-    const involvedGroup = generatedGroups.find(g => 
+    const involvedGroup = generatedGroups.find(g =>
         g.months.some((m: number) => selectedMonths.includes(m.toString()))
     );
     if (involvedGroup) {
-        const isExactMatch = involvedGroup.months.length === selectedMonths.length 
+        const isExactMatch = involvedGroup.months.length === selectedMonths.length
             && involvedGroup.months.every((m: number) => selectedMonths.includes(m.toString()));
         if (!isExactMatch) {
             partialGroupLabel = involvedGroup.label;
@@ -353,16 +353,16 @@ export default function FeeGeneratePage() {
                                     <span>Month(s) <span className="text-danger">*</span></span>
                                     <span className="text-muted fw-normal">
                                         {selectedMonths.length === 1
-                                            ? MONTHS[parseInt(selectedMonths[0])-1]
-                                            : <span style={{color:'var(--accent-orange)'}}>{selectedMonths.length} months selected</span>}
+                                            ? MONTHS[parseInt(selectedMonths[0]) - 1]
+                                            : <span style={{ color: 'var(--accent-orange)' }}>{selectedMonths.length} months selected</span>}
                                     </span>
                                 </label>
-                                <div className="d-grid gap-1" style={{gridTemplateColumns:'repeat(4,1fr)',display:'grid'}}>
+                                <div className="d-grid gap-1" style={{ gridTemplateColumns: 'repeat(4,1fr)', display: 'grid' }}>
                                     {MONTHS.map((m, i) => {
-                                        const val = (i+1).toString();
+                                        const val = (i + 1).toString();
                                         const active = selectedMonths.includes(val);
                                         const isGenerated = generatedMonths.includes(val);
-                                        
+
                                         // Find if this month is part of a combined group to show a link icon
                                         let isCombined = false;
                                         if (isGenerated) {
@@ -376,15 +376,17 @@ export default function FeeGeneratePage() {
                                             <button key={val} type="button"
                                                 onClick={() => toggleMonth(val)}
                                                 className="btn btn-sm "
-                                                style={{fontSize:'0.72rem',padding:'5px 2px',borderRadius:6,
+                                                style={{
+                                                    fontSize: '0.72rem', padding: '5px 2px', borderRadius: 6,
                                                     background: active ? 'var(--primary-teal)' : '#f1f3f5',
                                                     color: active ? '#fff' : (isGenerated ? '#198754' : '#6c757d'),
                                                     border: active ? '1.5px solid var(--primary-teal)' : '1.5px solid #dee2e6',
                                                     fontWeight: isGenerated ? 'bold' : '600',
-                                                    transition:'all 0.15s'}}>
-                                                {m.slice(0,3)}
-                                                {isGenerated && isCombined ? <i className="bi bi-link ms-1"></i> : 
-                                                 isGenerated ? <i className="bi bi-check-lg ms-1"></i> : ''}
+                                                    transition: 'all 0.15s'
+                                                }}>
+                                                {m.slice(0, 3)}
+                                                {isGenerated && isCombined ? <i className="bi bi-link ms-1"></i> :
+                                                    isGenerated ? <i className="bi bi-check-lg ms-1"></i> : ''}
                                             </button>
                                         );
                                     })}
@@ -418,9 +420,9 @@ export default function FeeGeneratePage() {
                                     </div>
                                     {!loadingPlan && matchingPlans.length > 0 && (
                                         <div className="mb-3">
-                                            <select 
-                                                className="form-select form-select-sm" 
-                                                value={selectedPlanId} 
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={selectedPlanId}
                                                 onChange={e => setSelectedPlanId(e.target.value)}
                                             >
                                                 {matchingPlans.map(p => (
@@ -524,23 +526,23 @@ export default function FeeGeneratePage() {
                             </div>
 
                             {hasPermission('fees', 'write') && (
-                            <button
-                                className={`btn w-100 py-2 fw-bold shadow-sm ${hasGeneratedSelected ? 'btn-secondary' : 'btn-primary-custom'}`}
-                                onClick={handleGenerate}
-                                disabled={generating || hasGeneratedSelected || !!partialGroupLabel}
-                            >
-                                {generating ? (
-                                    <><span className="spinner-border spinner-border-sm me-2"></span>Generating...</>
-                                ) : partialGroupLabel ? (
-                                    <><i className="bi bi-x-circle me-2"></i>Select Entire Combined ({partialGroupLabel}) first</>
-                                ) : hasGeneratedSelected ? (
-                                    <><i className="bi bi-x-circle me-2"></i>Cannot Generate (Month Already Issued)</>
-                                ) : selectedMonths.length > 1 ? (
-                                    <><i className="bi bi-lightning-charge me-2"></i>Generate for {selectedMonths.length} Months</>
-                                ) : (
-                                    <><i className="bi bi-lightning-charge me-2"></i>Generate Fee Slips</>
-                                )}
-                            </button>
+                                <button
+                                    className={`btn w-100 py-2 fw-bold shadow-sm ${hasGeneratedSelected ? 'btn-secondary' : 'btn-primary-custom'}`}
+                                    onClick={handleGenerate}
+                                    disabled={generating || hasGeneratedSelected || !!partialGroupLabel}
+                                >
+                                    {generating ? (
+                                        <><span className="spinner-border spinner-border-sm me-2"></span>Generating...</>
+                                    ) : partialGroupLabel ? (
+                                        <><i className="bi bi-x-circle me-2"></i>Select Entire Combined ({partialGroupLabel}) first</>
+                                    ) : hasGeneratedSelected ? (
+                                        <><i className="bi bi-x-circle me-2"></i>Cannot Generate (Month Already Issued)</>
+                                    ) : selectedMonths.length > 1 ? (
+                                        <><i className="bi bi-lightning-charge me-2"></i>Generate for {selectedMonths.length} Months</>
+                                    ) : (
+                                        <><i className="bi bi-lightning-charge me-2"></i>Generate Fee Slips</>
+                                    )}
+                                </button>
                             )}
                         </div>
                     </div>
@@ -588,12 +590,12 @@ export default function FeeGeneratePage() {
                                         </span>
                                     )}
                                     {hasPermission('fees', 'delete') && (
-                                    <button
-                                        className="btn btn-sm btn-outline-danger fw-bold"
-                                        onClick={() => setShowUndoModal(true)}
-                                    >
-                                        <i className="bi bi-arrow-counterclockwise me-1"></i>Undo Generation
-                                    </button>
+                                        <button
+                                            className="btn btn-sm btn-outline-danger fw-bold"
+                                            onClick={() => setShowUndoModal(true)}
+                                        >
+                                            <i className="bi bi-arrow-counterclockwise me-1"></i>Undo Generation
+                                        </button>
                                     )}
                                 </div>
                             )}
@@ -603,7 +605,7 @@ export default function FeeGeneratePage() {
                                 <div className="text-center py-5">
                                     <i className="bi bi-info-circle text-warning fs-1 d-block mb-3"></i>
                                     <h5 className="text-dark fw-bold">Combined Billing Detected!</h5>
-                                    <p className="text-muted">This month's fee was generated combined with another month ({partialGroupLabel}).<br/> To view the data, please <strong>select the complete {partialGroupLabel} group together</strong>.</p>
+                                    <p className="text-muted">This month's fee was generated combined with another month ({partialGroupLabel}).<br /> To view the data, please <strong>select the complete {partialGroupLabel} group together</strong>.</p>
                                 </div>
                             ) : loadingSlips ? (
                                 <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>
@@ -632,7 +634,7 @@ export default function FeeGeneratePage() {
                                                         <div className="fw-bold text-dark">
                                                             {slip.first_name} {slip.last_name}
                                                             {slip.is_family_slip && (
-                                                                <span className="badge bg-warning text-dark ms-2" style={{fontSize:'0.65rem'}}>
+                                                                <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '0.65rem' }}>
                                                                     <i className="bi bi-people-fill me-1"></i>Family
                                                                 </span>
                                                             )}
@@ -643,10 +645,10 @@ export default function FeeGeneratePage() {
                                                         {slip.is_family_slip && slip.family_members && slip.family_members.length > 1 && (
                                                             <div className="mt-1">
                                                                 {slip.family_members.map((m, mi) => (
-                                                                    <div key={mi} className="d-flex align-items-center gap-1" style={{fontSize:'0.72rem'}}>
+                                                                    <div key={mi} className="d-flex align-items-center gap-1" style={{ fontSize: '0.72rem' }}>
                                                                         <i className="bi bi-person-fill text-muted"></i>
                                                                         <span className="text-muted">{m.first_name} {m.last_name}</span>
-                                                                        <span className="badge bg-light text-secondary border" style={{fontSize:'0.6rem'}}>{m.class_name}</span>
+                                                                        <span className="badge bg-light text-secondary border" style={{ fontSize: '0.6rem' }}>{m.class_name}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -797,11 +799,11 @@ export default function FeeGeneratePage() {
                                 <div className="modal-footer">
                                     <button className="btn btn-secondary-custom px-4" onClick={() => setShowUndoModal(false)}>Cancel</button>
                                     {hasPermission('fees', 'delete') && (
-                                    <button className="btn btn-danger fw-bold px-4" onClick={handleUndo} disabled={undoLoading}>
-                                        {undoLoading
-                                            ? <><span className="spinner-border spinner-border-sm me-2"></span>Deleting...</>
-                                            : <><i className="bi bi-trash3-fill me-2"></i>Yes, Delete Slips</>}
-                                    </button>
+                                        <button className="btn btn-danger fw-bold px-4" onClick={handleUndo} disabled={undoLoading}>
+                                            {undoLoading
+                                                ? <><span className="spinner-border spinner-border-sm me-2"></span>Deleting...</>
+                                                : <><i className="bi bi-trash3-fill me-2"></i>Yes, Delete Slips</>}
+                                        </button>
                                     )}
                                 </div>
                             </div>
